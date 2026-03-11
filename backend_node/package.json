@@ -1,0 +1,20 @@
+{
+  "name": "meire-backend",
+  "version": "1.0.0",
+  "description": "Meire Node.js Backend Processor",
+  "main": "extrator_imediato.js",
+  "scripts": {
+    "start": "node extrator_imediato.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "node-cron": "^4.2.1",
+    "pocketbase": "^0.21.5",
+    "puppeteer": "^22.15.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
