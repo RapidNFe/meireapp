@@ -18,7 +18,7 @@ const config = {
             // mas o certificado e as credenciais definem o ambiente.
     },
     pocketbase: {
-        url: process.env.PB_URL || 'http://127.0.0.1:8090',
+        url: process.env.PB_URL || 'https://specifically-murphy-handmade-auction.trycloudflare.com',
         adminEmail: process.env.PB_ADMIN_EMAIL,
         adminPassword: process.env.PB_ADMIN_PASSWORD
     },

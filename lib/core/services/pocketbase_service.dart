@@ -66,7 +66,7 @@ class SecureAuthStore extends AuthStore {
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();
-final pb = PocketBase('http://127.0.0.1:8090', authStore: pocketBaseAuthStore);
+final pb = PocketBase('https://specifically-murphy-handmade-auction.trycloudflare.com', authStore: pocketBaseAuthStore);
 
 // Create a provider for easier injection
 final pbProvider = Provider<PocketBase>((ref) => pb);
