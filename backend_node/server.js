@@ -176,17 +176,27 @@ app.post('/api/notas/emitir', async (req, res) => {
 app.get('/api/impostos/estimativa/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        console.log(`📊 Calculando impostos para o usuário: ${userId}`);
+        const agora = new Date();
+        const mesAtualNum = (agora.getMonth() + 1).toString().padStart(2, '0');
+        const anoAtual = agora.getFullYear();
+        
+        const mesesLabels = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const refMes = `${mesesLabels[agora.getMonth()]}/${anoAtual}`;
 
+        console.log(`📊 Calculando impostos para o usuário: ${userId} (${refMes})`);
+
+        // Buscamos notas 'emitida' ou 'processando' deste mês
         const records = await query(`
             SELECT valor FROM notas_fiscais 
-            WHERE user = ? AND status LIKE '%emitida%'
-        `, [userId]);
+            WHERE user = ? 
+            AND status IN ('emitida', 'processando')
+            AND created LIKE ?
+        `, [userId, `${anoAtual}-${mesAtualNum}%`]);
 
-        console.log(`✅ Notas encontradas: ${records.length}`);
+        console.log(`✅ Notas filtradas (Mês Atual): ${records.length}`);
 
         // Parse dos valores
-        const faturamentoTotal = records.reduce((acc, nota) => {
+        const faturamentoMensal = records.reduce((acc, nota) => {
             let val = nota.valor;
             if (typeof val === 'string') {
                 val = parseFloat(val.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
@@ -194,13 +204,13 @@ app.get('/api/impostos/estimativa/:userId', async (req, res) => {
             return acc + (parseFloat(val) || 0);
         }, 0);
 
-        // O imposto do cliente é fixo conforme solicitado (Regra MEI/Said)
+        // O imposto do cliente é fixo (Regra MEI/Said)
         const impostoEstimado = 86.00;
 
         res.json({
-            faturamento: faturamentoTotal,
+            faturamento: faturamentoMensal,
             imposto: impostoEstimado,
-            referencia: "Março/2026"
+            referencia: refMes
         });
     } catch (error) {
         console.error('❌ Erro no cálculo de impostos:', error.message);
@@ -216,9 +226,11 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
         const { userId } = req.params;
         console.log(`📈 Gerando histórico para o usuário: ${userId}`);
 
+        // Buscamos notas 'emitida' ou 'processando'
         const records = await query(`
             SELECT valor, created FROM notas_fiscais 
-            WHERE user = ? AND status LIKE '%emitida%'
+            WHERE user = ? 
+            AND status IN ('emitida', 'processando')
             ORDER BY created DESC
         `, [userId]);
 
@@ -241,11 +253,16 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
 
         // 3. Agregamos os valores das notas no mês correspondente
         records.forEach(nota => {
+            // PocketBase armazena datas ISO UTC. Convertemos para local do servidor
             const dataNota = new Date(nota.created);
+            
+            // Encontramos o bucket de mês/ano correto no histórico
             const item = historico.find(h => h.mesNum === dataNota.getMonth() && h.ano === dataNota.getFullYear());
+            
             if (item) {
-                let val = nota.valor || nota.valor_servico;
+                let val = nota.valor;
                 if (typeof val === 'string') {
+                    // Resiliência para valores formatados (vírgula/ponto)
                     val = parseFloat(val.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
                 }
                 item.total += (parseFloat(val) || 0);

@@ -66,10 +66,10 @@ class SecureAuthStore extends AuthStore {
 
 // 🚀 AUTO-SWITCH INTELIGENTE (Arquitetura de Elite)
 // Detecta se estamos na Web (Deploy) ou Local (Desktop/Mobile)
-const String _tunnelUrl = 'https://bulletin-welding-scuba-pharmaceutical.trycloudflare.com';
+const String _tunnelUrl = 'https://scenario-ribbon-pvc-ground.trycloudflare.com';
 const String _localUrl = 'http://127.0.0.1:8090';
 
-final String meireBaseUrl = kIsWeb ? _tunnelUrl : _localUrl;
+const String meireBaseUrl = kIsWeb ? _tunnelUrl : _localUrl;
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();

@@ -122,6 +122,9 @@ class RevenueStats {
 }
 
 final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
+  // Mantém os dados em cache para velocidade máxima ao navegar entre abas
+  ref.keepAlive();
+
   final pb = ref.watch(pbProvider);
   final authService = ref.watch(authServiceProvider);
 
@@ -130,9 +133,10 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
   }
 
   try {
+    // Busca apenas as notas do ano atual para otimizar velocidade
     final records = await pb.collection('notas_fiscais').getFullList(
           sort: '-created',
-          filter: 'user = "${authService.currentUser!.id}"',
+          filter: 'user = "${authService.currentUser!.id}" && created >= "${DateTime.now().year}-01-01 00:00:00"',
         );
 
     final notas = records.map((e) => e.toJson()).toList();
@@ -159,6 +163,10 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
     }
 
     for (var n in notas) {
+      final status = n['status']?.toString().toLowerCase() ?? 'processando';
+      // Filtro de Segurança: Só contamos o que é real ou está em processamento
+      if (status != 'emitida' && status != 'processando') continue;
+
       final date =
           parseDate(n['created'] ?? n['data_competencia'] ?? n['emissao']);
       final valStr = n['valor_servico'] ?? n['valor'] ?? '0';
@@ -211,6 +219,7 @@ class ImpostoEstimativa {
 }
 
 final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async {
+  ref.keepAlive(); // Cacheia o resultado da estimativa
   final authService = ref.watch(authServiceProvider);
   final user = authService.currentUser;
 
@@ -250,6 +259,7 @@ class HistoricoMes {
 }
 
 final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) async {
+  ref.keepAlive(); // Mantém o gráfico carregado instantaneamente
   final authService = ref.watch(authServiceProvider);
   final user = authService.currentUser;
 

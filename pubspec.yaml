@@ -1,3 +1,4 @@
+# Deploy Web: flutter build web --release --web-renderer html --tree-shake-icons
 name: meire
 description: Meire Frontend Foundation (v1.0)
 publish_to: 'none'

@@ -1156,3 +1156,5 @@ class SparklineChartPainter extends CustomPainter {
     return oldDelegate.data != data;
   }
 }
+
+// Teste Append

@@ -124,7 +124,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
                     value: modoProducao,
-                    activeColor: Colors.green,
+                    activeThumbColor: Colors.green,
                     inactiveThumbColor: Colors.orange,
                     onChanged: _isLoadingSwitch ? null : (bool value) async {
                       if (value == true) {
@@ -140,7 +140,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         // Forçamos o refresh do record para atualizar o provider global
                         await ref.read(pbProvider).collection('users').authRefresh();
                         
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(value ? '🚀 Meire em Produção!' : '🛠️ Modo de Testes Ativado.'),
@@ -149,7 +149,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           );
                         }
                       } catch (e) {
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Erro ao atualizar ambiente. Verifique sua conexão.')),
                           );

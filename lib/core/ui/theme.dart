@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class MeireTheme {
   // Dark blue representing technical authority and trust
+  // Otimização de Performance: Cores cacheadas e temas imutáveis
   static const Color primaryColor = Color(0xFF001F3D);
   static const Color accentColor = Color(0xFF3B82F6);
   static const Color backgroundColor = Color(0xFFF5F7F8);
