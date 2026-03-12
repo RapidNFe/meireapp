@@ -66,6 +66,7 @@ class SecureAuthStore extends AuthStore {
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();
+// Hardcode da URL do túnel direto no código para Deploy (Cloudflare)
 final pb = PocketBase('https://specifically-murphy-handmade-auction.trycloudflare.com', authStore: pocketBaseAuthStore);
 
 // Create a provider for easier injection
