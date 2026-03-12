@@ -18,7 +18,7 @@ const config = {
             // mas o certificado e as credenciais definem o ambiente.
     },
     pocketbase: {
-        url: process.env.PB_URL || 'https://specifically-murphy-handmade-auction.trycloudflare.com',
+        url: process.env.PB_URL || 'https://bulletin-welding-scuba-pharmaceutical.trycloudflare.com',
         adminEmail: process.env.PB_ADMIN_EMAIL,
         adminPassword: process.env.PB_ADMIN_PASSWORD
     },

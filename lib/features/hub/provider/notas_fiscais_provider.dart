@@ -219,8 +219,7 @@ final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async 
   }
 
   try {
-    const baseUrl = 'https://specifically-murphy-handmade-auction.trycloudflare.com';
-    final url = '$baseUrl/api/impostos/estimativa/${user.id}';
+    final url = '$meireBaseUrl/api/impostos/estimativa/${user.id}';
     debugPrint('📡 Buscando impostos em: $url');
     final response = await http.get(Uri.parse(url));
     
@@ -257,8 +256,7 @@ final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) as
   if (user == null) return [];
 
   try {
-    const baseUrl = 'https://specifically-murphy-handmade-auction.trycloudflare.com';
-    final url = '$baseUrl/api/faturamento/historico/${user.id}';
+    final url = '$meireBaseUrl/api/faturamento/historico/${user.id}';
     debugPrint('📡 Buscando histórico em: $url');
     final response = await http.get(Uri.parse(url));
     
