@@ -154,7 +154,8 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
 
     DateTime parseDate(dynamic dateStr) {
       if (dateStr == null) return DateTime.now();
-      return DateTime.tryParse(dateStr.toString()) ?? DateTime.now();
+      // Converte ISO UTC para local antes de comparar mês/ano para evitar erro de virada de mês/fuso
+      return DateTime.tryParse(dateStr.toString())?.toLocal() ?? DateTime.now();
     }
 
     for (var n in notas) {
@@ -218,7 +219,8 @@ final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async 
   }
 
   try {
-    final url = 'http://localhost:3000/api/impostos/estimativa/${user.id}';
+    const baseUrl = 'https://specifically-murphy-handmade-auction.trycloudflare.com';
+    final url = '$baseUrl/api/impostos/estimativa/${user.id}';
     debugPrint('📡 Buscando impostos em: $url');
     final response = await http.get(Uri.parse(url));
     
@@ -255,7 +257,8 @@ final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) as
   if (user == null) return [];
 
   try {
-    final url = 'http://localhost:3000/api/faturamento/historico/${user.id}';
+    const baseUrl = 'https://specifically-murphy-handmade-auction.trycloudflare.com';
+    final url = '$baseUrl/api/faturamento/historico/${user.id}';
     debugPrint('📡 Buscando histórico em: $url');
     final response = await http.get(Uri.parse(url));
     
