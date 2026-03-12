@@ -18,7 +18,7 @@ const config = {
             // mas o certificado e as credenciais definem o ambiente.
     },
     pocketbase: {
-        url: process.env.PB_URL || 'https://scenario-ribbon-pvc-ground.trycloudflare.com',
+        url: process.env.PB_URL || 'https://abu-boss-gain-mere.trycloudflare.com',
         adminEmail: process.env.PB_ADMIN_EMAIL,
         adminPassword: process.env.PB_ADMIN_PASSWORD
     },

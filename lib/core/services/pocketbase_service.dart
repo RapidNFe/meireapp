@@ -66,7 +66,7 @@ class SecureAuthStore extends AuthStore {
 
 // 🚀 AUTO-SWITCH INTELIGENTE (Arquitetura de Elite)
 // Detecta se estamos na Web (Deploy) ou Local (Desktop/Mobile)
-const String _tunnelUrl = 'https://scenario-ribbon-pvc-ground.trycloudflare.com';
+const String _tunnelUrl = 'https://abu-boss-gain-mere.trycloudflare.com';
 const String _localUrl = 'http://127.0.0.1:8090';
 
 const String meireBaseUrl = kIsWeb ? _tunnelUrl : _localUrl;
