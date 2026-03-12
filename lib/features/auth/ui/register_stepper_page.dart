@@ -20,6 +20,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   final _formKeyStep2 = GlobalKey<FormState>();
   
   bool _isLoading = false;
+  bool _aceitouTermos = false;
   int _currentStep = 0; // 0 = CNPJ, 1 = Pessoal
 
   // Masks
@@ -31,9 +32,9 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   // State Step 1
   String _cnpj = '';
   String _razaoSocial = '';
-  String _nomeFantasia = '';
   
   // State Step 2
+  String _nomeCompleto = '';
   String _email = '';
   String _password = '';
 
@@ -44,21 +45,34 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
 
       setState(() {
         _razaoSocial = data['razao_social'] ?? 'Não informada';
-        _nomeFantasia = data['nome_fantasia'] ?? _razaoSocial;
         _isLoading = false;
         _currentStep = 1; // Advance to next step
       });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceAll('Exception:', '').trim()),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _mostrarOpcaoManual();
       }
     }
+  }
+
+  void _mostrarOpcaoManual() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('⚠️ Não conseguimos validar o CNPJ automaticamente.'),
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'Preencher Manual',
+          textColor: Colors.amber,
+          onPressed: () {
+            setState(() {
+              _razaoSocial = 'Preenchimento Manual';
+              _currentStep = 1;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   Future<void> _performRegistration() async {
@@ -74,7 +88,8 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       await ref.read(authServiceProvider).signUp(
             email: _email,
             password: _password,
-            nomeFantasia: _nomeFantasia,
+            nomeCompleto: _nomeCompleto,
+            razaoSocial: _razaoSocial,
             cpf: cleanCpf,
             cnpj: cleanCnpj,
           );
@@ -256,24 +271,26 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
               children: [
                 const Icon(Icons.verified, color: MeireTheme.accentColor, size: 32),
                 const SizedBox(height: 12),
-                Text(
-                  _nomeFantasia,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: MeireTheme.primaryColor,
+                if (_razaoSocial != 'Preenchimento Manual')
+                  Text(
+                    _razaoSocial,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: MeireTheme.primaryColor,
+                    ),
+                  )
+                else
+                  TextFormField(
+                    initialValue: '',
+                    decoration: const InputDecoration(
+                      labelText: 'Razão Social da sua MEI',
+                      hintText: 'Digite o nome exatamente como na Receita',
+                    ),
+                    onChanged: (val) => _razaoSocial = val,
+                    validator: (val) => (val == null || val.isEmpty) ? 'Campo obrigatório' : null,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _razaoSocial,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
-                ),
               ],
             ),
           ),
@@ -287,6 +304,17 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             ),
           ),
           const SizedBox(height: 24),
+          _buildTextField(
+            label: 'Seu Nome Completo',
+            icon: Icons.person_outline,
+            textCapitalization: TextCapitalization.words,
+            validator: (val) {
+              if (val == null || val.trim().split(' ').length < 2) return 'Digite seu nome completo';
+              return null;
+            },
+            onSaved: (val) => _nomeCompleto = val?.trim() ?? '',
+          ),
+          const SizedBox(height: 16),
           _buildTextField(
             label: 'E-mail Comercial',
             icon: Icons.email_outlined,
@@ -313,9 +341,53 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             },
             onSaved: (val) => _password = val ?? '',
           ),
+          const SizedBox(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 24,
+                width: 24,
+                child: Checkbox(
+                  value: _aceitouTermos,
+                  activeColor: MeireTheme.accentColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _aceitouTermos = value ?? false;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/privacy_policy');
+                  },
+                  child: RichText(
+                    text: const TextSpan(
+                      style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
+                      children: [
+                        TextSpan(text: 'Declaro que li e concordo com os '),
+                        TextSpan(
+                          text: 'Termos de Uso e Política de Privacidade.',
+                          style: TextStyle(
+                            color: MeireTheme.primaryColor,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 48),
           ElevatedButton(
-            onPressed: _isLoading ? null : _performRegistration,
+            onPressed: (_isLoading || !_aceitouTermos) ? null : _performRegistration,
             style: ElevatedButton.styleFrom(
               backgroundColor: MeireTheme.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 20),
@@ -354,6 +426,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     required IconData icon,
     bool obscureText = false,
     TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
     void Function(String?)? onSaved,
@@ -361,6 +434,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     return TextFormField(
       obscureText: obscureText,
       keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
       inputFormatters: inputFormatters,
       validator: validator,
       onSaved: onSaved,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/utils/currency_input_formatter.dart';
@@ -7,6 +8,8 @@ import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
 import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
+import 'package:meire/features/clients/provider/client_provider.dart';
+import 'package:meire/features/clients/models/client_model.dart';
 import 'package:shimmer/shimmer.dart';
 
 class NfseFormPage extends ConsumerStatefulWidget {
@@ -27,11 +30,25 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
   String? _selectedServiceId;
   bool _isLoading = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     _documentController.addListener(_onDocumentChanged);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      final client = ModalRoute.of(context)?.settings.arguments as ClientModel?;
+      if (client != null) {
+        _documentController.text = client.cnpj;
+        _nameController.text = client.razaoSocial;
+      }
+      _initialized = true;
+    }
   }
 
   @override
@@ -45,15 +62,107 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   }
 
   void _onDocumentChanged() {
-    String text = _documentController.text;
-    String cleanText = text.replaceAll(RegExp(r'[^0-9]'), '');
+    // Se quiser voltar o auto-fill mock aqui, ok.
+  }
 
-    // Auto-fill mock for CNPJ size (14 digits)
-    if (cleanText.length == 14 && _nameController.text.isEmpty) {
-      setState(() {
-        _nameController.text = "EMPRESA MOCKADA DE TESTE LTDA";
-      });
-    }
+  void _showClientSelector(List<ClientModel> clients) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Selecionar Cliente',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: clients.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.people_outline, size: 64, color: Colors.grey.shade300),
+                              const SizedBox(height: 16),
+                              Text('Nenhum cliente cadastrado.', style: TextStyle(color: Colors.grey.shade600)),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  Navigator.pushNamed(context, '/add_client');
+                                },
+                                icon: const Icon(Icons.add),
+                                label: const Text('Cadastrar Novo Cliente'),
+                              )
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          controller: scrollController,
+                          itemCount: clients.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final client = clients[index];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                              leading: CircleAvatar(
+                                backgroundColor: MeireTheme.accentColor.withValues(alpha: 1.0),
+                                child: Text(client.apelido.substring(0, 1).toUpperCase(), style: const TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold)),
+                              ),
+                              title: Text(client.apelido, style: const TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text('${client.razaoSocial}\nCNPJ: ${client.cnpj}'),
+                              isThreeLine: true,
+                              onTap: () {
+                                setState(() {
+                                  _documentController.text = client.cnpj;
+                                  _nameController.text = client.razaoSocial;
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          },
+                        ),
+                ),
+                if (clients.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/add_client');
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Cadastrar Novo Cliente'),
+                    ),
+                  )
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _submitNfse() async {
@@ -92,8 +201,15 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
         // Refresh dashboard data
         ref.invalidate(revenueStatsProvider);
+        ref.invalidate(impostoEstimativaProvider);
+        ref.invalidate(historicoFaturamentoProvider);
 
         if (mounted) {
+          HapticFeedback.lightImpact();
+          await Future.delayed(const Duration(milliseconds: 50));
+          HapticFeedback.mediumImpact();
+
+          if (!mounted) return;
           Navigator.pushReplacementNamed(context, '/nfse_success');
         }
       } catch (e) {
@@ -139,6 +255,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   }
 
   Widget _buildFormState(List<FavoriteService> favoriteServices) {
+    final clientsAsync = ref.watch(clientListProvider);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Center(
@@ -149,7 +267,26 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSectionTitle('1. Dados do Tomador (Cliente)'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSectionTitle('1. Dados do Tomador (Cliente)'),
+                    TextButton.icon(
+                      onPressed: () {
+                        clientsAsync.whenData((clients) {
+                           _showClientSelector(clients);
+                        });
+                      },
+                      icon: const Icon(Icons.search, size: 18),
+                      label: const Text('Buscar Salvo'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: MeireTheme.accentColor,
+                        padding: EdgeInsets.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
                 _buildCard(
                   child: Column(
                     children: [
@@ -157,17 +294,14 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                         controller: _documentController,
                         inputFormatters: [Validators.cnpjMask],
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(labelText: 'CPF ou CNPJ'),
+                        decoration: const InputDecoration(labelText: 'CPF ou CNPJ (apenas números)'),
                         validator: Validators.validateCpfCnpj,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
-                            labelText: 'Nome/Razão Social do Cliente'),
-                        validator: (val) => Validators.validateRequired(
-                            val, 'Nome/Razão Social'),
+                        decoration: const InputDecoration(labelText: 'Nome/Razão Social do Cliente'),
+                        validator: (val) => Validators.validateRequired(val, 'Nome/Razão Social'),
                       ),
                     ],
                   ),

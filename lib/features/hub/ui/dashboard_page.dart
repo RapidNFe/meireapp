@@ -8,8 +8,11 @@ import 'package:meire/features/auth/ui/gov_integration_page.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
+import 'package:meire/features/clients/ui/customer_central_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
@@ -39,7 +42,10 @@ class _HubPageState extends ConsumerState<HubPage> {
     final settings = ref.watch(settingsProvider);
     final authService = ref.watch(authServiceProvider);
     final userRecord = authService.currentUser;
-    final fullName = userRecord?.getStringValue('name') ?? '';
+    
+    var fullName = userRecord?.getStringValue('name') ?? '';
+    if (fullName.isEmpty) fullName = userRecord?.getStringValue('nome_fantasia') ?? '';
+    if (fullName.isEmpty) fullName = userRecord?.getStringValue('razao_social') ?? '';
 
     final userName =
         fullName.isNotEmpty ? fullName.split(' ').first : 'Usuário';
@@ -70,7 +76,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           remainingString,
           userRecord?.getStringValue('status_registro') ?? 'conta_criada'),
       const InvoiceHistoryPage(),
-      const Center(child: Text('Relatórios de Faturamento da MEI')),
+      const CustomerCentralPage(),
       const ProfilePage(),
     ];
 
@@ -249,6 +255,8 @@ class _HubPageState extends ConsumerState<HubPage> {
                             children: [
                               _buildTermometroCard(context),
                               const SizedBox(height: 16),
+                              _buildPerformanceSemestral(context),
+                              const SizedBox(height: 16),
                               _buildMeiLimitCard(
                                   annualLimitPercentage,
                                   annualLimitPercentageString,
@@ -291,6 +299,8 @@ class _HubPageState extends ConsumerState<HubPage> {
                   children: [
                     statusCard,
                     _buildTermometroCard(context),
+                    const SizedBox(height: 16),
+                    _buildPerformanceSemestral(context),
                     const SizedBox(height: 16),
                     _buildMeiLimitCard(
                         annualLimitPercentage,
@@ -339,7 +349,7 @@ class _HubPageState extends ConsumerState<HubPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -356,7 +366,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                   const Text("Resumo Financeiro", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
                     child: Text(imposto.referencia.isNotEmpty ? imposto.referencia : "Atual", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -389,44 +399,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                     AnimatedDonutChart(faturamento: imposto.faturamento, imposto: imposto.imposto),
                 ],
               ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.black.withOpacity(0.2), borderRadius: BorderRadius.circular(16)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Imposto Estimado (DAS)", style: TextStyle(color: Colors.white70, fontSize: 11)),
-                        const SizedBox(height: 4),
-                        TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0, end: imposto.imposto),
-                          duration: const Duration(milliseconds: 1500),
-                          curve: Curves.easeOut,
-                          builder: (context, value, child) {
-                            return Text(
-                              NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(value),
-                              style: const TextStyle(color: Colors.amber, fontSize: 20, fontWeight: FontWeight.bold),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.1),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text("Ver Detalhes", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    )
-                  ],
-                ),
-              )
+              // Seção de imposto removida conforme solicitado
             ],
           );
         },
@@ -591,7 +564,12 @@ class _HubPageState extends ConsumerState<HubPage> {
                         const TextStyle(color: Colors.white60, fontSize: 11)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final uri = Uri.parse('https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao');
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
+                  },
                   icon: const Icon(Icons.qr_code_scanner,
                       color: MeireTheme.primaryColor, size: 18),
                   label: const Text("Pagar Agora (PIX)",
@@ -632,11 +610,11 @@ class _HubPageState extends ConsumerState<HubPage> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 24),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(2),
               ),
-              child: const SizedBox.shrink(),
               alignment: Alignment.center,
+              child: const SizedBox.shrink(),
             ),
             const Icon(Icons.rocket_launch_outlined, color: MeireTheme.accentColor, size: 48),
             const SizedBox(height: 24),
@@ -681,9 +659,9 @@ class _HubPageState extends ConsumerState<HubPage> {
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: MeireTheme.accentColor.withOpacity(0.1),
+              color: MeireTheme.accentColor.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MeireTheme.accentColor.withOpacity(0.3)),
+              border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.5)),
             ),
             child: Row(
               children: [
@@ -771,7 +749,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.withOpacity(0.5)),
+                    Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.1)),
                     const SizedBox(height: 16),
                     const Text(
                       "Sua primeira nota aparecerá aqui.",
@@ -826,7 +804,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: CircleAvatar(
-                      backgroundColor: statusColor.withOpacity(0.1),
+                      backgroundColor: statusColor.withValues(alpha: 0.9),
                       radius: 20,
                       child: Icon(statusIcon, color: statusColor, size: 20),
                     ),
@@ -907,6 +885,37 @@ class _HubPageState extends ConsumerState<HubPage> {
     );
   }
 
+  Widget _buildPerformanceSemestral(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Performance Semestral",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Icon(Icons.timeline, color: Colors.grey.shade400, size: 20),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const SizedBox(
+            height: 120, // Altura do gráfico
+            child: SparklineWidget(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
@@ -926,7 +935,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.history_edu), label: "Notas"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart), label: "Relatórios"),
+              icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
@@ -978,7 +987,7 @@ class DonutChartPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
       
     final paintLucro = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 1.0)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -1004,4 +1013,146 @@ class DonutChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(DonutChartPainter oldDelegate) => 
       oldDelegate.impostoPercentage != impostoPercentage;
+}
+
+class SparklineWidget extends ConsumerWidget {
+  const SparklineWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final historicoAsync = ref.watch(historicoFaturamentoProvider);
+
+    return historicoAsync.when(
+      data: (historico) {
+        if (historico.isEmpty) {
+          return const Center(
+            child: Text('Sem histórico no momento', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          );
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return CustomPaint(
+              size: Size(constraints.maxWidth, constraints.maxHeight),
+              painter: SparklineChartPainter(
+                data: historico,
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      error: (_, __) => const Center(child: Text('Erro ao carregar', style: TextStyle(color: Colors.grey, fontSize: 12))),
+    );
+  }
+}
+
+class SparklineChartPainter extends CustomPainter {
+  final List<HistoricoMes> data;
+
+  SparklineChartPainter({required this.data});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    final double maxVal = data.map((e) => e.valor).reduce(math.max);
+    final maxScale = maxVal == 0 ? 1.0 : maxVal; // Prevent division by zero
+
+    final w = size.width;
+    final h = size.height;
+
+    // Definição da Linha Principal
+    final paintLine = Paint()
+      ..color = Colors.amber
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    final fillPath = Path();
+
+    final stepX = w / (data.length > 1 ? data.length - 1 : 1);
+
+    for (int i = 0; i < data.length; i++) {
+        final double x = i * stepX;
+        final double normalizedY = data[i].valor / maxScale;
+        // The Y coordinate: 0 is at the bottom, so h - (normalizedY * h)
+        // Margem de 10% embaixo e cima, escala 80%
+        final double y = h - (normalizedY * (h * 0.8)) - (h * 0.1); 
+
+        if (i == 0) {
+            path.moveTo(x, y);
+            fillPath.moveTo(x, h);
+            fillPath.lineTo(x, y);
+        } else {
+            // Curva suave
+            final prevX = (i - 1) * stepX;
+            final prevNormalizedY = data[i - 1].valor / maxScale;
+            final prevY = h - (prevNormalizedY * (h * 0.8)) - (h * 0.1);
+
+            final controlX1 = prevX + (stepX / 2);
+            final controlY1 = prevY;
+            final controlX2 = prevX + (stepX / 2);
+            final controlY2 = y;
+            
+            path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+            fillPath.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+        }
+    }
+
+    fillPath.lineTo(w, h); // Desce até a base
+    fillPath.close();
+
+    // Gradiente de Fundo
+    final gradient = LinearGradient(
+        colors: [
+            Colors.amber.withValues(alpha: 0.35),
+            Colors.amber.withValues(alpha: 0.0),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+    );
+
+    final paintFill = Paint()..shader = gradient.createShader(Rect.fromLTWH(0, 0, w, h));
+
+    canvas.drawPath(fillPath, paintFill);
+    canvas.drawPath(path, paintLine);
+
+    // Labels e Pontos
+    final textPainter = TextPainter(textDirection: ui.TextDirection.ltr);
+
+    for (int i = 0; i < data.length; i++) {
+        final double x = i * stepX;
+        final double normalizedY = data[i].valor / maxScale;
+        final double y = h - (normalizedY * (h * 0.8)) - (h * 0.1);
+
+        final pointPaintOuter = Paint()..color = Colors.white..style = PaintingStyle.fill;
+        final pointPaintInner = Paint()..color = Colors.amber..style = PaintingStyle.fill;
+        
+        canvas.drawCircle(Offset(x, y), 5.0, pointPaintOuter);
+        canvas.drawCircle(Offset(x, y), 3.0, pointPaintInner);
+
+        textPainter.text = TextSpan(
+            text: data[i].label,
+            style: TextStyle(color: Colors.grey.shade400, fontSize: 10, fontWeight: FontWeight.bold),
+        );
+        textPainter.layout();
+        
+        final double tx = x - (textPainter.width / 2);
+        // Garante que o texto não ultrapassa a tela
+        final double boundedTx = tx < 0 ? 0 : (tx + textPainter.width > w ? w - textPainter.width : tx);
+
+        textPainter.paint(
+            canvas,
+            Offset(boundedTx, h - (h * 0.05)),
+        );
+    }
+  }
+
+  @override
+  bool shouldRepaint(SparklineChartPainter oldDelegate) {
+    return oldDelegate.data != data;
+  }
 }

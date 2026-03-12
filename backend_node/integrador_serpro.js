@@ -1,22 +1,20 @@
 // ==========================================================
 // SERPRO INTEGRA CONTADOR - O MOTOR OFICIAL INQUEBRÁVEL
 // ==========================================================
-require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs');
 const https = require('https');
-const path = require('path');
+const config = require('./config');
+
+// Log de Ativação (Para você saber onde está pisando)
+console.log(`🛡️  MEIRE SERPRO: Ativado modo [${config.isProducao ? 'PRODUÇÃO' : 'TESTES'}]`);
 
 class SerproIntegrador {
     constructor() {
-        this.consumerKey = process.env.SERPRO_CONSUMER_KEY;
-        this.consumerSecret = process.env.SERPRO_CONSUMER_SECRET;
-        this.certPassword = process.env.SERPRO_CERTIFICADO_SENHA;
-
-        // Caminho do seu certificado PFX (Configurado no .env)
-        this.pfxPath = process.env.CAMINHO_CERTIFICADO_PFX
-            ? path.resolve(__dirname, process.env.CAMINHO_CERTIFICADO_PFX)
-            : path.resolve(__dirname, 'certs/SAID CONTABILIDADE E TREINAMENTOS CONTABEIS LTDA_28413885000170 senha Said2026++.pfx');
+        this.clientId = process.env.SERPRO_CLIENT_ID;
+        this.clientSecret = process.env.SERPRO_CLIENT_SECRET;
+        this.certPassword = process.env.CERT_PASSWORD;
+        this.pfxPath = config.serpro.certPath;
         
         // Token temporário em cache (Dura cerca de 60 minutos)
         this.accessToken = null;
@@ -35,7 +33,8 @@ class SerproIntegrador {
         return new https.Agent({
             pfx: pfxFile,
             passphrase: this.certPassword,
-            rejectUnauthorized: false // Em homologação pode ser necessário false
+            // Em produção, exigimos validação total. Em testes, relaxamos para evitar erros de SSL.
+            rejectUnauthorized: config.isProducao 
         });
     }
 
@@ -46,12 +45,12 @@ class SerproIntegrador {
         console.log('🔐 [Serpro] Contatando portal de autenticação...');
 
         // O Serpro exige Basic Auth em Base64 usando Key:Secret
-        const rawAuth = `${this.consumerKey}:${this.consumerSecret}`;
+        const rawAuth = `${this.clientId}:${this.clientSecret}`;
         const b64Auth = Buffer.from(rawAuth).toString('base64');
 
         try {
-            // URL Oficial de Autorização do Serpro / Integra Contador (Verifique a doc oficial para URL de Prod vs Homolog)
-            const urlAuth = 'https://gateway.apiserpro.serpro.gov.br/token';
+            // URL Oficial de Autorização do Serpro
+            const urlAuth = config.serpro.authUrl;
 
             const response = await axios.post(
                 urlAuth,
@@ -86,8 +85,8 @@ class SerproIntegrador {
         console.log(`📡 [Serpro] Escaneando banco central para o CNPJ ${cnpjDoCliente}...`);
 
         try {
-            // O endpoint específico depende do contrato no Integra Contador (Exemplo genérico RFB)
-            const urlEndpoint = `https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/empresas/${cnpjDoCliente}`;
+            // O endpoint específico depende do ambiente
+            const urlEndpoint = `${config.serpro.baseUrl}/empresas/${cnpjDoCliente}`;
 
             const response = await axios.get(urlEndpoint, {
                 httpsAgent: this._getHttpsAgent(),

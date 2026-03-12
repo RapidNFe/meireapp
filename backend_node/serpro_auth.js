@@ -1,7 +1,7 @@
 const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
-require('dotenv').config();
+const config = require('./config');
 
 class SerproAuthManager {
     constructor() {
@@ -12,9 +12,9 @@ class SerproAuthManager {
 
         // O Túnel mTLS fica montado e pronto para uso
         this.agenteSeguro = new https.Agent({
-            pfx: fs.readFileSync(process.env.CAMINHO_CERTIFICADO_PFX || './certs/SAID CONTABILIDADE E TREINAMENTOS CONTABEIS LTDA_28413885000170 senha Said2026++.pfx'),
-            passphrase: process.env.SERPRO_CERTIFICADO_SENHA,
-            rejectUnauthorized: false
+            pfx: fs.readFileSync(config.serpro.certPath),
+            passphrase: process.env.CERT_PASSWORD,
+            rejectUnauthorized: config.isProducao
         });
     }
 
@@ -36,13 +36,13 @@ class SerproAuthManager {
         console.log('🔄 [RENOVAÇÃO SAPI] Indo até a Receita buscar novas chaves duplas...');
         
         const credenciaisBase64 = Buffer.from(
-            `${process.env.SERPRO_CONSUMER_KEY}:${process.env.SERPRO_CONSUMER_SECRET}`
+            `${process.env.SERPRO_CLIENT_ID}:${process.env.SERPRO_CLIENT_SECRET}`
         ).toString('base64');
 
         try {
             const authResponse = await axios({
                 method: 'POST',
-                url: 'https://autenticacao.sapi.serpro.gov.br/authenticate',
+                url: config.serpro.authUrl,
                 headers: {
                     'Authorization': `Basic ${credenciaisBase64}`,
                     'Role-Type': 'TERCEIROS',

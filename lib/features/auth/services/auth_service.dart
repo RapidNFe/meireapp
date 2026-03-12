@@ -24,7 +24,8 @@ class AuthService {
   Future<void> signUp({
     required String email,
     required String password,
-    required String nomeFantasia,
+    required String nomeCompleto,
+    required String razaoSocial,
     required String cpf,
     required String cnpj,
   }) async {
@@ -62,11 +63,14 @@ class AuthService {
         "emailVisibility": true,
         "password": password,
         "passwordConfirm": password,
-        "name": nomeFantasia,
-        "nome_fantasia": nomeFantasia,
+        "name": nomeCompleto,
+        "razao_social": razaoSocial,
         "cpf": cleanCpf,
         "cnpj": cleanCnpj,
         "status_registro": "conta_criada",
+        "mei_ativo": true,
+        "faturamento_anual": 0.0,
+        "producao": false,
       };
 
       await _pb.collection('users').create(body: body);
@@ -93,6 +97,15 @@ class AuthService {
       await _pb.collection('users').update(userId, body: {
         'status_registro': 'aguardando_procuracao',
       });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAccount(String userId) async {
+    try {
+      await _pb.collection('users').delete(userId);
+      logout();
     } catch (e) {
       rethrow;
     }

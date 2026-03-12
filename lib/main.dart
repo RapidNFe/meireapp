@@ -9,8 +9,12 @@ import 'package:meire/features/hub/ui/dashboard_page.dart';
 import 'package:meire/features/nfse/ui/favorite_service_form_page.dart';
 import 'package:meire/features/nfse/ui/nfse_form_page.dart';
 import 'package:meire/features/nfse/ui/nfse_success_page.dart';
+import 'package:meire/features/admin/ui/admin_dashboard_page.dart';
+import 'package:meire/features/clients/ui/add_client_page.dart';
+import 'package:meire/features/clients/ui/customer_central_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
+import 'package:meire/features/shared/ui/privacy_policy_page.dart';
 
 // Create a global navigator key to allow navigation from anywhere, like auth listeners
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -18,6 +22,15 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await pocketBaseAuthStore.init(); // Load the token securely before app starts
+  
+  if (pb.authStore.isValid) {
+    try {
+      await pb.collection('users').authRefresh();
+    } catch (_) {
+      pb.authStore.clear();
+    }
+  }
+  
   await initializeDateFormatting('pt_BR', null);
   runApp(const ProviderScope(child: MeireApp()));
 }
@@ -32,6 +45,7 @@ class MeireApp extends ConsumerWidget {
 
     // Check if session is valid for auto-login
     final isAuthenticated = ref.watch(pbProvider).authStore.isValid;
+    final isAdmin = ref.watch(pbProvider).authStore.record?.getStringValue('email') == 'thiago514@hotmail.com';
 
     // Listen to Auth State globally
     ref.listen(pbAuthChangeProvider, (previous, next) {
@@ -44,8 +58,9 @@ class MeireApp extends ConsumerWidget {
                 ?.pushNamedAndRemoveUntil('/login', (route) => false);
           } else {
             // Re-authenticated properly, move to hub if we are on login screen
+            final eventIsAdmin = event.record?.getStringValue('email') == 'thiago514@hotmail.com';
             navigatorKey.currentState
-                ?.pushNamedAndRemoveUntil('/hub', (route) => false);
+                ?.pushNamedAndRemoveUntil(eventIsAdmin ? '/admin_hub' : '/hub', (route) => false);
           }
         }
       }
@@ -57,15 +72,19 @@ class MeireApp extends ConsumerWidget {
       theme: MeireTheme.lightTheme(settings.isCompact),
       darkTheme: MeireTheme.darkTheme(settings.isCompact),
       themeMode: settings.themeMode,
-      home: isAuthenticated ? const HubPage() : const LoginPage(),
+      home: isAuthenticated ? (isAdmin ? const AdminDashboardPage() : const HubPage()) : const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterStepperPage(),
         '/success': (context) => const SuccessPage(),
         '/hub': (context) => const HubPage(),
+        '/clientes': (context) => const CustomerCentralPage(),
+        '/admin_hub': (context) => const AdminDashboardPage(),
         '/nfse_form': (context) => const NfseFormPage(),
         '/nfse_success': (context) => const NfseSuccessPage(),
         '/favorite_service_form': (context) => const FavoriteServiceFormPage(),
+        '/add_client': (context) => const AddClientPage(),
+        '/privacy_policy': (context) => const PrivacyPolicyPage(),
       },
       debugShowCheckedModeBanner: false,
     );

@@ -17,10 +17,10 @@ class NotasFiscaisService {
   }) async {
     final body = <String, dynamic>{
       "tomador_nome": clientName,
-      "tomador_documento": clientCnpj,
+      "tomador_cnpj": clientCnpj,
       "valor": amount,
       "descricao": description,
-      "status": "Emitida",
+      "status": "emitida",
       "emissao": DateTime.now().toIso8601String(),
     };
 

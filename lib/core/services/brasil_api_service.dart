@@ -4,13 +4,6 @@ class BrasilApiService {
   static const String _baseUrl = 'https://brasilapi.com.br/api/cnpj/v1';
   static final Dio _dio = Dio();
 
-  static String _apenasLetras(String input) {
-    // Remove números e caracteres especiais (como pontos e traços de CPF/CNPJ)
-    String cleaned = input.replaceAll(RegExp(r'[^a-zA-ZáàâãéèêíïóôõöúçñÁÀÂÃÉÈÍÏÓÔÕÖÚÇÑ\s]'), ' ');
-    // Remove espaços múltiplos e corta as bordas
-    return cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
-  }
-
   // Retorna um Map com os dados da empresa ou lança uma exceção se der erro
   static Future<Map<String, dynamic>> buscarCnpj(String cnpj) async {
     // 1. Limpa o CNPJ (remove pontos, barras e traços)
@@ -35,8 +28,8 @@ class BrasilApiService {
         String nomeFantasiaRaw = data['nome_fantasia'] ?? razaoSocialRaw;
 
         return {
-          'razao_social': _apenasLetras(razaoSocialRaw),
-          'nome_fantasia': _apenasLetras(nomeFantasiaRaw),
+          'razao_social': razaoSocialRaw.trim(),
+          'nome_fantasia': nomeFantasiaRaw.trim(),
           'situacao': data['descricao_situacao_cadastral'],
         };
       } else {

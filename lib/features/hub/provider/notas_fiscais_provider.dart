@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/services/pocketbase_service.dart';
 import '../../auth/services/auth_service.dart';
 import 'dart:async';
@@ -217,16 +218,57 @@ final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async 
   }
 
   try {
-    final response = await http.get(Uri.parse('http://127.0.0.1:3000/api/impostos/estimativa/${user.id}'));
+    final url = 'http://localhost:3000/api/impostos/estimativa/${user.id}';
+    debugPrint('📡 Buscando impostos em: $url');
+    final response = await http.get(Uri.parse(url));
     
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
+      debugPrint('✅ Resumo Financeiro recebido: ${response.body}');
       return ImpostoEstimativa.fromJson(json);
     }
     
+    debugPrint('⚠️ Erro no Servidor Node: ${response.statusCode}');
     return ImpostoEstimativa.empty();
   } catch (e) {
-    print('Erro buscando estimativa de imposto: $e');
+    debugPrint('💥 Falha total ao conectar no Node: $e');
     return ImpostoEstimativa.empty();
+  }
+});
+
+class HistoricoMes {
+  final String label;
+  final double valor;
+
+  HistoricoMes({required this.label, required this.valor});
+
+  factory HistoricoMes.fromJson(Map<String, dynamic> json) => HistoricoMes(
+        label: json['label'] ?? '',
+        valor: (json['valor'] ?? 0).toDouble(),
+      );
+}
+
+final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) async {
+  final authService = ref.watch(authServiceProvider);
+  final user = authService.currentUser;
+
+  if (user == null) return [];
+
+  try {
+    final url = 'http://localhost:3000/api/faturamento/historico/${user.id}';
+    debugPrint('📡 Buscando histórico em: $url');
+    final response = await http.get(Uri.parse(url));
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = jsonDecode(response.body);
+      debugPrint('✅ Histórico recebido: ${jsonList.length} meses');
+      return jsonList.map((e) => HistoricoMes.fromJson(e)).toList();
+    }
+    
+    debugPrint('⚠️ Erro no Histórico: ${response.statusCode}');
+    return [];
+  } catch (e) {
+    debugPrint('💥 Falha ao buscar histórico no Node: $e');
+    return [];
   }
 });

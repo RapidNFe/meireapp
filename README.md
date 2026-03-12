@@ -1,17 +1,16 @@
-# meire
+# Arquitetura MEIRE v1.0 - Stack Contábil Soberana
 
-A new Flutter project.
+**Camada 1 (App): Flutter (Riverpod + Realtime)**
+- UI Quiet Luxury focada em Fricção Zero (Haptic Feedback, Animações Suaves, Termômetro Tributário em tempo real).
 
-## Getting Started
+**Camada 2 (Database): PocketBase (Go/SQLite)**
+- Persistência ultrarrápida com auditoria de status em tempo real. O cofre local da SAID.
 
-This project is a starting point for a Flutter application.
+**Camada 3 (Backend): Node.js Enterprise**
+- Integrador mTLS com 3 Pilares de Resiliência:
+  1. **Cofre de Autenticação**: Cache em RAM para evitar sobretaxa de tokens (SAPI), garantido até a expiração.
+  2. **Catraca de Fluxo (Fila)**: Enfileiramento de requisições para evitar Rate Limit e gargalos na Receita.
+  3. **Fortaleza de Contingência**: Retry automático com Backoff Exponencial (2s -> 4s -> 8s).
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Camada 4 (Integrador): Serpro (Integra Contador)**
+- Conexão direta via API Nacional (NFS-e v1.0). "Sua carteira no governo."

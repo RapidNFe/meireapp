@@ -1,54 +1,173 @@
-require('dotenv').config();
+const config = require('./config');
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 
 // Importando a sua Engenharia
 const serproAuth = require('./serpro_auth');
 const catraca = require('./catraca_serpro');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+// Caminho do Banco do PocketBase
+const DB_PATH = 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
+
+function query(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        const db = new sqlite3.Database(DB_PATH);
+        db.all(sql, params, (err, rows) => {
+            db.close();
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
+
+function run(sql, params = []) {
+    return new Promise((resolve, reject) => {
+        const db = new sqlite3.Database(DB_PATH);
+        db.run(sql, params, function (err) {
+            const id = this.lastID;
+            db.close();
+            if (err) reject(err);
+            else resolve({ id, changes: this.changes });
+        });
+    });
+}
 
 // Configurando o Banco de Dados (PocketBase)
 const PocketBase = require('pocketbase/cjs');
-const pb = new PocketBase('http://127.0.0.1:8090');
+const pb = new PocketBase(config.pocketbase.url);
+
+// Nota: Removemos checkPBAuth porque agora o Node fala direto com o BD SQLITE do PocketBase
+// para evitar conflitos de versão do SDK ou regras de acesso (403/404).
 
 const app = express();
-app.use(cors());
-app.use(express.json()); // Permite que o Node entenda JSON vindo do Flutter
+
+// LIBERAR CORS PARA O CHROME NO NOTEBOOK
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json());
+
+// Log de Debug para todas as requisições
+app.use((req, res, next) => {
+    console.log(`🌐 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+    next();
+});
 
 // ==========================================
 // 🚀 ROTA 1: EMISSÃO DE NOTA FISCAL (NFS-e)
 // ==========================================
 app.post('/api/notas/emitir', async (req, res) => {
-    // 1. O Flutter manda os dados da nota no corpo da requisição
-    const { cnpjCliente, valor, servico, clienteDestino } = req.body;
-
-    console.log(`\n📥 Recebido pedido de emissão do App para o CNPJ: ${cnpjCliente}`);
+    const { userId, tomadorCnpj, tomadorNome, valor, servico } = req.body;
 
     try {
-        // 2. A Mágica da Fricção Zero: Jogamos o pedido na sua Catraca!
-        // O app não fica travado esperando o governo. A catraca organiza.
-        const resultadoEmissao = await catraca.adicionar(async () => {
-            
-            // Aqui dentro o Node pega a chave no Cofre...
+        // 0. Buscamos os dados SOBERANOS do Prestador (o Usuário logado)
+        const prestadores = await query(`SELECT cnpj, nome_fantasia, razao_social, producao FROM users WHERE id = ?`, [userId]);
+
+        if (prestadores.length === 0) {
+            throw new Error("Prestador não encontrado no banco de dados.");
+        }
+
+        const prestador = prestadores[0];
+        const cnpjPrestador = prestador.cnpj;
+        const nomePrestador = prestador.nome_fantasia || prestador.razao_social;
+
+        // 🛡️ TRAVA DE AMBIENTE INDIVIDUAL: Se o usuário ativou o producao no Perfil, tpAmb = 1 (Real), senão 2 (Homologação)
+        const isProducao = prestador.producao === 1 || prestador.producao === true;
+        const tpAmbiente = isProducao ? 1 : 2;
+
+        const urlSerpro = isProducao
+            ? 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar'
+            : 'https://gateway.apiserpro.serpro.gov.br/integra-contador-homologacao/v1/Consultar';
+
+        console.log(`🚀 [Emissão] [Ambiente: ${isProducao ? 'PRODUÇÃO' : 'TESTES'}] Iniciando nota para ${nomePrestador}`);
+
+        // 1. Criamos o Registro 'Processando' (Segurança de Auditoria)
+        let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+        const logId = Math.random().toString(36).substring(2, 17);
+
+        await run(`
+            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, servico, status, created, updated)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [logId, userId, tomadorCnpj, tomadorNome, valor, servico, 'processando', now, now]);
+
+        // 2. A Catraca entra em ação com o Payload Oficial do Governo
+        const resultado = await catraca.adicionar(async () => {
             const chaves = await serproAuth.getTokens();
-            
-            // ...e faz a chamada oficial para a Receita (simulada por enquanto)
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve({ 
-                        sucesso: true, 
-                        mensagem: "Nota emitida com sucesso via Integra Contador!",
-                        numeroNota: Math.floor(Math.random() * 100000)
-                    });
-                }, 1500);
+
+            // O "Envelope" que o Serpro exige (Baseado no seu manual)
+            const payloadGoverno = {
+                "tpAmb": tpAmbiente,
+                "contratante": { "numero": cnpjPrestador, "tipo": 2 },
+                "autorPedidoDados": { "numero": cnpjPrestador, "tipo": 2 },
+                "contribuinte": { "numero": tomadorCnpj, "tipo": 2 },
+                "pedidoDados": {
+                    "idSistema": "NFSE",
+                    "idServico": "EMITIR_NOTA_V1",
+                    "versaoSistema": "1.0",
+                    "dados": JSON.stringify({
+                        "valorServico": valor,
+                        "discriminacao": servico,
+                        "prestador": {
+                            "cnpj": cnpjPrestador,
+                            "razaoSocial": prestador.razao_social || prestador.nome_fantasia
+                        },
+                        "codigoCnae": "6201501",
+                        "issRetido": 2
+                    })
+                }
+            };
+
+            // Chamada Real (A ponte mTLS que validamos)
+            const response = await axios({
+                method: 'POST',
+                url: urlSerpro,
+                headers: {
+                    'Authorization': `Bearer ${chaves.bearer}`,
+                    'jwt_token': chaves.jwt,
+                    'Content-Type': 'application/json'
+                },
+                data: payloadGoverno,
+                httpsAgent: chaves.agente
             });
+
+            return response.data;
         });
 
-        // 3. Devolvemos a resposta de sucesso para o Flutter
-        res.status(200).json(resultadoEmissao);
+        // 3. Sucesso! Atualizamos o banco
+        now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+        await run(`
+            UPDATE notas_fiscais 
+            SET status = 'emitida', numero_nota = ?, updated = ?
+            WHERE id = ?
+        `, [resultado.dados?.numeroNota || "Gerada", now, logId]);
 
-    } catch (erro) {
-        console.error('❌ Erro na emissão:', erro.message);
-        res.status(500).json({ erro: "Falha ao processar a nota fiscal." });
+        res.json({ sucesso: true, numero: resultado.dados?.numeroNota });
+
+    } catch (error) {
+        console.error("💥 Falha na Emissão Real:", error.message);
+
+        let logId = null;
+        try {
+            // Find the most recent 'processando' note for this user if logNota is not in scope of the catch
+            const recent = await pb.collection('notas_fiscais').getFirstListItem(`user_id="${userId}" && status="processando"`, { sort: '-created' });
+            logId = recent.id;
+        } catch (e) {
+            // ignore
+        }
+
+        // Se falhar tudo, marcamos como erro no banco para o Thiago ver
+        if (logId) {
+            now = new Date().toISOString().replace('T', ' ').replace('Z', '');
+            await run(`UPDATE notas_fiscais SET status = 'erro', updated = ? WHERE id = ?`, [now, logId]);
+        }
+
+        res.status(500).json({ sucesso: false, erro: "O Governo rejeitou a nota. Tente novamente." });
     }
 });
 // ==========================================
@@ -57,24 +176,26 @@ app.post('/api/notas/emitir', async (req, res) => {
 app.get('/api/impostos/estimativa/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        // Puxa as notas via PocketBase para somar faturamento
-        // Atenção ao filtro: user = userId de acordo com o padrão do nosso app
-        const records = await pb.collection('notas_fiscais').getFullList({
-            filter: `user = "${userId}" && status = "emitida"`,
-        });
+        console.log(`📊 Calculando impostos para o usuário: ${userId}`);
 
-        // Parse dos valores que vêm como strings "1500.00" do pocketbase
+        const records = await query(`
+            SELECT valor FROM notas_fiscais 
+            WHERE user = ? AND status LIKE '%emitida%'
+        `, [userId]);
+
+        console.log(`✅ Notas encontradas: ${records.length}`);
+
+        // Parse dos valores
         const faturamentoTotal = records.reduce((acc, nota) => {
-            let val = nota.valor || nota.valor_servico;
+            let val = nota.valor;
             if (typeof val === 'string') {
                 val = parseFloat(val.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
             }
             return acc + (parseFloat(val) || 0);
         }, 0);
-        
-        // Lógica Simplificada: MEI é fixo, Simples Nacional (Anexo III) começa em 6%
-        // Aqui você pode evoluir para a tabela progressiva depois
-        const impostoEstimado = faturamentoTotal * 0.06; 
+
+        // O imposto do cliente é fixo conforme solicitado (Regra MEI/Said)
+        const impostoEstimado = 86.00;
 
         res.json({
             faturamento: faturamentoTotal,
@@ -88,10 +209,103 @@ app.get('/api/impostos/estimativa/:userId', async (req, res) => {
 });
 
 // ==========================================
+// 📈 ROTA 3: HISTÓRICO DE FATURAMENTO (SPARKLINE)
+// ==========================================
+app.get('/api/faturamento/historico/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log(`📈 Gerando histórico para o usuário: ${userId}`);
+
+        const records = await query(`
+            SELECT valor, created FROM notas_fiscais 
+            WHERE user = ? AND status LIKE '%emitida%'
+            ORDER BY created DESC
+        `, [userId]);
+
+        console.log(`✅ Notas no histórico: ${records.length}`);
+
+        // 2. Preparamos o esqueleto dos últimos 6 meses (garante que meses sem nota apareçam como 0)
+        const mesesLabels = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const hoje = new Date();
+        let historico = [];
+
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+            historico.push({
+                mes: mesesLabels[d.getMonth()],
+                mesNum: d.getMonth(),
+                ano: d.getFullYear(),
+                total: 0
+            });
+        }
+
+        // 3. Agregamos os valores das notas no mês correspondente
+        records.forEach(nota => {
+            const dataNota = new Date(nota.created);
+            const item = historico.find(h => h.mesNum === dataNota.getMonth() && h.ano === dataNota.getFullYear());
+            if (item) {
+                let val = nota.valor || nota.valor_servico;
+                if (typeof val === 'string') {
+                    val = parseFloat(val.replace(',', '.').replace(/[^0-9.]/g, '')) || 0;
+                }
+                item.total += (parseFloat(val) || 0);
+            }
+        });
+
+        // 4. Retornamos apenas o essencial para o CustomPaint do Flutter
+        const resultadoFinal = historico.map(h => ({ label: h.mes, valor: h.total }));
+
+        res.json(resultadoFinal);
+
+    } catch (error) {
+        console.error("Erro no histórico:", error.message);
+        res.status(500).json({ error: "Falha ao processar histórico financeiro" });
+    }
+});
+
+// ==========================================
+// 📜 ROTA 4: EXPORTAÇÃO DE DADOS (LGPD - DIREITO À PORTABILIDADE)
+// ==========================================
+app.get('/api/meus-dados/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        console.log(`📜 [LGPD] Exportando pacote de dados para o usuário: ${userId}`);
+
+        // 1. Buscamos todas as notas fiscais emitidas
+        const notas = await query(`
+            SELECT * FROM notas_fiscais 
+            WHERE user = ?
+        `, [userId]);
+
+        // 2. Buscamos a agenda de clientes (tomadores)
+        const clientes = await query(`
+            SELECT * FROM clientes_tomadores 
+            WHERE user_id = ?
+        `, [userId]);
+
+        // 3. Montamos o pacote Soberano
+        const pacoteDados = {
+            usuario_id: userId,
+            data_exportacao: new Date().toISOString(),
+            status_lgpd: "Concluído",
+            historico_faturamentos: notas,
+            agenda_clientes: clientes,
+            mensagem: "Este arquivo contém todos os seus dados processados pela Meire (SAID Contabilidade). Você tem o direito de portabilidade desses dados conforme a LGPD."
+        };
+
+        res.json(pacoteDados);
+
+    } catch (error) {
+        console.error("❌ [LGPD] Falha na exportação:", error.message);
+        res.status(500).json({ error: "Falha ao gerar pacote de dados para exportação." });
+    }
+});
+
 // LIGANDO O MOTOR
 // ==========================================
-const PORTA = process.env.PORT || 3000;
+const PORTA = config.servidor.port;
 app.listen(PORTA, () => {
-    console.log(`\n🟢 Servidor da SAID Contabilidade ONLINE na porta ${PORTA}`);
+    console.log(`\n🛡️  MEIRE ONLINE: Ambiente de [${config.isProducao ? 'PRODUÇÃO' : 'TESTES'}]`);
+    console.log(`🟢 Servidor da SAID Contabilidade na porta ${PORTA}`);
     console.log(`⏳ Aguardando comandos do aplicativo Meire...\n`);
 });
