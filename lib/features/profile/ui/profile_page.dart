@@ -16,6 +16,13 @@ class ProfilePage extends ConsumerStatefulWidget {
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoadingSwitch = false;
 
+  bool _checkCadastroCompleto(RecordModel user) {
+    final im = user.getStringValue('inscricao_municipal');
+    final cep = user.getStringValue('cep');
+    final cnpj = user.getStringValue('cnpj');
+    return im.isNotEmpty && cep.isNotEmpty && cnpj.length == 14;
+  }
+
   bool _validarRequisitosProducao(RecordModel user) {
     List<String> pendencias = [];
 
@@ -23,12 +30,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final razaoSocial = user.getStringValue('razao_social');
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
-    // final cnae = user.getStringValue('cnae_padrao'); // Placeholder if you add later
 
-    if (cnpj.isEmpty || cnpj.length != 14) pendencias.add("CNPJ inválido");
+    if (cnpj.isEmpty || cnpj.length != 14) pendencias.add("CNPJ inválido ou incompleto");
     if (razaoSocial.isEmpty) pendencias.add("Razão Social ausente");
-    
-    // Trava de Segurança: A IM é obrigatória para nota real na maioria das prefeituras
     if (im.isEmpty) pendencias.add("Inscrição Municipal (IM) ausente");
     if (cep.isEmpty) pendencias.add("CEP ausente");
 
@@ -103,68 +107,95 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               const SizedBox(height: 32),
               
               // 🎛️ NOVA SEÇÃO: CONTROLE DE AMBIENTE (KILL SWITCH)
-              _buildCard(
-                context: context,
-                title: 'Configurações de Emissão',
-                icon: Icons.settings_remote,
-                isVault: true,
-                children: [
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(
-                      'Modo de Operação',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      modoProducao ? '🚀 PRODUÇÃO (Notas Reais)' : '🛠️ HOMOLOGAÇÃO (Testes)',
-                      style: TextStyle(
-                        color: modoProducao ? Colors.green : Colors.orange,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                    value: modoProducao,
-                    activeThumbColor: Colors.green,
-                    inactiveThumbColor: Colors.orange,
-                    onChanged: _isLoadingSwitch ? null : (bool value) async {
-                      if (value == true) {
-                        if (!_validarRequisitosProducao(user)) return;
-                      }
-
-                      setState(() => _isLoadingSwitch = true);
-                      try {
-                        await ref.read(pbProvider).collection('users').update(user.id, body: {
-                          'producao': value,
-                        });
-                        
-                        // Forçamos o refresh do record para atualizar o provider global
-                        await ref.read(pbProvider).collection('users').authRefresh();
-                        
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(value ? '🚀 Meire em Produção!' : '🛠️ Modo de Testes Ativado.'),
-                              backgroundColor: value ? Colors.green : Colors.orange,
+              Builder(
+                builder: (context) {
+                  final bool isCompleto = _checkCadastroCompleto(user);
+                  return Opacity(
+                    opacity: isCompleto ? 1.0 : 0.6,
+                    child: _buildCard(
+                      context: context,
+                      title: 'Configurações de Emissão',
+                      icon: isCompleto ? Icons.settings_remote : Icons.lock_outline,
+                      isVault: true,
+                      children: [
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Row(
+                            children: [
+                              const Text(
+                                'Modo de Operação',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              if (!isCompleto)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Icon(Icons.info_outline, size: 16, color: Colors.redAccent),
+                                ),
+                            ],
+                          ),
+                          subtitle: Text(
+                            modoProducao ? '🚀 PRODUÇÃO (Notas Reais)' : '🛠️ HOMOLOGAÇÃO (Testes)',
+                            style: TextStyle(
+                              color: modoProducao ? Colors.green : Colors.orange,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Erro ao atualizar ambiente. Verifique sua conexão.')),
-                          );
-                        }
-                      } finally {
-                        if (mounted) setState(() => _isLoadingSwitch = false);
-                      }
-                    },
-                  ),
-                  const Divider(height: 32),
-                  const Text(
-                    'Dica: Em Modo de Testes, as notas não possuem valor legal e servem apenas para validar o fluxo.',
-                    style: TextStyle(color: Colors.grey, fontSize: 12, fontStyle: FontStyle.italic),
-                  ),
-                ],
+                          ),
+                          value: modoProducao,
+                          activeThumbColor: Colors.green,
+                          inactiveThumbColor: Colors.orange,
+                          onChanged: _isLoadingSwitch ? null : (bool value) async {
+                            // Blindagem: Se tentar ligar e o cadastro estiver incompleto, bloqueia e avisa
+                            if (value == true) {
+                              if (!_validarRequisitosProducao(user)) {
+                                return;
+                              }
+                            }
+
+                            setState(() => _isLoadingSwitch = true);
+                            try {
+                              await ref.read(pbProvider).collection('users').update(user.id, body: {
+                                'producao': value,
+                              });
+                              
+                              // Forçamos o refresh do record para atualizar o provider global
+                              await ref.read(pbProvider).collection('users').authRefresh();
+                              
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(value ? '🚀 Meire em Produção!' : '🛠️ Modo de Testes Ativado.'),
+                                    backgroundColor: value ? Colors.green : Colors.orange,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Erro ao atualizar ambiente. Verifique sua conexão.')),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoadingSwitch = false);
+                            }
+                          },
+                        ),
+                        const Divider(height: 32),
+                        Text(
+                          isCompleto 
+                            ? 'Dica: Em Modo de Testes, as notas não possuem valor legal e servem apenas para validar o fluxo.'
+                            : '⚠️ Finalize seu cadastro (CNPJ, IM e CEP) para habilitar o Modo de Produção.',
+                          style: TextStyle(
+                            color: isCompleto ? Colors.grey : Colors.redAccent, 
+                            fontSize: 12, 
+                            fontStyle: isCompleto ? FontStyle.italic : FontStyle.normal,
+                            fontWeight: isCompleto ? null : FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
               
               const SizedBox(height: 24),
@@ -180,6 +211,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   _InfoRow(label: 'CPF', value: _formatDocument(user.getStringValue('cpf'))),
                   const Divider(height: 24),
                   _InfoRow(label: 'CNPJ', value: _formatDocument(cnpj)),
+                  const Divider(height: 24),
+                  _InfoRow(
+                    label: 'Insc. Municipal', 
+                    value: user.getStringValue('inscricao_municipal').isEmpty ? '⚠️ Pendente' : user.getStringValue('inscricao_municipal'),
+                    isPending: user.getStringValue('inscricao_municipal').isEmpty,
+                  ),
+                  const Divider(height: 24),
+                  _InfoRow(
+                    label: 'CEP', 
+                    value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
+                    isPending: user.getStringValue('cep').isEmpty,
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -341,6 +384,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return doc;
   }
 
+  String _formatCEP(String cep) {
+    if (cep.length == 8) {
+      return '${cep.substring(0, 5)}-${cep.substring(5, 8)}';
+    }
+    return cep;
+  }
+
   Widget _buildHeader() {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -426,8 +476,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final bool isPending;
 
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({
+    required this.label, 
+    required this.value, 
+    this.isPending = false
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -442,8 +497,13 @@ class _InfoRow extends StatelessWidget {
         ),
         Expanded(
           flex: 3,
-          child:
-              Text(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+          child: Text(
+            value, 
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isPending ? Colors.redAccent : null,
+            ),
+          ),
         ),
       ],
     );

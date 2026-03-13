@@ -35,3 +35,7 @@ spark.txt
 # Symbolication/Obfuscation
 app.*.symbols
 app.*.map.json
+
+# SSH Keys
+backend_node/*.key
+backend_node/*.pub

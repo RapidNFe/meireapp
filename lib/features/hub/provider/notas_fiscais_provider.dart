@@ -230,7 +230,13 @@ final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async 
   try {
     final url = '$meireBaseUrl/api/impostos/estimativa/${user.id}';
     debugPrint('📡 Buscando impostos em: $url');
-    final response = await http.get(Uri.parse(url));
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
     
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
@@ -268,7 +274,13 @@ final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) as
   try {
     final url = '$meireBaseUrl/api/faturamento/historico/${user.id}';
     debugPrint('📡 Buscando histórico em: $url');
-    final response = await http.get(Uri.parse(url));
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    );
     
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
