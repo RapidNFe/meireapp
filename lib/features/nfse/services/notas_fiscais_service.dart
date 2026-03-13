@@ -11,7 +11,7 @@ class NotasFiscaisService {
 
   NotasFiscaisService(this._pb, this._auth);
 
-  Future<void> addNotaFiscal({
+  Future<dynamic> addNotaFiscal({
     required String clientName,
     required String clientCnpj,
     required double amount,
@@ -20,27 +20,53 @@ class NotasFiscaisService {
     final userId = _auth.currentUser?.id;
     if (userId == null) throw Exception("Usuário não autenticado");
 
-    // 🚀 CHAMADA AO BACKEND SOBERANO (Node.js)
-    // O backend irá processar o Serpro, criar o log no PB e retornar o status.
-    final String emissionUrl = '${_pb.baseURL}/api/notas/emitir';
+    // 🚀 CHAMADA AO NOVO MOTOR VORTEX (Node.js)
+    final String emissionUrl = '${_pb.baseURL}/api/nacional/emitir';
+    
+    final now = DateTime.now();
+    final formattedDate = "${now.toIso8601String().substring(0, 19)}-03:00"; // Simplificado para teste
 
     try {
       final response = await _dio.post(
         emissionUrl,
         data: {
           "userId": userId,
-          "tomadorCnpj": clientCnpj.replaceAll(RegExp(r'[^0-9]'), ''),
-          "tomadorNome": clientName,
-          "valor": amount,
-          "servico": description,
+          "payload": {
+            "numeroDPS": (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(), // Número único baseado em tempo
+            "numeroSerie": "900",
+            "dataHoraEmissao": formattedDate,
+            "competencia": "${now.year}-${now.month.toString().padLeft(2, '0')}-01",
+            "codigoMunicipioEmissor": _auth.currentUser?.getStringValue('codigo_municipio') ?? "5208707",
+            "tomador": {
+              "cnpj": clientCnpj.replaceAll(RegExp(r'[^0-9]'), ''),
+              "nome": clientName,
+              "endereco": {
+                "municipio": "5208707", // Ideal seria vir do cadastro do cliente
+                "cep": "74820090",
+                "logradouro": "Endereço Fixado",
+                "numero": "1",
+                "bairro": "Centro"
+              }
+            },
+            "servico": {
+              "municipioPrestacao": "5208707",
+              "codigoTribNacional": "060101",
+              "descricao": description,
+              "valor": amount.toStringAsFixed(2),
+            }
+          }
         },
       );
 
       if (response.data['sucesso'] != true) {
-        throw Exception(response.data['erro'] ?? "Falha na emissão pelo Governo.");
+        final erros = response.data['erros'] as List?;
+        final msg = erros != null ? erros.map((e) => e['Descricao']).join(', ') : "Falha na emissão.";
+        throw Exception(msg);
       }
+      
+      return response.data;
     } on DioException catch (e) {
-      throw Exception("Erro de conexão com o Gateway: ${e.message}");
+      throw Exception("Erro de conexão com o Gateway: ${e.response?.data?['erro'] ?? e.message}");
     }
   }
 }

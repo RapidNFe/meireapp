@@ -6,6 +6,8 @@ import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/features/auth/ui/gov_integration_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -21,6 +23,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   final _imController = TextEditingController();
   final _cepController = TextEditingController();
+  final _senhaPfxController = TextEditingController();
+  PlatformFile? _pickedFile;
 
   @override
   void initState() {
@@ -33,6 +37,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user != null) {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
+      _senhaPfxController.text = user.getStringValue('senha_pfx');
     }
   }
 
@@ -40,6 +45,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void dispose() {
     _imController.dispose();
     _cepController.dispose();
+    _senhaPfxController.dispose();
     super.dispose();
   }
 
@@ -51,10 +57,26 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     setState(() => _isSaving = true);
 
     try {
-      await ref.read(pbProvider).collection('users').update(user.id, body: {
+      final Map<String, dynamic> body = {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-      });
+        'senha_pfx': _senhaPfxController.text,
+      };
+
+      final List<http.MultipartFile> files = [];
+      if (_pickedFile != null && _pickedFile!.bytes != null) {
+        files.add(http.MultipartFile.fromBytes(
+          'arquivo_pfx',
+          _pickedFile!.bytes!,
+          filename: _pickedFile!.name,
+        ));
+      }
+
+      await ref.read(pbProvider).collection('users').update(
+        user.id, 
+        body: body,
+        files: files,
+      );
 
       // Refresh data
       await ref.read(pbProvider).collection('users').authRefresh();
@@ -392,6 +414,58 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                          Text('A Meire possui acesso seguro ao seu e-CAC para gerar e disparar suas Notas Fiscais no sistema federal de forma automática.', style: TextStyle(color: Colors.grey, height: 1.4))
                       ],
                     ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              _buildCard(
+                context: context,
+                title: 'Certificado Digital (PFX)',
+                icon: Icons.security,
+                isVault: true,
+                children: [
+                   const Text(
+                    'Suba seu certificado .pfx para emitir notas fiscais em Modo Real como emisor oficial.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isEditing) ...[
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['pfx'],
+                          withData: true,
+                        );
+                        if (result != null) {
+                          setState(() => _pickedFile = result.files.first);
+                        }
+                      },
+                      icon: const Icon(Icons.upload_file),
+                      label: Text(_pickedFile != null ? 'Arquivo: ${_pickedFile!.name}' : 'Selecionar Certificado .pfx'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _senhaPfxController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Senha do Certificado',
+                        hintText: 'Digite a senha do seu PFX',
+                        prefixIcon: Icon(Icons.password),
+                      ),
+                    ),
+                  ] else ...[
+                    _InfoRow(
+                      label: 'Arquivo', 
+                      value: user.getStringValue('arquivo_pfx').isEmpty ? '❌ Não configurado' : '✅ Configurado: ${user.getStringValue('arquivo_pfx')}',
+                      isPending: user.getStringValue('arquivo_pfx').isEmpty,
+                    ),
+                    const Divider(height: 24),
+                    _InfoRow(
+                      label: 'Senha', 
+                      value: user.getStringValue('senha_pfx').isEmpty ? '❌ Não configurada' : '••••••••',
+                      isPending: user.getStringValue('senha_pfx').isEmpty,
+                    ),
+                  ]
                 ],
               ),
               const SizedBox(height: 32),

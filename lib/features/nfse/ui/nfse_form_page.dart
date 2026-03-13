@@ -179,8 +179,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         _isLoading = true;
       });
 
-      // Simulates SERPRO/Receita API delay
-      await Future.delayed(const Duration(seconds: 3));
+      // 🚀 Chamada síncrona real agora disponível via VORTEX
+      // await Future.delayed(const Duration(seconds: 3));
 
       // Parse amount
       final cleanValue = _valueController.text
