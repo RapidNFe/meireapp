@@ -191,7 +191,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               _buildHeader(),
               const SizedBox(height: 32),
               
-              // 🎛️ NOVA SEÇÃO: CONTROLE DE AMBIENTE (KILL SWITCH)
+              // 🎛️ 1. CONTROLE DE AMBIENTE
               Builder(
                 builder: (context) {
                   final bool isCompleto = _checkCadastroCompleto(user);
@@ -230,11 +230,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           activeThumbColor: Colors.green,
                           inactiveThumbColor: Colors.orange,
                           onChanged: _isLoadingSwitch ? null : (bool value) async {
-                            // Blindagem: Se tentar ligar e o cadastro estiver incompleto, bloqueia e avisa
                             if (value == true) {
-                              if (!_validarRequisitosProducao(user)) {
-                                return;
-                              }
+                              if (!_validarRequisitosProducao(user)) return;
                             }
 
                             setState(() => _isLoadingSwitch = true);
@@ -242,10 +239,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               await ref.read(pbProvider).collection('users').update(user.id, body: {
                                 'producao': value,
                               });
-                              
-                              // Forçamos o refresh do record para atualizar o provider global
                               await ref.read(pbProvider).collection('users').authRefresh();
-                              
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
@@ -257,7 +251,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Erro ao atualizar ambiente. Verifique sua conexão.')),
+                                  const SnackBar(content: Text('Erro ao atualizar ambiente.')),
                                 );
                               }
                             } finally {
@@ -268,12 +262,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         const Divider(height: 32),
                         Text(
                           isCompleto 
-                            ? 'Dica: Em Modo de Testes, as notas não possuem valor legal e servem apenas para validar o fluxo.'
-                            : '⚠️ Finalize seu cadastro (CNPJ, IM e CEP) para habilitar o Modo de Produção.',
+                            ? 'Dica: Em Modo de Testes, as notas não possuem valor legal.'
+                            : '⚠️ Finalize seu cadastro para habilitar o Modo de Produção.',
                           style: TextStyle(
                             color: isCompleto ? Colors.grey : Colors.redAccent, 
                             fontSize: 12, 
-                            fontStyle: isCompleto ? FontStyle.italic : FontStyle.normal,
                             fontWeight: isCompleto ? null : FontWeight.bold,
                           ),
                         ),
@@ -284,6 +277,65 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               ),
               
               const SizedBox(height: 24),
+
+              // 🛡️ 2. CERTIFICADO DIGITAL (Prioridade Máxima)
+              _buildCard(
+                context: context,
+                title: 'Certificado Digital (A1 PFX)',
+                icon: Icons.security,
+                isVault: true,
+                children: [
+                   const Text(
+                    'O arquivo .pfx e sua senha são essenciais para que você assine suas notas de forma oficial e soberana.',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isEditing) ...[
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      onPressed: () async {
+                        final result = await FilePicker.platform.pickFiles(
+                          type: FileType.custom,
+                          allowedExtensions: ['pfx'],
+                          withData: true,
+                        );
+                        if (result != null) {
+                          setState(() => _pickedFile = result.files.first);
+                        }
+                      },
+                      icon: const Icon(Icons.upload_file),
+                      label: Text(_pickedFile != null ? 'Arquivo: ${_pickedFile!.name}' : 'Selecionar Certificado .pfx'),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _senhaPfxController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Senha do Certificado',
+                        prefixIcon: Icon(Icons.password),
+                      ),
+                    ),
+                  ] else ...[
+                    _InfoRow(
+                      label: 'Arquivo PFX', 
+                      value: user.getStringValue('arquivo_pfx').isEmpty ? '❌ Não carregado' : '✅ Configurado (${user.getStringValue('arquivo_pfx')})',
+                      isPending: user.getStringValue('arquivo_pfx').isEmpty,
+                    ),
+                    const Divider(height: 24),
+                    _InfoRow(
+                      label: 'Senha', 
+                      value: user.getStringValue('senha_pfx').isEmpty ? '❌ Pendente' : '✅ Configurada',
+                      isPending: user.getStringValue('senha_pfx').isEmpty,
+                    ),
+                  ]
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // 👤 3. INFORMAÇÕES PESSOAIS
               _buildCard(
                 context: context,
                 title: 'Informações Pessoais',
@@ -304,7 +356,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ),
                 ),
                 children: [
-                  _InfoRow(label: 'Nome Completo', value: displayName),
+                  _InfoRow(label: 'Nome', value: displayName),
                   const Divider(height: 24),
                   _InfoRow(label: 'E-mail', value: email),
                   const Divider(height: 24),
@@ -317,19 +369,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       children: [
                         TextFormField(
                           controller: _imController,
-                          decoration: const InputDecoration(
-                            labelText: 'Inscrição Municipal (IM)',
-                            hintText: 'Digite sua IM',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Inscrição Municipal'),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _cepController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'CEP',
-                            hintText: '00000-000',
-                          ),
+                          decoration: const InputDecoration(labelText: 'CEP'),
                         ),
                       ],
                     )
@@ -351,7 +397,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                 ],
               ),
+
               const SizedBox(height: 24),
+
+              // 🏦 4. INTEGRAÇÃO GOVERNAMENTAL
               _buildCard(
                 context: context,
                 title: 'Integração Governamental',
@@ -362,126 +411,48 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Você ainda não conectou o Emissor Nacional. Delegue sua permissão assinando a e-Procuração para emitir suas notas expressas.',
+                          'Conecte seu acesso ao Governo para sincronizar dados e facilitar a gestão do seu MEI.',
                           style: TextStyle(color: Colors.grey),
                         ),
                         const SizedBox(height: 16),
                         OutlinedButton.icon(
                           onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) =>
-                                        const GovIntegrationPage()));
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => const GovIntegrationPage()));
                           },
                           icon: const Icon(Icons.add_moderator),
-                          label: const Text('Conectar ao Governo'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: MeireTheme.accentColor,
-                            side:
-                                const BorderSide(color: MeireTheme.accentColor),
-                          ),
+                          label: const Text('Conectar via e-CAC'),
                         ),
                       ],
                     )
                   else if (statusRegistro == 'aguardando_procuracao')
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.hourglass_top, color: Colors.orange, size: 20),
-                            SizedBox(width: 8),
-                            Text('Análise Ocorrendo', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        Text('Sua e-Procuração está sendo habilitada pelos nossos contadores. Isso costuma levar pouco tempo.', style: TextStyle(color: Colors.grey, height: 1.4)),
+                        Icon(Icons.hourglass_top, color: Colors.orange, size: 20),
+                        SizedBox(width: 8),
+                        Text('Análise da e-Procuração em curso...', style: TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     )
                   else
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
-                            SizedBox(width: 8),
-                            Text('Acesso Delegado Ativo ✓', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                          ],
-                        ),
-                         SizedBox(height: 8),
-                         Text('A Meire possui acesso seguro ao seu e-CAC para gerar e disparar suas Notas Fiscais no sistema federal de forma automática.', style: TextStyle(color: Colors.grey, height: 1.4))
+                        Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                        SizedBox(width: 8),
+                        Text('Acesso Delegado Ativo ✓', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                       ],
                     ),
                 ],
               ),
-              const SizedBox(height: 24),
-              _buildCard(
-                context: context,
-                title: 'Certificado Digital (PFX)',
-                icon: Icons.security,
-                isVault: true,
-                children: [
-                   const Text(
-                    'Suba seu certificado .pfx para emitir notas fiscais em Modo Real como emisor oficial.',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_isEditing) ...[
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: ['pfx'],
-                          withData: true,
-                        );
-                        if (result != null) {
-                          setState(() => _pickedFile = result.files.first);
-                        }
-                      },
-                      icon: const Icon(Icons.upload_file),
-                      label: Text(_pickedFile != null ? 'Arquivo: ${_pickedFile!.name}' : 'Selecionar Certificado .pfx'),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _senhaPfxController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Senha do Certificado',
-                        hintText: 'Digite a senha do seu PFX',
-                        prefixIcon: Icon(Icons.password),
-                      ),
-                    ),
-                  ] else ...[
-                    _InfoRow(
-                      label: 'Arquivo', 
-                      value: user.getStringValue('arquivo_pfx').isEmpty ? '❌ Não configurado' : '✅ Configurado: ${user.getStringValue('arquivo_pfx')}',
-                      isPending: user.getStringValue('arquivo_pfx').isEmpty,
-                    ),
-                    const Divider(height: 24),
-                    _InfoRow(
-                      label: 'Senha', 
-                      value: user.getStringValue('senha_pfx').isEmpty ? '❌ Não configurada' : '••••••••',
-                      isPending: user.getStringValue('senha_pfx').isEmpty,
-                    ),
-                  ]
-                ],
-              ),
+              
               const SizedBox(height: 32),
+              
+              // BOTÕES DE SAÍDA
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    ref.read(authServiceProvider).logout();
-                  },
+                  onPressed: () => ref.read(authServiceProvider).logout(),
                   icon: const Icon(Icons.logout),
                   label: const Text('Sair da Conta'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 ),
               ),
               const SizedBox(height: 16),
@@ -489,14 +460,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 width: double.infinity,
                 child: TextButton.icon(
                   onPressed: () => _mostrarModalDeExclusao(context, ref),
-                  icon: const Icon(Icons.delete_forever, color: Colors.redAccent, size: 20),
-                  label: const Text(
-                    'Excluir Minha Conta e Dados',
-                    style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                  icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                  label: const Text('Excluir Minha Conta', style: TextStyle(color: Colors.redAccent)),
                 ),
               ),
               const SizedBox(height: 56),

@@ -67,16 +67,7 @@ app.get('/serpro/status', (req, res) => {
 });
 
 // ==========================================
-// 🚀 ROTA 1: EMISSÃO DE NOTA FISCAL (NFS-e) - SERPRO (ANTIGA)
-// ==========================================
-app.post('/api/notas/emitir', async (req, res) => {
-    // ... mantendo a lógica atual do Serpro caso desejado ...
-    // (Pode ser removida ou mantida para legado)
-    res.status(405).json({ erro: "Use a rota /api/nacional/emitir para o novo padrão" });
-});
-
-// ==========================================
-// 🚀 ROTA 1.1: EMISSÃO NACIONAL (ADN/SEFIN) - O NOVO PADRÃO
+// 🚀 ROTA 1: EMISSÃO NACIONAL (ADN/SEFIN) - MOTOR VORTEX
 // ==========================================
 app.post('/api/nacional/emitir', async (req, res) => {
     const { userId, payload } = req.body; 
@@ -93,23 +84,18 @@ app.post('/api/nacional/emitir', async (req, res) => {
         if (results.length === 0) throw new Error("Usuário não encontrado.");
         const prestadorDb = results[0];
 
-        // 2. Configura Caminho do Certificado (Soberania do Cliente)
-        let certPath = '';
-        let certPass = '';
-
-        if (prestadorDb.arquivo_pfx && prestadorDb.senha_pfx) {
-            certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, prestadorDb.arquivo_pfx);
-            certPass = prestadorDb.senha_pfx;
-            console.log(`✅ Usando certificado carregado pelo cliente no Perfil.`);
-        } else {
-            // Fallback para o da SEFIN-PROD ou similar se não houver
-            certPath = path.resolve(__dirname, process.env.CERT_PATH_PROD);
-            certPass = process.env.CERT_PASSWORD;
-            console.log(`⚠️ Usando certificado de fallback (SAID).`);
+        // 🛡️ TRAVA SOBERANA: Sem certificado próprio, não há emissão.
+        if (!prestadorDb.arquivo_pfx || !prestadorDb.senha_pfx) {
+            return res.status(403).json({ 
+                sucesso: false, 
+                erro: "Certificado Digital não configurado. Por favor, suba seu arquivo .pfx e senha na aba 'Perfil' para emitir notas." 
+            });
         }
 
-        // 3. Enriquecendo o Payload com dados do Banco
-        // Garante que o CNPJ usado na assinatura seja o do banco, não o enviado pelo front
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, prestadorDb.arquivo_pfx);
+        const certPass = prestadorDb.senha_pfx;
+
+        // 2. Enriquecendo o Payload com dados do Banco
         payload.prestador = {
             cnpj: prestadorDb.cnpj,
             im: prestadorDb.inscricao_municipal,
@@ -118,10 +104,10 @@ app.post('/api/nacional/emitir', async (req, res) => {
         };
         payload.ambiente = prestadorDb.producao ? "1" : "2";
 
-        // 4. Aciona o Motor VORTEX
+        // 3. Aciona o Motor VORTEX
         const resultado = await vortex.emitirNacional(payload, certPath, certPass);
 
-        // 5. Salva no Banco de Dados (Log de Sucesso/Chave)
+        // 4. Salva no Banco de Dados (Log de Sucesso/Chave)
         let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
         const logId = Math.random().toString(36).substring(2, 17);
 
@@ -150,7 +136,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
         } else {
             res.status(400).json({ 
                 sucesso: false, 
-                erros: resultado.dados?.erros || [{ Descricao: "Erro desconhecido no governo" }] 
+                erros: resultado.dados?.erros || [{ Descricao: "O Governo rejeitou a nota. Verifique o seu certificado e dados." }] 
             });
         }
 
@@ -166,26 +152,43 @@ app.post('/api/nacional/emitir', async (req, res) => {
 app.get('/api/serpro/ccmei/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
-        const users = await query(`SELECT cnpj FROM users WHERE id = ?`, [userId]);
-        if (users.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
         
-        const cnpj = users[0].cnpj;
+        // 1. Busca dados soberanos do usuário
+        const results = await query(
+            `SELECT cnpj, arquivo_pfx, senha_pfx FROM users WHERE id = ?`, 
+            [userId]
+        );
 
+        if (results.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
+        const userDb = results[0];
+
+        if (!userDb.arquivo_pfx || !userDb.senha_pfx) {
+            return res.status(403).json({ error: "Certificado Digital não configurado no perfil." });
+        }
+
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, userDb.arquivo_pfx);
+        const certPass = userDb.senha_pfx;
+
+        // 2. Aciona o Serpro usando o certificado do usuário
         const resultado = await catraca.adicionar(async () => {
-            const chaves = await serproAuth.getTokens();
+            const chaves = await serproAuth.getTokens(certPath, certPass);
             const response = await axios({
                 method: 'POST',
                 url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar',
-                headers: { 'Authorization': `Bearer ${chaves.bearer}`, 'jwt_token': chaves.jwt, 'Content-Type': 'application/json' },
+                headers: { 
+                    'Authorization': `Bearer ${chaves.bearer}`, 
+                    'jwt_token': chaves.jwt, 
+                    'Content-Type': 'application/json' 
+                },
                 data: {
-                    "contratante": { "numero": "28413885000170", "tipo": 2 },
-                    "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
-                    "contribuinte": { "numero": cnpj, "tipo": 2 },
+                    "contratante": { "numero": userDb.cnpj, "tipo": 2 },
+                    "autorPedidoDados": { "numero": userDb.cnpj, "tipo": 2 },
+                    "contribuinte": { "numero": userDb.cnpj, "tipo": 2 },
                     "pedidoDados": {
                         "idSistema": "CCMEI",
                         "idServico": "DADOSCCMEI122",
                         "versaoSistema": "1.0",
-                        "dados": JSON.stringify({ "numeroCnpj": cnpj })
+                        "dados": JSON.stringify({ "numeroCnpj": userDb.cnpj })
                     }
                 },
                 httpsAgent: chaves.agente
@@ -205,24 +208,38 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
 // 💰 ROTA 1.2: EMISSÃO DE BOLETO DAS (MEI)
 // ==========================================
 app.post('/api/serpro/das/emitir', async (req, res) => {
-    const { userId, periodo } = req.body; // periodo format: 'YYYYMM'
+    const { userId, periodo } = req.body; 
 
     try {
-        const users = await query(`SELECT cnpj FROM users WHERE id = ?`, [userId]);
-        if (users.length === 0) throw new Error("Usuário não encontrado.");
-        
-        const cnpj = users[0].cnpj;
+        const results = await query(
+            `SELECT cnpj, arquivo_pfx, senha_pfx FROM users WHERE id = ?`, 
+            [userId]
+        );
+
+        if (results.length === 0) throw new Error("Usuário não encontrado.");
+        const userDb = results[0];
+
+        if (!userDb.arquivo_pfx || !userDb.senha_pfx) {
+            throw new Error("Certificado Digital não configurado.");
+        }
+
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, userDb.arquivo_pfx);
+        const certPass = userDb.senha_pfx;
 
         const resultado = await catraca.adicionar(async () => {
-            const chaves = await serproAuth.getTokens();
+            const chaves = await serproAuth.getTokens(certPath, certPass);
             const response = await axios({
                 method: 'POST',
                 url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Emitir',
-                headers: { 'Authorization': `Bearer ${chaves.bearer}`, 'jwt_token': chaves.jwt, 'Content-Type': 'application/json' },
+                headers: { 
+                    'Authorization': `Bearer ${chaves.bearer}`, 
+                    'jwt_token': chaves.jwt, 
+                    'Content-Type': 'application/json' 
+                },
                 data: {
-                    "contratante": { "numero": "28413885000170", "tipo": 2 },
-                    "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
-                    "contribuinte": { "numero": cnpj, "tipo": 2 },
+                    "contratante": { "numero": userDb.cnpj, "tipo": 2 },
+                    "autorPedidoDados": { "numero": userDb.cnpj, "tipo": 2 },
+                    "contribuinte": { "numero": userDb.cnpj, "tipo": 2 },
                     "pedidoDados": {
                         "idSistema": "PGMEI",
                         "idServico": "GERARDASCODBARRA22",
@@ -380,7 +397,7 @@ app.get('/api/meus-dados/:userId', async (req, res) => {
             status_lgpd: "Concluído",
             historico_faturamentos: notas,
             agenda_clientes: clientes,
-            mensagem: "Este arquivo contém todos os seus dados processados pela Meire (SAID Contabilidade). Você tem o direito de portabilidade desses dados conforme a LGPD."
+            mensagem: "Este arquivo contém todos os seus dados processados pela Meire App. Você tem o direito de portabilidade desses dados conforme a LGPD."
         };
 
         res.json(pacoteDados);
@@ -396,6 +413,6 @@ app.get('/api/meus-dados/:userId', async (req, res) => {
 const PORTA = config.servidor.port;
 app.listen(PORTA, () => {
     console.log(`\n🛡️  MEIRE ONLINE: Ambiente de [${config.isProducao ? 'PRODUÇÃO' : 'TESTES'}]`);
-    console.log(`🟢 Servidor da SAID Contabilidade na porta ${PORTA}`);
-    console.log(`⏳ Aguardando comandos do aplicativo Meire...\n`);
+    console.log(`🟢 Servidor Meire App na porta ${PORTA}`);
+    console.log(`⏳ Aguardando comandos do aplicativo...\n`);
 });

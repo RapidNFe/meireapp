@@ -3,76 +3,88 @@ const https = require('https');
 const fs = require('fs');
 const config = require('./config');
 
+/**
+ * SERPRO AUTH - MOTOR DE AUTENTICAÇÃO SOBERANO
+ * 
+ * Agora este módulo não guarda estado global com certificado fixo.
+ * Ele gera agentes e tokens baseados no certificado fornecido em cada chamada.
+ */
 class SerproAuthManager {
     constructor() {
-        // O Cofre da Memória RAM
-        this.bearerToken = null;
-        this.jwtToken = null;
-        this.expiresAt = null;
-
-        // O Túnel mTLS fica montado e pronto para uso
-        this.agenteSeguro = new https.Agent({
-            pfx: fs.readFileSync(config.serpro.certPath),
-            passphrase: process.env.CERT_PASSWORD,
-            rejectUnauthorized: config.isProducao
-        });
+        // Cache de tokens por certPath para não fritar a API do Serpro desnecessariamente
+        // Mas o ideal é que cada requisição de usuário use o seu
+        this.tokenCache = new Map();
     }
 
-    async getTokens() {
+    /**
+     * Obtém um Agente HTTPS e Tokens para um certificado específico
+     * @param {string} certPath 
+     * @param {string} certPassword 
+     */
+    async getTokens(certPath, certPassword) {
+        const cacheKey = certPath;
         const agora = Date.now();
-        const margemSeguranca = 5 * 60 * 1000; // Renova 5 minutos antes de expirar
+        const cached = this.tokenCache.get(cacheKey);
 
-        // 1. VERIFICAÇÃO DO CACHE: Tem chave e ela ainda está válida?
-        if (this.bearerToken && this.jwtToken && this.expiresAt && (agora < this.expiresAt - margemSeguranca)) {
-            console.log('⚡ [CACHE SAPI] Entregando chaves direto da memória RAM (0 lentidão).');
-            return { 
-                bearer: this.bearerToken, 
-                jwt: this.jwtToken,
-                agente: this.agenteSeguro
+        if (cached && cached.expiresAt > agora + 300000) { // 5 min de margem
+            return {
+                bearer: cached.bearer,
+                jwt: cached.jwt,
+                agente: this._createAgent(certPath, certPassword)
             };
         }
 
-        // 2. RENOVAÇÃO OFICIAL: Se não tem ou está vencendo, pede uma nova ao Governo
-        console.log('🔄 [RENOVAÇÃO SAPI] Indo até a Receita buscar novas chaves duplas...');
-        
+        console.log(`🔄 [Soberano] Renovando tokens Serpro para o certificado: ${certPath}`);
+
         const credenciaisBase64 = Buffer.from(
             `${process.env.SERPRO_CLIENT_ID}:${process.env.SERPRO_CLIENT_SECRET}`
         ).toString('base64');
 
+        const agente = this._createAgent(certPath, certPassword);
+
         try {
-            const authResponse = await axios({
+            const response = await axios({
                 method: 'POST',
                 url: config.serpro.authUrl,
                 headers: {
                     'Authorization': `Basic ${credenciaisBase64}`,
-                    'Role-Type': 'TERCEIROS',
+                    'Role-Type': 'TERCEIROS', // Pode ser 'CONTRIBUINTE' se for o próprio, mas 'TERCEIROS' costuma funcionar pra ambos
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
                 data: 'grant_type=client_credentials',
-                httpsAgent: this.agenteSeguro
+                httpsAgent: agente
             });
 
-            // 3. ATUALIZA O COFRE
-            this.bearerToken = authResponse.data.access_token;
-            this.jwtToken = authResponse.data.jwt_token;
-            // expires_in vem em segundos (ex: 3600). Multiplicamos por 1000 para milissegundos.
-            this.expiresAt = agora + (authResponse.data.expires_in * 1000);
+            const tokens = {
+                bearer: response.data.access_token,
+                jwt: response.data.jwt_token,
+                expiresAt: agora + (response.data.expires_in * 1000)
+            };
 
-            console.log(`✅ [COFRE ATUALIZADO] Novas chaves guardadas. Válidas até: ${new Date(this.expiresAt).toLocaleTimeString()}`);
+            this.tokenCache.set(cacheKey, tokens);
 
-            return { 
-                bearer: this.bearerToken, 
-                jwt: this.jwtToken,
-                agente: this.agenteSeguro
+            return {
+                bearer: tokens.bearer,
+                jwt: tokens.jwt,
+                agente: agente
             };
 
         } catch (erro) {
-            console.error('❌ [FALHA CRÍTICA SAPI] Não foi possível renovar as chaves:', erro.message);
-            throw erro;
+            console.error('❌ [Serpro Auth] Erro na renovação soberana:', erro.response?.data || erro.message);
+            throw new Error(`Falha na autenticação com o Governo usando seu certificado: ${erro.message}`);
         }
+    }
+
+    _createAgent(certPath, certPassword) {
+        if (!fs.existsSync(certPath)) {
+            throw new Error(`Arquivo de certificado não encontrado: ${certPath}`);
+        }
+        return new https.Agent({
+            pfx: fs.readFileSync(certPath),
+            passphrase: certPassword,
+            rejectUnauthorized: config.isProducao
+        });
     }
 }
 
-// O pulo do gato: exportamos a INSTÂNCIA, não a classe. 
-// Isso garante que o Node.js inteiro compartilhe a mesma memória RAM.
 module.exports = new SerproAuthManager();

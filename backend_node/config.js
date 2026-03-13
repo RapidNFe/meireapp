@@ -10,7 +10,6 @@ const config = {
             ? 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1' 
             : 'https://gateway.apiserpro.serpro.gov.br/integra-contador-homologacao/v1',
         tpAmb: isProducao ? 1 : 2, // 1 = Real, 2 = Testes
-        certPath: isProducao ? (process.env.CERT_PATH_PROD || './certs/said_producao.pfx') : (process.env.CERT_PATH_HOMOLOG || './certs/said_homologacao.pfx'),
         authUrl: 'https://autenticacao.sapi.serpro.gov.br/authenticate',
         // Default values for Integra Contador requests, can be overridden per request
         idSistema: "NFSE", // Mandatory for Integra Contador
