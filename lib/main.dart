@@ -15,6 +15,7 @@ import 'package:meire/features/clients/ui/customer_central_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
 import 'package:meire/features/shared/ui/privacy_policy_page.dart';
+import 'package:meire/features/copiloto/ui/dasn_copiloto_page.dart';
 
 // Create a global navigator key to allow navigation from anywhere, like auth listeners
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -85,6 +86,7 @@ class MeireApp extends ConsumerWidget {
         '/favorite_service_form': (context) => const FavoriteServiceFormPage(),
         '/add_client': (context) => const AddClientPage(),
         '/privacy_policy': (context) => const PrivacyPolicyPage(),
+        '/dasn_copiloto': (context) => const DasnCopilotoPage(),
       },
       debugShowCheckedModeBanner: false,
     );

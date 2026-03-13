@@ -7,15 +7,19 @@
     "start": "node extrator_imediato.js"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.8.11",
     "axios": "^1.13.6",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "node-cron": "^4.2.1",
+    "node-forge": "^1.3.3",
     "pocketbase": "^0.21.5",
     "puppeteer": "^22.15.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "xml-crypto": "^6.1.2",
+    "xmlbuilder2": "^4.0.3"
   }
 }

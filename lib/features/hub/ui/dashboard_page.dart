@@ -732,7 +732,8 @@ class _HubPageState extends ConsumerState<HubPage> {
             () => Navigator.pushNamed(context, '/favorite_service_form')),
         const SizedBox(height: 12),
         _buildActionItem(context, Icons.description_outlined,
-            "Declaração Anual", "DASN-SIMEI 2024", () {}),
+            "Declaração Anual", "DASN-SIMEI 2024", 
+            () => Navigator.pushNamed(context, '/dasn_copiloto')),
       ],
     );
   }

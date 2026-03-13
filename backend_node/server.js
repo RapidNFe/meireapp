@@ -59,6 +59,11 @@ app.use((req, res, next) => {
     next();
 });
 
+// 🟢 ROTA DE STATUS (SAÚDE DO SISTEMA)
+app.get('/serpro/status', (req, res) => {
+    res.json({ status: "Servidor Online", ambiente: config.isProducao ? "producao" : "homologacao" });
+});
+
 // ==========================================
 // 🚀 ROTA 1: EMISSÃO DE NOTA FISCAL (NFS-e)
 // ==========================================
@@ -67,7 +72,7 @@ app.post('/api/notas/emitir', async (req, res) => {
 
     try {
         // 0. Buscamos os dados SOBERANOS do Prestador (o Usuário logado)
-        const prestadores = await query(`SELECT cnpj, nome_fantasia, razao_social, producao FROM users WHERE id = ?`, [userId]);
+        const prestadores = await query(`SELECT cnpj, razao_social, producao FROM users WHERE id = ?`, [userId]);
 
         if (prestadores.length === 0) {
             throw new Error("Prestador não encontrado no banco de dados.");
@@ -75,7 +80,7 @@ app.post('/api/notas/emitir', async (req, res) => {
 
         const prestador = prestadores[0];
         const cnpjPrestador = prestador.cnpj;
-        const nomePrestador = prestador.nome_fantasia || prestador.razao_social;
+        const nomePrestador = prestador.razao_social;
 
         // 🛡️ TRAVA DE AMBIENTE INDIVIDUAL: Se o usuário ativou o producao no Perfil, tpAmb = 1 (Real), senão 2 (Homologação)
         const isProducao = prestador.producao === 1 || prestador.producao === true;
@@ -103,19 +108,19 @@ app.post('/api/notas/emitir', async (req, res) => {
             // O "Envelope" que o Serpro exige (Baseado no seu manual)
             const payloadGoverno = {
                 "tpAmb": tpAmbiente,
-                "contratante": { "numero": cnpjPrestador, "tipo": 2 },
-                "autorPedidoDados": { "numero": cnpjPrestador, "tipo": 2 },
-                "contribuinte": { "numero": tomadorCnpj, "tipo": 2 },
+                "contratante": { "numero": "28413885000170", "tipo": 2 }, // SAID Contabilidade
+                "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
+                "contribuinte": { "numero": cnpjPrestador, "tipo": 2 },
                 "pedidoDados": {
-                    "idSistema": "NFSE",
-                    "idServico": "EMITIR_NOTA_V1",
+                    "idSistema": "SIMPLES_NACIONAL",
+                    "idServico": "EMISSAO_NFSE",
                     "versaoSistema": "1.0",
                     "dados": JSON.stringify({
                         "valorServico": valor,
                         "discriminacao": servico,
                         "prestador": {
                             "cnpj": cnpjPrestador,
-                            "razaoSocial": prestador.razao_social || prestador.nome_fantasia
+                            "razaoSocial": prestador.razao_social
                         },
                         "codigoCnae": "6201501",
                         "issRetido": 2
@@ -150,24 +155,106 @@ app.post('/api/notas/emitir', async (req, res) => {
         res.json({ sucesso: true, numero: resultado.dados?.numeroNota });
 
     } catch (error) {
-        console.error("💥 Falha na Emissão Real:", error.message);
+        console.error("🕵️‍♂️ DEDO DURO DO SERPRO (NFS-e):", JSON.stringify(error.response?.data || error.message, null, 2));
 
         let logId = null;
         try {
-            // Find the most recent 'processando' note for this user if logNota is not in scope of the catch
-            const recent = await pb.collection('notas_fiscais').getFirstListItem(`user_id="${userId}" && status="processando"`, { sort: '-created' });
-            logId = recent.id;
-        } catch (e) {
-            // ignore
-        }
+            // Buscamos o registro no SQLite para marcar o erro
+            const last = await query(`SELECT id FROM notas_fiscais WHERE user = ? AND status = 'processando' ORDER BY created DESC LIMIT 1`, [userId]);
+            if (last.length > 0) logId = last[0].id;
+        } catch (e) { /* ignore */ }
 
-        // Se falhar tudo, marcamos como erro no banco para o Thiago ver
         if (logId) {
             now = new Date().toISOString().replace('T', ' ').replace('Z', '');
             await run(`UPDATE notas_fiscais SET status = 'erro', updated = ? WHERE id = ?`, [now, logId]);
         }
 
-        res.status(500).json({ sucesso: false, erro: "O Governo rejeitou a nota. Tente novamente." });
+        const msgErro = error.response?.data?.mensagens?.[0]?.texto || "O Governo rejeitou a nota. Verifique os dados.";
+        res.status(500).json({ sucesso: false, erro: msgErro });
+    }
+});
+
+// ==========================================
+// 🛡️ ROTA 1.1: DIAGNÓSTICO CCMEI (O QUE O GOVERNO DIZ)
+// ==========================================
+app.get('/api/serpro/ccmei/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const users = await query(`SELECT cnpj FROM users WHERE id = ?`, [userId]);
+        if (users.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
+        
+        const cnpj = users[0].cnpj;
+
+        const resultado = await catraca.adicionar(async () => {
+            const chaves = await serproAuth.getTokens();
+            const response = await axios({
+                method: 'POST',
+                url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar',
+                headers: { 'Authorization': `Bearer ${chaves.bearer}`, 'jwt_token': chaves.jwt, 'Content-Type': 'application/json' },
+                data: {
+                    "contratante": { "numero": "28413885000170", "tipo": 2 },
+                    "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
+                    "contribuinte": { "numero": cnpj, "tipo": 2 },
+                    "pedidoDados": {
+                        "idSistema": "CCMEI",
+                        "idServico": "DADOSCCMEI122",
+                        "versaoSistema": "1.0",
+                        "dados": JSON.stringify({ "numeroCnpj": cnpj })
+                    }
+                },
+                httpsAgent: chaves.agente
+            });
+            return response.data;
+        });
+
+        res.json({ sucesso: true, dados: JSON.parse(resultado.dados || "{}") });
+
+    } catch (error) {
+        console.error("❌ Erro CCMEI:", error.response?.data || error.message);
+        res.status(500).json({ sucesso: false, erro: "Falha ao consultar prontuário do governo." });
+    }
+});
+
+// ==========================================
+// 💰 ROTA 1.2: EMISSÃO DE BOLETO DAS (MEI)
+// ==========================================
+app.post('/api/serpro/das/emitir', async (req, res) => {
+    const { userId, periodo } = req.body; // periodo format: 'YYYYMM'
+
+    try {
+        const users = await query(`SELECT cnpj FROM users WHERE id = ?`, [userId]);
+        if (users.length === 0) throw new Error("Usuário não encontrado.");
+        
+        const cnpj = users[0].cnpj;
+
+        const resultado = await catraca.adicionar(async () => {
+            const chaves = await serproAuth.getTokens();
+            const response = await axios({
+                method: 'POST',
+                url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Emitir',
+                headers: { 'Authorization': `Bearer ${chaves.bearer}`, 'jwt_token': chaves.jwt, 'Content-Type': 'application/json' },
+                data: {
+                    "contratante": { "numero": "28413885000170", "tipo": 2 },
+                    "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
+                    "contribuinte": { "numero": cnpj, "tipo": 2 },
+                    "pedidoDados": {
+                        "idSistema": "PGMEI",
+                        "idServico": "GERARDASCODBARRA22",
+                        "versaoSistema": "1.0",
+                        "dados": JSON.stringify({ "periodoApuracao": periodo })
+                    }
+                },
+                httpsAgent: chaves.agente
+            });
+            return response.data;
+        });
+
+        res.json({ sucesso: true, dados: resultado });
+
+    } catch (error) {
+        console.error("🕵️‍♂️ ERRO DAS:", JSON.stringify(error.response?.data || error.message, null, 2));
+        const msg = error.response?.data?.mensagens?.[0]?.texto || "Erro ao gerar boleto no Serpro.";
+        res.status(500).json({ sucesso: false, erro: msg });
     }
 });
 // ==========================================

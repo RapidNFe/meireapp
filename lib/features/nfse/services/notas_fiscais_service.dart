@@ -22,7 +22,7 @@ class NotasFiscaisService {
 
     // 🚀 CHAMADA AO BACKEND SOBERANO (Node.js)
     // O backend irá processar o Serpro, criar o log no PB e retornar o status.
-    final String emissionUrl = '${_pb.baseUrl}/api/notas/emitir';
+    final String emissionUrl = '${_pb.baseURL}/api/notas/emitir';
 
     try {
       final response = await _dio.post(
