@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/ui/notifications_modal.dart';
@@ -565,6 +566,23 @@ class _HubPageState extends ConsumerState<HubPage> {
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () async {
+                    final user = ref.read(authServiceProvider).currentUser;
+                    final cnpj = user?.getStringValue('cnpj') ?? '';
+                    
+                    if (cnpj.isNotEmpty) {
+                      await Clipboard.setData(ClipboardData(text: cnpj));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("✨ CNPJ $cnpj copiado para o pagamento!"),
+                            backgroundColor: MeireTheme.primaryColor,
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    }
+
                     final uri = Uri.parse('https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao');
                     if (await canLaunchUrl(uri)) {
                       await launchUrl(uri, mode: LaunchMode.externalApplication);

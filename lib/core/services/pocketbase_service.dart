@@ -71,7 +71,7 @@ const String _deployUrl = 'https://api.meireapp.com.br'; // Oficial (Ativar aman
 const String _localUrl = 'http://127.0.0.1:8090';
 
 // URL Base Centralizada (PocketBase + API)
-const String meireBaseUrl = kIsWeb ? _deployUrl : _localUrl;
+const String meireBaseUrl = (kReleaseMode || kIsWeb) ? _deployUrl : _localUrl;
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();

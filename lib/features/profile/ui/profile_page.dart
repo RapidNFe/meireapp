@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:meire/core/ui/theme.dart';
@@ -15,6 +16,68 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoadingSwitch = false;
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  final _imController = TextEditingController();
+  final _cepController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user != null) {
+      _imController.text = user.getStringValue('inscricao_municipal');
+      _cepController.text = user.getStringValue('cep');
+    }
+  }
+
+  @override
+  void dispose() {
+    _imController.dispose();
+    _cepController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    final authService = ref.read(authServiceProvider);
+    final user = authService.currentUser;
+    if (user == null) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      await ref.read(pbProvider).collection('users').update(user.id, body: {
+        'inscricao_municipal': _imController.text,
+        'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+      });
+
+      // Refresh data
+      await ref.read(pbProvider).collection('users').authRefresh();
+      
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+          _isSaving = false;
+        });
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Perfil atualizado com sucesso!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Erro ao salvar: $e')),
+        );
+      }
+    }
+  }
 
   bool _checkCadastroCompleto(RecordModel user) {
     final im = user.getStringValue('inscricao_municipal');
@@ -203,6 +266,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 context: context,
                 title: 'Informações Pessoais',
                 icon: Icons.person_outline,
+                extra: TextButton.icon(
+                  onPressed: _isSaving ? null : () {
+                    if (_isEditing) {
+                      _saveProfile();
+                    } else {
+                      _initializeControllers();
+                      setState(() => _isEditing = true);
+                    }
+                  },
+                  icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                  label: Text(_isEditing ? 'Salvar' : 'Editar'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: _isEditing ? Colors.green : MeireTheme.accentColor,
+                  ),
+                ),
                 children: [
                   _InfoRow(label: 'Nome Completo', value: displayName),
                   const Divider(height: 24),
@@ -212,17 +290,43 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const Divider(height: 24),
                   _InfoRow(label: 'CNPJ', value: _formatDocument(cnpj)),
                   const Divider(height: 24),
-                  _InfoRow(
-                    label: 'Insc. Municipal', 
-                    value: user.getStringValue('inscricao_municipal').isEmpty ? '⚠️ Pendente' : user.getStringValue('inscricao_municipal'),
-                    isPending: user.getStringValue('inscricao_municipal').isEmpty,
-                  ),
-                  const Divider(height: 24),
-                  _InfoRow(
-                    label: 'CEP', 
-                    value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
-                    isPending: user.getStringValue('cep').isEmpty,
-                  ),
+                  if (_isEditing)
+                    Column(
+                      children: [
+                        TextFormField(
+                          controller: _imController,
+                          decoration: const InputDecoration(
+                            labelText: 'Inscrição Municipal (IM)',
+                            hintText: 'Digite sua IM',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _cepController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'CEP',
+                            hintText: '00000-000',
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        _InfoRow(
+                          label: 'Insc. Municipal', 
+                          value: user.getStringValue('inscricao_municipal').isEmpty ? '⚠️ Pendente' : user.getStringValue('inscricao_municipal'),
+                          isPending: user.getStringValue('inscricao_municipal').isEmpty,
+                        ),
+                        const Divider(height: 24),
+                        _InfoRow(
+                          label: 'CEP', 
+                          value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
+                          isPending: user.getStringValue('cep').isEmpty,
+                        ),
+                      ],
+                    ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -417,6 +521,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     required String title,
     required IconData icon,
     required List<Widget> children,
+    Widget? extra,
     bool isVault = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -459,7 +564,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              if (isVault) ...[
+              if (extra != null) ...[
+                const Spacer(),
+                extra,
+              ] else if (isVault) ...[
                 const Spacer(),
                 const Icon(Icons.lock, size: 16, color: Colors.grey),
               ]
