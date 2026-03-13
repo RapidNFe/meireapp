@@ -8,9 +8,14 @@ function gerarXmlDPS(dados) {
   // 1. Montagem do ID da DPS (Regra da Sefaz: DPS + cMun(7) + tpInsc(1) + CNPJ(14) + Serie(5) + nDPS(15))
   const tipoInscricao = dados.prestador.cnpj.length === 14 ? '2' : '1'; 
   const numeroDpsFormatado = String(dados.numeroDPS).padStart(15, '0');
-  const idDPS = `DPS${dados.codigoMunicipioEmissor}${tipoInscricao}${dados.prestador.cnpj}${dados.numeroSerie}${numeroDpsFormatado}`;
+  const serieFormatada = String(dados.numeroSerie).padStart(5, '0');
+  const idDPS = `DPS${dados.codigoMunicipioEmissor}${tipoInscricao}${dados.prestador.cnpj}${serieFormatada}${numeroDpsFormatado}`;
 
-  // 2. Construindo a Árvore XML com os dados do Flutter
+  // 2. Data sem milissegundos (Fundamental para evitar E0714 em alguns servidores)
+  // Ex: de 2026-03-13T10:54:50.123-03:00 para 2026-03-13T10:54:50-03:00
+  const dhEmiTratada = dados.dataHoraEmissao.replace(/\.\d+(?=[+-]|Z|$)/, "");
+
+  // 3. Construindo a Árvore XML com os dados do Flutter
   const objXML = {
     DPS: {
       '@xmlns': 'http://www.sped.fazenda.gov.br/nfse',
@@ -18,16 +23,17 @@ function gerarXmlDPS(dados) {
       infDPS: {
         '@Id': idDPS,
         tpAmb: dados.ambiente,
-        dhEmi: dados.dataHoraEmissao,
-        verAplic: 'MeireApp1.0', // Sua assinatura no XML!
+        dhEmi: dhEmiTratada,
+        verAplic: 'MeireApp1.0', 
         serie: dados.numeroSerie,
         nDPS: dados.numeroDPS,
         dCompet: dados.competencia,
-        tpEmit: '1', // 1 = Prestador
+        tpEmit: '1', 
         cLocEmi: dados.codigoMunicipioEmissor,
         
         prest: {
           CNPJ: dados.prestador.cnpj,
+          ...(dados.prestador.im ? { IM: dados.prestador.im } : {}),
           regTrib: {
             opSimpNac: dados.prestador.opcaoSimplesNacional,
             regEspTrib: dados.prestador.regimeEspecialTributacao
@@ -61,15 +67,15 @@ function gerarXmlDPS(dados) {
         
         valores: {
           vServPrest: {
-            vServ: dados.servico.valor
+            vServ: parseFloat(dados.servico.valor).toFixed(2)
           },
           trib: {
             tribMun: {
-              tribISSQN: '1', // 1 = Operação Tributável
-              tpRetISSQN: '1' // 1 = Não Retido
+              tribISSQN: '1', 
+              tpRetISSQN: '1' 
             },
             totTrib: {
-              indTotTrib: '0' // 0 = Não informado
+              indTotTrib: '0' 
             }
           }
         }
@@ -77,57 +83,11 @@ function gerarXmlDPS(dados) {
     }
   };
 
-  // 3. Gerando a string XML final
-  const documentoXML = create({ version: '1.0', encoding: 'utf-8' }, objXML);
+  // 4. Gerando a string XML final (Bruto, sem espaços)
+  const documentoXML = create({ version: '1.0', encoding: 'UTF-8' }, objXML);
   const xmlAssinavel = documentoXML.end({ prettyPrint: false });
   
   return { idDPS, xmlAssinavel };
 }
 
-// =========================================================================
-// TESTE DE MESA: Simulando o JSON limpo chegando do Flutter (Meire App)
-// =========================================================================
-const payloadFlutter = {
-  ambiente: "1", // 1=Produção, 2=Homologação (Produção Restrita)
-  dataHoraEmissao: "2026-03-13T10:54:50-03:00",
-  competencia: "2026-02-28",
-  numeroSerie: "70000",
-  numeroDPS: "1",
-  codigoMunicipioEmissor: "5208707", // Goiânia
-  
-  prestador: {
-    cnpj: "65354705000152", // CNPJ Cascia
-    opcaoSimplesNacional: "2", 
-    regimeEspecialTributacao: "0" 
-  },
-  
-  tomador: {
-    cnpj: "23061036000180", // CNPJ Debora
-    nome: "DEBORA CORTES UNIPESSOAL LTDA",
-    endereco: {
-      municipio: "5208707",
-      cep: "74820090",
-      logradouro: "AV SEGUNDA RADIAL",
-      numero: "1307",
-      complemento: "QUADRA145 LOTE 06",
-      bairro: "SETOR PEDRO LUDOVICO"
-    }
-  },
-  
-  servico: {
-    municipioPrestacao: "5208707",
-    codigoTribNacional: "060101",
-    descricao: "nota fiscal profissional parceiro referente ao mês de Fevereiro de 2026",
-    valor: "7889.70"
-  }
-};
-
-// Executando
-const { idDPS, xmlAssinavel } = gerarXmlDPS(payloadFlutter);
-
-console.log("🎯 ID da Nota Gerado:", idDPS);
-console.log("\n📦 XML Pronto para ser Assinado pelo 'assinador_soberano.js':\n");
-console.log(xmlAssinavel);
-
-// Exportando para ser usado no seu fluxo principal
 module.exports = { gerarXmlDPS };

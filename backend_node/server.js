@@ -7,6 +7,8 @@ const axios = require('axios');
 const serproAuth = require('./serpro_auth');
 const catraca = require('./catraca_serpro');
 const sqlite3 = require('sqlite3').verbose();
+const vortex = require('./vortex_emissor_nacional');
+const zlib = require('zlib');
 const path = require('path');
 
 // Caminho do Banco do PocketBase
@@ -65,112 +67,96 @@ app.get('/serpro/status', (req, res) => {
 });
 
 // ==========================================
-// 🚀 ROTA 1: EMISSÃO DE NOTA FISCAL (NFS-e)
+// 🚀 ROTA 1: EMISSÃO DE NOTA FISCAL (NFS-e) - SERPRO (ANTIGA)
 // ==========================================
 app.post('/api/notas/emitir', async (req, res) => {
-    const { userId, tomadorCnpj, tomadorNome, valor, servico } = req.body;
+    // ... mantendo a lógica atual do Serpro caso desejado ...
+    // (Pode ser removida ou mantida para legado)
+    res.status(405).json({ erro: "Use a rota /api/nacional/emitir para o novo padrão" });
+});
+
+// ==========================================
+// 🚀 ROTA 1.1: EMISSÃO NACIONAL (ADN/SEFIN) - O NOVO PADRÃO
+// ==========================================
+app.post('/api/nacional/emitir', async (req, res) => {
+    const { userId, payload } = req.body; 
 
     try {
-        // 0. Buscamos os dados SOBERANOS do Prestador (o Usuário logado)
-        const prestadores = await query(`SELECT cnpj, razao_social, producao FROM users WHERE id = ?`, [userId]);
+        console.log(`📡 [Nacional] Requisição recebida do usuário: ${userId}`);
 
-        if (prestadores.length === 0) {
-            throw new Error("Prestador não encontrado no banco de dados.");
+        // 1. Busca dados do Prestador e Certificado no Banco
+        const results = await query(
+            `SELECT cnpj, razao_social, producao, arquivo_pfx, senha_pfx, inscricao_municipal FROM users WHERE id = ?`, 
+            [userId]
+        );
+
+        if (results.length === 0) throw new Error("Usuário não encontrado.");
+        const prestadorDb = results[0];
+
+        // 2. Configura Caminho do Certificado (Soberania do Cliente)
+        let certPath = '';
+        let certPass = '';
+
+        if (prestadorDb.arquivo_pfx && prestadorDb.senha_pfx) {
+            certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, prestadorDb.arquivo_pfx);
+            certPass = prestadorDb.senha_pfx;
+            console.log(`✅ Usando certificado carregado pelo cliente no Perfil.`);
+        } else {
+            // Fallback para o da SEFIN-PROD ou similar se não houver
+            certPath = path.resolve(__dirname, process.env.CERT_PATH_PROD);
+            certPass = process.env.CERT_PASSWORD;
+            console.log(`⚠️ Usando certificado de fallback (SAID).`);
         }
 
-        const prestador = prestadores[0];
-        const cnpjPrestador = prestador.cnpj;
-        const nomePrestador = prestador.razao_social;
+        // 3. Enriquecendo o Payload com dados do Banco
+        // Garante que o CNPJ usado na assinatura seja o do banco, não o enviado pelo front
+        payload.prestador = {
+            cnpj: prestadorDb.cnpj,
+            im: prestadorDb.inscricao_municipal,
+            opcaoSimplesNacional: payload.prestador?.opcaoSimplesNacional || "2",
+            regimeEspecialTributacao: payload.prestador?.regimeEspecialTributacao || "0"
+        };
+        payload.ambiente = prestadorDb.producao ? "1" : "2";
 
-        // 🛡️ TRAVA DE AMBIENTE INDIVIDUAL: Se o usuário ativou o producao no Perfil, tpAmb = 1 (Real), senão 2 (Homologação)
-        const isProducao = prestador.producao === 1 || prestador.producao === true;
-        const tpAmbiente = isProducao ? 1 : 2;
+        // 4. Aciona o Motor VORTEX
+        const resultado = await vortex.emitirNacional(payload, certPath, certPass);
 
-        const urlSerpro = isProducao
-            ? 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar'
-            : 'https://gateway.apiserpro.serpro.gov.br/integra-contador-homologacao/v1/Consultar';
-
-        console.log(`🚀 [Emissão] [Ambiente: ${isProducao ? 'PRODUÇÃO' : 'TESTES'}] Iniciando nota para ${nomePrestador}`);
-
-        // 1. Criamos o Registro 'Processando' (Segurança de Auditoria)
+        // 5. Salva no Banco de Dados (Log de Sucesso/Chave)
         let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
         const logId = Math.random().toString(36).substring(2, 17);
 
         await run(`
-            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, servico, status, created, updated)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [logId, userId, tomadorCnpj, tomadorNome, valor, servico, 'processando', now, now]);
+            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, status, chave_acesso, xml_nota, created, updated)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            logId, 
+            userId, 
+            payload.tomador.cnpj, 
+            payload.tomador.nome || payload.tomador.razaoSocial, 
+            payload.servico.valor,
+            resultado.sucesso ? 'emitida' : 'erro',
+            resultado.dados?.chaveAcesso || null,
+            resultado.dados?.xmlDecodificado || null,
+            now, 
+            now
+        ]);
 
-        // 2. A Catraca entra em ação com o Payload Oficial do Governo
-        const resultado = await catraca.adicionar(async () => {
-            const chaves = await serproAuth.getTokens();
-
-            // O "Envelope" que o Serpro exige (Baseado no seu manual)
-            const payloadGoverno = {
-                "tpAmb": tpAmbiente,
-                "contratante": { "numero": "28413885000170", "tipo": 2 }, // SAID Contabilidade
-                "autorPedidoDados": { "numero": "28413885000170", "tipo": 2 },
-                "contribuinte": { "numero": cnpjPrestador, "tipo": 2 },
-                "pedidoDados": {
-                    "idSistema": "SIMPLES_NACIONAL",
-                    "idServico": "EMISSAO_NFSE",
-                    "versaoSistema": "1.0",
-                    "dados": JSON.stringify({
-                        "valorServico": valor,
-                        "discriminacao": servico,
-                        "prestador": {
-                            "cnpj": cnpjPrestador,
-                            "razaoSocial": prestador.razao_social
-                        },
-                        "codigoCnae": "6201501",
-                        "issRetido": 2
-                    })
-                }
-            };
-
-            // Chamada Real (A ponte mTLS que validamos)
-            const response = await axios({
-                method: 'POST',
-                url: urlSerpro,
-                headers: {
-                    'Authorization': `Bearer ${chaves.bearer}`,
-                    'jwt_token': chaves.jwt,
-                    'Content-Type': 'application/json'
-                },
-                data: payloadGoverno,
-                httpsAgent: chaves.agente
+        if (resultado.sucesso) {
+            res.json({ 
+                sucesso: true, 
+                chaveAcesso: resultado.dados.chaveAcesso,
+                idNota: logId
             });
-
-            return response.data;
-        });
-
-        // 3. Sucesso! Atualizamos o banco
-        now = new Date().toISOString().replace('T', ' ').replace('Z', '');
-        await run(`
-            UPDATE notas_fiscais 
-            SET status = 'emitida', numero_nota = ?, updated = ?
-            WHERE id = ?
-        `, [resultado.dados?.numeroNota || "Gerada", now, logId]);
-
-        res.json({ sucesso: true, numero: resultado.dados?.numeroNota });
-
-    } catch (error) {
-        console.error("🕵️‍♂️ DEDO DURO DO SERPRO (NFS-e):", JSON.stringify(error.response?.data || error.message, null, 2));
-
-        let logId = null;
-        try {
-            // Buscamos o registro no SQLite para marcar o erro
-            const last = await query(`SELECT id FROM notas_fiscais WHERE user = ? AND status = 'processando' ORDER BY created DESC LIMIT 1`, [userId]);
-            if (last.length > 0) logId = last[0].id;
-        } catch (e) { /* ignore */ }
-
-        if (logId) {
-            now = new Date().toISOString().replace('T', ' ').replace('Z', '');
-            await run(`UPDATE notas_fiscais SET status = 'erro', updated = ? WHERE id = ?`, [now, logId]);
+        } else {
+            res.status(400).json({ 
+                sucesso: false, 
+                erros: resultado.dados?.erros || [{ Descricao: "Erro desconhecido no governo" }] 
+            });
         }
 
-        const msgErro = error.response?.data?.mensagens?.[0]?.texto || "O Governo rejeitou a nota. Verifique os dados.";
-        res.status(500).json({ sucesso: false, erro: msgErro });
+    } catch (error) {
+        console.error("❌ Erro na Emissão Nacional:", error.message);
+        res.status(500).json({ sucesso: false, erro: error.message });
     }
 });
 
