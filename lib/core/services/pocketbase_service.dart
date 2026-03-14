@@ -64,8 +64,19 @@ class SecureAuthStore extends AuthStore {
   }
 }
 
-// URL Base Centralizada (PocketBase + API)
-const String meireBaseUrl = 'https://api.meireapp.com.br';
+// Configuração de Ambientes
+const String _prodUrl = 'https://api.meireapp.com.br';
+const String _devPbUrl = 'http://127.0.0.1:8090';
+const String _devApiUrl = 'http://127.0.0.1:3000';
+
+// URL do PocketBase (Banco de Dados)
+const String meirePbUrl = kDebugMode ? _devPbUrl : _prodUrl;
+
+// URL da API Node.js (Cofre, Emissão, Dashboard)
+const String meireApiUrl = kDebugMode ? _devApiUrl : _prodUrl;
+
+// Retrocompatibilidade (para não quebrar outros arquivos agora)
+const String meireBaseUrl = meirePbUrl;
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();

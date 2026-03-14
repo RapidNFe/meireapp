@@ -51,6 +51,7 @@ function run(sql, params = []) {
 // Configurando o Banco de Dados (PocketBase)
 const PocketBase = require('pocketbase/cjs');
 const pb = new PocketBase(config.pocketbase.url);
+console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: ${config.pocketbase.adminEmail})`);
 
 // Nota: Removemos checkPBAuth porque agora o Node fala direto com o BD SQLITE do PocketBase
 // para evitar conflitos de versão do SDK ou regras de acesso (403/404).
@@ -588,7 +589,7 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         }
 
         // 1. Limpa cofre antigo se existir, mantendo consistência 1:1
-        await pb.admins.authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+        await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
         try {
             const existentes = await pb.collection('cofre_certificados').getFullList({ filter: `usuario="${userId}"` });
             for (let r of existentes) {

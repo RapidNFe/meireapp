@@ -72,7 +72,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             throw Exception('Você precisa fornecer a senha verdadeira para salvar o novo certificado.');
         }
 
-        final uri = Uri.parse('$meireBaseUrl/api/certificados/upload');
+        final uri = Uri.parse('$meireApiUrl/api/certificados/upload');
         final request = http.MultipartRequest('POST', uri)
           ..fields['userId'] = user.id
           ..fields['senha_pfx'] = senhaDigitada
