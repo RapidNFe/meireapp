@@ -19,7 +19,7 @@ const multer = require('multer');
 // Configura o Multer para RAM
 const upload = multer({ 
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 } // 50KB Limite
+    limits: { fileSize: 500 * 1024 } // 500KB Limite para certificados maiores
 });
 
 // Caminho do Banco do PocketBase
@@ -70,8 +70,17 @@ app.use(express.json());
 // Log de Debug para todas as requisições
 app.use((req, res, next) => {
     console.log(`🌐 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+    if (Object.keys(req.body).length > 0) {
+        console.log(`   📦 Body keys: ${Object.keys(req.body).join(', ')}`);
+    }
     next();
 });
+
+// Middleware para capturar 404 e avisar no console
+const catch404 = (req, res, next) => {
+    console.warn(`⚠️ [404] Rota não encontrada no Node: ${req.method} ${req.url}`);
+    res.status(404).json({ error: "Rota não encontrada no servidor Node.js (Meire API)" });
+};
 
 // 🟢 ROTA DE STATUS (SAÚDE DO SISTEMA)
 app.get('/serpro/status', (req, res) => {
@@ -125,7 +134,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
         payload.ambiente = prestadorDb.producao ? "1" : "2";
 
         // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
-        const resultado = await vortex.emitirNacional(payload, certPath, certPassword, prestadorDb.producao);
+        const resultado = await vortex.emitirNacional(payload, certPath, certPass, prestadorDb.producao);
 
         // 4. Salva no Banco de Dados (Log de Sucesso/Chave)
         let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
@@ -558,7 +567,12 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         const { userId, senha_pfx } = req.body;
         const arquivo = req.file;
 
+        console.log(`📥 [Upload] Recebida tentativa de upload para usuário: ${userId}`);
+        console.log(`   - Arquivo: ${arquivo ? arquivo.originalname : 'Nulo'}`);
+        console.log(`   - Tamanho: ${arquivo ? arquivo.size : 0} bytes`);
+
         if (!arquivo || !senha_pfx || !userId) {
+            console.error("❌ [Upload] Dados incompletos");
             return res.status(400).json({ erro: "Faltam dados obrigatórios. Arquivo ou senha perdidos." });
         }
 
@@ -588,29 +602,37 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
             return res.status(400).json({ erro: "A senha fornecida está incorreta para este certificado, ou formato do PFX não suportado." });
         }
 
-        // 1. Limpa cofre antigo se existir, mantendo consistência 1:1
+        // 1. Autentica como Superusuário (Necessário para acessar coleções com regras restritas)
         await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
-        try {
-            const existentes = await pb.collection('cofre_certificados').getFullList({ filter: `usuario="${userId}"` });
-            for (let r of existentes) {
-                await pb.collection('cofre_certificados').delete(r.id);
-            }
-        } catch(e) { }
 
-        // 2. Transfere arquivo RAM (Buffer) => Blob (FormData PB)
+        // 2. Transfere arquivo RAM (Buffer) => File (Padrão PB SDK)
         const formData = new FormData();
         formData.append('usuario', userId);
         formData.append('senha_encriptada', senhaCifrada);
-        formData.append('valido', true);
+        formData.append('valido', 'true');
         if (dataVencimentoStr) {
             formData.append('data_vencimento', dataVencimentoStr);
         }
         
-        const blobArquivo = new Blob([arquivo.buffer]);
-        formData.append('arquivo_pfx', blobArquivo, arquivo.originalname);
+        // Criamos um File que o SDK do PB ama (Node 24+)
+        const fileArquivo = new File([arquivo.buffer], arquivo.originalname, { type: 'application/x-pkcs12' });
+        formData.append('arquivo_pfx', fileArquivo);
 
-        // 3. Salva no Vault PocketBase
-        const registro = await pb.collection('cofre_certificados').create(formData);
+        // 3. Salva no Vault PocketBase (Lógica de Upsert Soberana)
+        let registro;
+        try {
+            // Tenta buscar se o usuário JÁ TEM um cofre
+            const cofreExistente = await pb.collection('cofre_certificados').getFirstListItem(`usuario="${userId}"`);
+            console.log(`🔄 [Vault] Atualizando cofre existente para: ${userId}`);
+            registro = await pb.collection('cofre_certificados').update(cofreExistente.id, formData);
+        } catch (errUpsert) {
+            if (errUpsert.status === 404) {
+                console.log(`✨ [Vault] Criando novo cofre para: ${userId}`);
+                registro = await pb.collection('cofre_certificados').create(formData);
+            } else {
+                throw errUpsert;
+            }
+        }
 
         // 4. Update de sinalização no Users (sem guardar a senha/arquivo aqui!)
         const updateData = {
@@ -643,6 +665,9 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         pb.authStore.clear(); // Fechar portões!
     }
 });
+
+// Captura rotas não encontradas (Deve ser a última antes do listen)
+app.use(catch404);
 
 // LIGANDO O MOTOR
 // ==========================================
