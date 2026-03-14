@@ -37,7 +37,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user != null) {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
-      _senhaPfxController.text = user.getStringValue('senha_pfx');
+      _senhaPfxController.text = user.getBoolValue('possui_certificado') ? '********' : '';
     }
   }
 
@@ -60,23 +60,38 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final Map<String, dynamic> body = {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        'senha_pfx': _senhaPfxController.text,
       };
 
-      final List<http.MultipartFile> files = [];
-      if (_pickedFile != null && _pickedFile!.bytes != null) {
-        files.add(http.MultipartFile.fromBytes(
-          'arquivo_pfx',
-          _pickedFile!.bytes!,
-          filename: _pickedFile!.name,
-        ));
-      }
+      // 1. Atualiza dados Cadastrais no PocketBase (Dados Seguros/Públicos)
+      await ref.read(pbProvider).collection('users').update(user.id, body: body);
 
-      await ref.read(pbProvider).collection('users').update(
-        user.id, 
-        body: body,
-        files: files,
-      );
+      // 2. Se o usuário tentou subir um pfx novo, usamos a Rota Blindada (Node)
+      final senhaDigitada = _senhaPfxController.text;
+      if (_pickedFile != null && _pickedFile!.bytes != null) {
+        if (senhaDigitada.isEmpty || senhaDigitada == '********') {
+            throw Exception('Você precisa fornecer a senha verdadeira para salvar o novo certificado.');
+        }
+
+        final uri = Uri.parse('$meireBaseUrl/api/certificados/upload');
+        final request = http.MultipartRequest('POST', uri)
+          ..fields['userId'] = user.id
+          ..fields['senha_pfx'] = senhaDigitada
+          ..files.add(http.MultipartFile.fromBytes(
+            'arquivo_pfx',
+            _pickedFile!.bytes!,
+            filename: _pickedFile!.name,
+          ));
+
+        final response = await request.send();
+        
+        if (response.statusCode != 201) {
+          final resStr = await response.stream.bytesToString();
+          throw Exception('Erro do cofre: $resStr');
+        }
+      } else if (senhaDigitada.isNotEmpty && senhaDigitada != '********') {
+          // Se o usuário digitou senha nova MAS NÃO subiu arquivo
+          throw Exception('Para segurança do cofre, envie o arquivo .pfx junto com a nova senha.');
+      }
 
       // Refresh data
       await ref.read(pbProvider).collection('users').authRefresh();
@@ -320,15 +335,34 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ] else ...[
                     _InfoRow(
                       label: 'Arquivo PFX', 
-                      value: user.getStringValue('arquivo_pfx').isEmpty ? '❌ Não carregado' : '✅ Configurado (${user.getStringValue('arquivo_pfx')})',
-                      isPending: user.getStringValue('arquivo_pfx').isEmpty,
+                      value: !user.getBoolValue('possui_certificado') ? '❌ Não carregado' : '✅ Protegido no Cofre (Isolado)',
+                      isPending: !user.getBoolValue('possui_certificado'),
                     ),
                     const Divider(height: 24),
                     _InfoRow(
                       label: 'Senha', 
-                      value: user.getStringValue('senha_pfx').isEmpty ? '❌ Pendente' : '✅ Configurada',
-                      isPending: user.getStringValue('senha_pfx').isEmpty,
+                      value: !user.getBoolValue('possui_certificado') ? '❌ Pendente' : '✅ Configurada e Criptografada 🔐',
+                      isPending: !user.getBoolValue('possui_certificado'),
                     ),
+                    if (user.getStringValue('vencimento_pfx').isNotEmpty) ...[
+                      const Divider(height: 24),
+                      _InfoRow(
+                        label: 'Vencimento', 
+                        value: (() {
+                          try {
+                            final dataStr = user.getStringValue('vencimento_pfx');
+                            final data = DateTime.parse(dataStr).toLocal();
+                            final diferenca = data.difference(DateTime.now()).inDays;
+                            final dataFormatada = '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+                            if (diferenca < 0) return '❌ Expirado em $dataFormatada';
+                            if (diferenca <= 30) return '⚠️ Vence em $diferenca dias ($dataFormatada)';
+                            return '✅ Válido até $dataFormatada';
+                          } catch (_) {
+                            return 'Formato inválido';
+                          }
+                        })(),
+                      ),
+                    ]
                   ]
                 ],
               ),

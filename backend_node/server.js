@@ -10,6 +10,16 @@ const sqlite3 = require('sqlite3').verbose();
 const vortex = require('./vortex_emissor_nacional');
 const zlib = require('zlib');
 const path = require('path');
+const { encrypt, decrypt } = require('./crypto_utils');
+const forge = require('node-forge');
+const fs = require('fs');
+const multer = require('multer');
+
+// Configura o Multer para RAM
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 } // 50KB Limite
+});
 
 // Caminho do Banco do PocketBase
 const DB_PATH = 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
@@ -75,25 +85,33 @@ app.post('/api/nacional/emitir', async (req, res) => {
     try {
         console.log(`📡 [Nacional] Requisição recebida do usuário: ${userId}`);
 
-        // 1. Busca dados do Prestador e Certificado no Banco
+        // 1. Busca dados do Prestador e Certificado no Cofre (Joins soberanos)
         const results = await query(
-            `SELECT cnpj, razao_social, producao, arquivo_pfx, senha_pfx, inscricao_municipal FROM users WHERE id = ?`, 
+            `SELECT u.cnpj, u.razao_social, u.producao, u.inscricao_municipal, u.possui_certificado,
+                    c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+             FROM users u 
+             LEFT JOIN cofre_certificados c ON c.usuario = u.id 
+             WHERE u.id = ?`, 
             [userId]
         );
 
         if (results.length === 0) throw new Error("Usuário não encontrado.");
         const prestadorDb = results[0];
 
-        // 🛡️ TRAVA SOBERANA: Sem certificado próprio, não há emissão.
-        if (!prestadorDb.arquivo_pfx || !prestadorDb.senha_pfx) {
+        // 🛡️ TRAVA SOBERANA: Sem certificado do cofre, não há emissão.
+        if (!prestadorDb.possui_certificado || !prestadorDb.arquivo_pfx || !prestadorDb.senha_encriptada) {
             return res.status(403).json({ 
                 sucesso: false, 
-                erro: "Certificado Digital não configurado. Por favor, suba seu arquivo .pfx e senha na aba 'Perfil' para emitir notas." 
+                erro: "Certificado Digital protegido não encontrado. Faça o upload no Perfil." 
             });
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, prestadorDb.arquivo_pfx);
-        const certPass = prestadorDb.senha_pfx;
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', prestadorDb.cofre_id, prestadorDb.arquivo_pfx);
+        const certPass = decrypt(prestadorDb.senha_encriptada);
+
+        if (!certPass) {
+             return res.status(403).json({ sucesso: false, erro: "Senha do cofre inválida ou corrompida. Por favor, recadastre o certificado." });
+        }
 
         // 2. Enriquecendo o Payload com dados do Banco
         payload.prestador = {
@@ -153,21 +171,27 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         
-        // 1. Busca dados soberanos do usuário
+        // 1. Busca do cofre isolado
         const results = await query(
-            `SELECT cnpj, arquivo_pfx, senha_pfx FROM users WHERE id = ?`, 
+            `SELECT u.cnpj, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+             FROM users u 
+             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
             [userId]
         );
 
         if (results.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
         const userDb = results[0];
 
-        if (!userDb.arquivo_pfx || !userDb.senha_pfx) {
-            return res.status(403).json({ error: "Certificado Digital não configurado no perfil." });
+        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
+            return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, userDb.arquivo_pfx);
-        const certPass = userDb.senha_pfx;
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPass = decrypt(userDb.senha_encriptada);
+
+        if (!certPass) {
+             return res.status(403).json({ error: "Falha na descriptografia da senha. Recadastre no Perfil." });
+        }
 
         // 2. Aciona o Serpro usando o certificado do usuário
         const resultado = await catraca.adicionar(async () => {
@@ -212,19 +236,25 @@ app.post('/api/serpro/das/emitir', async (req, res) => {
 
     try {
         const results = await query(
-            `SELECT cnpj, arquivo_pfx, senha_pfx FROM users WHERE id = ?`, 
+            `SELECT u.cnpj, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+             FROM users u 
+             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
             [userId]
         );
 
         if (results.length === 0) throw new Error("Usuário não encontrado.");
         const userDb = results[0];
 
-        if (!userDb.arquivo_pfx || !userDb.senha_pfx) {
-            throw new Error("Certificado Digital não configurado.");
+        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
+            throw new Error("Certificado não encontrado no cofre.");
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/_pb_users_auth_', userId, userDb.arquivo_pfx);
-        const certPass = userDb.senha_pfx;
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPass = decrypt(userDb.senha_encriptada);
+
+        if (!certPass) {
+             throw new Error("Falha ao abrir chave da AES Master do cofre.");
+        }
 
         const resultado = await catraca.adicionar(async () => {
             const chaves = await serproAuth.getTokens(certPath, certPass);
@@ -405,6 +435,96 @@ app.get('/api/meus-dados/:userId', async (req, res) => {
     } catch (error) {
         console.error("❌ [LGPD] Falha na exportação:", error.message);
         res.status(500).json({ error: "Falha ao gerar pacote de dados para exportação." });
+    }
+});
+
+// ==========================================
+// 🔐 ROTA 5: UPLOAD PARA COFRE BLINDADO (MULTER EM RAM)
+// ==========================================
+app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, res) => {
+    try {
+        const { userId, senha_pfx } = req.body;
+        const arquivo = req.file;
+
+        if (!arquivo || !senha_pfx || !userId) {
+            return res.status(400).json({ erro: "Faltam dados obrigatórios. Arquivo ou senha perdidos." });
+        }
+
+        console.log(`🔐 [Vault] Encriptando cofre do usuário na memória: ${userId}`);
+        const senhaCifrada = encrypt(senha_pfx);
+        if (!senhaCifrada) {
+            throw new Error("Falha ao criptografar a senha na memória.");
+        }
+
+        // Tenta Extrair Data Validade no ar (da memória!)
+        let dataVencimentoStr = null;
+        try {
+            const p12Der = arquivo.buffer.toString('binary');
+            const p12Asn1 = forge.asn1.fromDer(p12Der);
+            const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, senha_pfx);
+
+            Extrator: for (const safeContent of p12.safeContents) {
+                for (const safeBag of safeContent.safeBags) {
+                    if (safeBag.type === forge.pki.oids.certBag && safeBag.cert && safeBag.cert.validity) {
+                        dataVencimentoStr = safeBag.cert.validity.notAfter.toISOString();
+                        break Extrator;
+                    }
+                }
+            }
+        } catch (errExt) {
+            console.warn(`⚠️ [Vault] Senha errada ou PFX corrompido para usuario ${userId}`, errExt.message);
+            return res.status(400).json({ erro: "A senha fornecida está incorreta para este certificado, ou formato do PFX não suportado." });
+        }
+
+        // 1. Limpa cofre antigo se existir, mantendo consistência 1:1
+        await pb.admins.authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+        try {
+            const existentes = await pb.collection('cofre_certificados').getFullList({ filter: `usuario="${userId}"` });
+            for (let r of existentes) {
+                await pb.collection('cofre_certificados').delete(r.id);
+            }
+        } catch(e) { }
+
+        // 2. Transfere arquivo RAM (Buffer) => Blob (FormData PB)
+        const formData = new FormData();
+        formData.append('usuario', userId);
+        formData.append('senha_encriptada', senhaCifrada);
+        formData.append('valido', true);
+        if (dataVencimentoStr) {
+            formData.append('data_vencimento', dataVencimentoStr);
+        }
+        
+        const blobArquivo = new Blob([arquivo.buffer]);
+        formData.append('arquivo_pfx', blobArquivo, arquivo.originalname);
+
+        // 3. Salva no Vault PocketBase
+        const registro = await pb.collection('cofre_certificados').create(formData);
+
+        // 4. Update de sinalização no Users (sem guardar a senha/arquivo aqui!)
+        let vencimentoMsg = "Aguardando";
+        if (dataVencimentoStr) {
+            await pb.collection('users').update(userId, {
+                vencimento_pfx: dataVencimentoStr,
+                possui_certificado: true,
+                // Opcional: apagar as colunas antigas 
+                arquivo_pfx: null,
+                senha_pfx: ''
+            });
+            vencimentoMsg = `Válido até ${new Date(dataVencimentoStr).toLocaleDateString('pt-BR')}`;
+        }
+
+        // A senha morre quando essa função limpa o stack!
+        res.status(201).json({ 
+            mensagem: "Certificado guardado no cofre isolado com sucesso!",
+            idRegistro: registro.id,
+            vencimento: vencimentoMsg 
+        });
+
+    } catch (error) {
+        console.error("❌ Erro no Vault Blindado:", error.message);
+        res.status(500).json({ erro: "Falha interna ao depositar no cofre." });
+    } finally {
+        pb.authStore.clear(); // Fechar portões!
     }
 });
 
