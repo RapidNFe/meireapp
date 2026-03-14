@@ -64,14 +64,8 @@ class SecureAuthStore extends AuthStore {
   }
 }
 
-// 🚀 O INTERRUPTOR (Arquitetura Sovereign)
-// Amanhã é só inverter o comentário para decolar
-// const String _deployUrl = 'https://abu-boss-gain-mere.trycloudflare.com'; // Temporária
-const String _deployUrl = 'https://api.meireapp.com.br'; // Oficial (Ativar amanhã)
-const String _localUrl = 'http://127.0.0.1:8090';
-
 // URL Base Centralizada (PocketBase + API)
-const String meireBaseUrl = (kReleaseMode || kIsWeb) ? _deployUrl : _localUrl;
+const String meireBaseUrl = 'https://api.meireapp.com.br';
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();

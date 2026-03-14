@@ -4,8 +4,8 @@ const fs = require('fs');
 const zlib = require('zlib');
 const path = require('path');
 
-async function enviarParaADN(xmlAssinado, caminhoCertificado, senhaCertificado) {
-  console.log("🗜️ [SEFIN] Compactando Buffer original...");
+async function enviarParaADN(xmlAssinado, caminhoCertificado, senhaCertificado, isProducao = false) {
+  console.log(`🗜️ [SEFIN] Compactando Buffer em modo [${isProducao ? 'REAL' : 'TESTE'}]...`);
   
   // Certifique-se de que o XML assinado não recebeu nenhum trim() ou alteração de string após a assinatura
   const xmlBuffer = Buffer.from(xmlAssinado, 'utf-8');
@@ -17,17 +17,19 @@ async function enviarParaADN(xmlAssinado, caminhoCertificado, senhaCertificado) 
   };
 
   // 2. Configurando o Agente mTLS
-  console.log("🛡️ [SEFIN] Configurando túnel seguro mTLS...");
+  console.log(`🛡️ [SEFIN] Configurando túnel seguro mTLS (${isProducao ? 'Rigoroso' : 'Permissivo'})...`);
   const certificadoPfx = fs.readFileSync(path.resolve(caminhoCertificado));
   const agenteHttpsMtls = new https.Agent({
     pfx: certificadoPfx,
     passphrase: senhaCertificado,
-    rejectUnauthorized: false // Mantemos false para o ambiente de testes
+    rejectUnauthorized: isProducao // Trava meticulosa: em produção o TLS deve ser perfeito
   });
 
-  const urlAlvo = 'https://sefin.nfse.gov.br/SefinNacional/nfse'; 
+  const urlAlvo = isProducao 
+    ? 'https://sefin.nfse.gov.br/SefinNacional/nfse' 
+    : 'https://homologacao.sefin.nfse.gov.br/SefinNacional/nfse'; 
 
-  console.log(`🎯 [SEFIN] Disparando contra a Receita Nacional...`);
+  console.log(`🎯 [SEFIN] Disparando contra: ${urlAlvo}`);
   
   try {
     const resposta = await axios.post(urlAlvo, payloadParaEnvio, {

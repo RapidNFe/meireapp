@@ -20,8 +20,9 @@ class SerproAuthManager {
      * Obtém um Agente HTTPS e Tokens para um certificado específico
      * @param {string} certPath 
      * @param {string} certPassword 
+     * @param {boolean} isProducao
      */
-    async getTokens(certPath, certPassword) {
+    async getTokens(certPath, certPassword, isProducao = false) {
         const cacheKey = certPath;
         const agora = Date.now();
         const cached = this.tokenCache.get(cacheKey);
@@ -30,22 +31,26 @@ class SerproAuthManager {
             return {
                 bearer: cached.bearer,
                 jwt: cached.jwt,
-                agente: this._createAgent(certPath, certPassword)
+                agente: this._createAgent(certPath, certPassword, isProducao)
             };
         }
 
-        console.log(`🔄 [Soberano] Renovando tokens Serpro para o certificado: ${certPath}`);
+        console.log(`🔄 [Soberano] Renovando tokens SERPRO (${isProducao ? 'REAL' : 'TESTE'}) para o certificado: ${certPath}`);
 
         const credenciaisBase64 = Buffer.from(
             `${process.env.SERPRO_CLIENT_ID}:${process.env.SERPRO_CLIENT_SECRET}`
         ).toString('base64');
 
-        const agente = this._createAgent(certPath, certPassword);
+        const urlAuth = isProducao 
+            ? 'https://autenticacao.sapi.serpro.gov.br/authenticate'
+            : 'https://autenticacao.sapi.serpro.gov.br/authenticate'; // O Serpro usa endpoint unico, mas o mTLS define o contexto. 
+
+        const agente = this._createAgent(certPath, certPassword, isProducao);
 
         try {
             const response = await axios({
                 method: 'POST',
-                url: config.serpro.authUrl,
+                url: urlAuth,
                 headers: {
                     'Authorization': `Basic ${credenciaisBase64}`,
                     'Role-Type': 'TERCEIROS', // Pode ser 'CONTRIBUINTE' se for o próprio, mas 'TERCEIROS' costuma funcionar pra ambos
@@ -75,14 +80,14 @@ class SerproAuthManager {
         }
     }
 
-    _createAgent(certPath, certPassword) {
+    _createAgent(certPath, certPassword, isProducao = false) {
         if (!fs.existsSync(certPath)) {
             throw new Error(`Arquivo de certificado não encontrado: ${certPath}`);
         }
         return new https.Agent({
             pfx: fs.readFileSync(certPath),
             passphrase: certPassword,
-            rejectUnauthorized: config.isProducao
+            rejectUnauthorized: isProducao // Trava meticulosa
         });
     }
 }

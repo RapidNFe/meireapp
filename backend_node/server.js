@@ -12,6 +12,7 @@ const zlib = require('zlib');
 const path = require('path');
 const { encrypt, decrypt } = require('./crypto_utils');
 const forge = require('node-forge');
+const { baixarDanfsePDF } = require('./danfse_service');
 const fs = require('fs');
 const multer = require('multer');
 
@@ -122,23 +123,25 @@ app.post('/api/nacional/emitir', async (req, res) => {
         };
         payload.ambiente = prestadorDb.producao ? "1" : "2";
 
-        // 3. Aciona o Motor VORTEX
-        const resultado = await vortex.emitirNacional(payload, certPath, certPass);
+        // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
+        const resultado = await vortex.emitirNacional(payload, certPath, certPassword, prestadorDb.producao);
 
         // 4. Salva no Banco de Dados (Log de Sucesso/Chave)
         let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
         const logId = Math.random().toString(36).substring(2, 17);
 
         await run(`
-            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, status, chave_acesso, xml_nota, created, updated)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, servico, numero_nota, status, chave_acesso, xml_nota, created, updated)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             logId, 
             userId, 
             payload.tomador.cnpj, 
             payload.tomador.nome || payload.tomador.razaoSocial, 
             payload.servico.valor,
-            resultado.sucesso ? 'emitida' : 'erro',
+            payload.servico.descricao,
+            payload.numeroDPS,
+            resultado.sucesso ? 'CONCLUIDA' : 'ERRO',
             resultado.dados?.chaveAcesso || null,
             resultado.dados?.xmlDecodificado || null,
             now, 
@@ -165,6 +168,60 @@ app.post('/api/nacional/emitir', async (req, res) => {
 });
 
 // ==========================================
+// 📊 ROTA 1.0.1: RESUMO DO DASHBOARD (MÉTRICAS METICULOSAS)
+// ==========================================
+app.get('/api/dashboard/resumo/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const anoAtual = new Date().getFullYear();
+        // Formato SQLite: YYYY-MM-DD HH:MM:SS
+        const inicioAno = `${anoAtual}-01-01 00:00:00`; 
+
+        // 1. Busca o faturamento acumulado do ano
+        const somaRows = await query(`
+            SELECT SUM(valor) as total, COUNT(id) as qtd 
+            FROM notas_fiscais 
+            WHERE user = ? AND status = 'CONCLUIDA' AND created >= ?
+        `, [userId, inicioAno]);
+
+        const faturamentoTotal = somaRows[0].total || 0;
+        const qtdEmitida = somaRows[0].qtd || 0;
+        const limiteMEI = 81000;
+        const percentualUso = (faturamentoTotal / limiteMEI) * 100;
+
+        // 2. Pega as últimas 5 notas para o histórico rápido
+        const notas = await query(`
+            SELECT id, tomador_nome, valor, created, status, chave_acesso 
+            FROM notas_fiscais 
+            WHERE user = ? 
+            ORDER BY created DESC 
+            LIMIT 5
+        `, [userId]);
+
+        const notasFormatadas = notas.map(nota => ({
+            id: nota.id,
+            tomador: nota.tomador_nome,
+            valor: nota.valor,
+            data: nota.created,
+            status: nota.status,
+            chave_acesso: nota.chave_acesso
+        }));
+
+        res.status(200).json({
+            faturamento_ano: faturamentoTotal,
+            limite_mei: limiteMEI,
+            percentual_atingido: percentualUso.toFixed(2),
+            qtd_notas_emitidas: qtdEmitida,
+            notas_recentes: notasFormatadas 
+        });
+
+    } catch (error) {
+        console.error("❌ Erro no Motor do Dashboard:", error.message);
+        res.status(500).json({ erro: "Falha ao carregar métricas do dashboard." });
+    }
+});
+
+// ==========================================
 // 🛡️ ROTA 1.1: DIAGNÓSTICO CCMEI (O QUE O GOVERNO DIZ)
 // ==========================================
 app.get('/api/serpro/ccmei/:userId', async (req, res) => {
@@ -173,7 +230,7 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
         
         // 1. Busca do cofre isolado
         const results = await query(
-            `SELECT u.cnpj, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+            `SELECT u.cnpj, u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
              FROM users u 
              LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
             [userId]
@@ -195,7 +252,7 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
 
         // 2. Aciona o Serpro usando o certificado do usuário
         const resultado = await catraca.adicionar(async () => {
-            const chaves = await serproAuth.getTokens(certPath, certPass);
+            const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
             const response = await axios({
                 method: 'POST',
                 url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar',
@@ -229,14 +286,68 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
 });
 
 // ==========================================
-// 💰 ROTA 1.2: EMISSÃO DE BOLETO DAS (MEI)
+// 📄 ROTA 1.3: BUSCAR PDF DO DANFSE
+// ==========================================
+app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
+    try {
+        const { userId, chaveAcesso } = req.params;
+
+        // 1. Busca do cofre isolado
+        const results = await query(
+            `SELECT u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+             FROM users u 
+             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
+            [userId]
+        );
+
+        if (results.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
+        const userDb = results[0];
+
+        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
+            return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
+        }
+
+        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPass = decrypt(userDb.senha_encriptada);
+
+        if (!certPass) {
+             return res.status(403).json({ error: "Falha na descriptografia da senha." });
+        }
+
+        // 2. Monta o túnel mTLS
+        const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
+        
+        // 3. Busca o PDF
+        const ambiente = userDb.producao ? '1' : '2';
+        const pdfBuffer = await baixarDanfsePDF(chaveAcesso, ambiente, chaves.agente);
+
+        // 4. Converte para Base64
+        const pdfBase64 = pdfBuffer.toString('base64');
+
+        res.json({
+            sucesso: true,
+            pdfBase64: pdfBase64,
+            nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`
+        });
+
+    } catch (error) {
+        console.error("❌ Erro ao buscar DANFSe:", error.message);
+        if (error.message.includes('ERRO_404')) {
+            return res.status(404).json({ sucesso: false, erro: "O Governo ainda não gerou o PDF desta nota. Tente em alguns minutos." });
+        }
+        res.status(500).json({ sucesso: false, erro: error.message });
+    }
+});
+
+// ==========================================
+// 💰 ROTA 1.4: EMISSÃO DE BOLETO DAS (MEI)
 // ==========================================
 app.post('/api/serpro/das/emitir', async (req, res) => {
     const { userId, periodo } = req.body; 
 
     try {
         const results = await query(
-            `SELECT u.cnpj, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+            `SELECT u.cnpj, u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
              FROM users u 
              LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
             [userId]
@@ -257,7 +368,7 @@ app.post('/api/serpro/das/emitir', async (req, res) => {
         }
 
         const resultado = await catraca.adicionar(async () => {
-            const chaves = await serproAuth.getTokens(certPath, certPass);
+            const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
             const response = await axios({
                 method: 'POST',
                 url: 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Emitir',

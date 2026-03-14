@@ -4,15 +4,18 @@ const { assinarComNodeForge } = require('./assinador_soberano');
 const fs = require('fs');
 const zlib = require('zlib');
 
+const config = require('./config');
+
 /**
  * VORTEX - MOTOR DINÂMICO DE EMISSÃO NACIONAL
  * 
  * @param {Object} payload - Dados da nota (Prestador, Tomador, Serviço)
  * @param {string} certPath - Caminho absoluto ou relativo para o arquivo .pfx
  * @param {string} certPassword - Senha do certificado
+ * @param {boolean} isProducao - Trava de segurança Real vs Teste do Usuário
  * @returns {Promise<Object>} - Resultado da emissão
  */
-async function emitirNacional(payload, certPath, certPassword) {
+async function emitirNacional(payload, certPath, certPassword, isProducao) {
   console.log(`🚀 [VORTEX] Iniciando emissão para CNPJ ${payload.prestador.cnpj}...`);
 
   try {
@@ -26,8 +29,8 @@ async function emitirNacional(payload, certPath, certPassword) {
     console.log("🖋️ [VORTEX] XML Assinado com sucesso.");
 
     // 3. TRANSMISSÃO ADN (Sefin Nacional)
-    console.log("🌐 [VORTEX] Transmitindo para o Ambiente de Dados Nacional...");
-    const resposta = await enviarParaADN(xmlAssinado, certPath, certPassword);
+    console.log(`🌐 [VORTEX] Transmitindo para o Ambiente [${isProducao ? 'PRODUÇÃO' : 'TESTE'}]...`);
+    const resposta = await enviarParaADN(xmlAssinado, certPath, certPassword, isProducao);
 
     if (resposta.sucesso && resposta.dados.chaveAcesso) {
       console.log(`🏆 [VORTEX] SUCESSO! Chave: ${resposta.dados.chaveAcesso}`);
