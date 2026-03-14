@@ -76,9 +76,29 @@ app.use((req, res, next) => {
     next();
 });
 
+// 🔄 PROXY INTELIGENTE PARA POCKETBASE
+// Qualquer coisa que não bater nas rotas abaixo será enviada para o PocketBase
+const proxy = require('express-http-proxy');
+const pbProxy = proxy('http://127.0.0.1:8090', {
+    proxyReqPathResolver: (req) => req.originalUrl,
+    // Garante que o corpo da requisição seja passado corretamente (importante para arquivos)
+    parseReqBody: false 
+});
+
+// Aplicar o proxy para rotas do PocketBase conhecidas
+app.use('/api/collections', pbProxy);
+app.use('/api/files', pbProxy);
+app.use('/api/admins', pbProxy);
+app.use('/api/health', pbProxy);
+app.use('/api/settings', pbProxy);
+
 // Middleware para capturar 404 e avisar no console
 const catch404 = (req, res, next) => {
     console.warn(`⚠️ [404] Rota não encontrada no Node: ${req.method} ${req.url}`);
+    // Se caiu aqui e começa com /api, talvez seja algo do PocketBase não mapeado acima
+    if (req.url.startsWith('/api')) {
+        return pbProxy(req, res, next);
+    }
     res.status(404).json({ error: "Rota não encontrada no servidor Node.js (Meire API)" });
 };
 
