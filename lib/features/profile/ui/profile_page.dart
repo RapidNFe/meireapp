@@ -362,7 +362,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           }
                         })(),
                       ),
-                    ]
+                    ],
+                    const SizedBox(height: 24),
+                    if (!_isEditing) 
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => setState(() => _isEditing = true),
+                          icon: const Icon(Icons.cloud_upload_outlined),
+                          label: const Text('Atualizar Certificado / Senha'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: MeireTheme.accentColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
                   ]
                 ],
               ),

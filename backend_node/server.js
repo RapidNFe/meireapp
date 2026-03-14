@@ -501,17 +501,21 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         const registro = await pb.collection('cofre_certificados').create(formData);
 
         // 4. Update de sinalização no Users (sem guardar a senha/arquivo aqui!)
-        let vencimentoMsg = "Aguardando";
+        const updateData = {
+            possui_certificado: true,
+            arquivo_pfx: null,
+            senha_pfx: ''
+        };
+
         if (dataVencimentoStr) {
-            await pb.collection('users').update(userId, {
-                vencimento_pfx: dataVencimentoStr,
-                possui_certificado: true,
-                // Opcional: apagar as colunas antigas 
-                arquivo_pfx: null,
-                senha_pfx: ''
-            });
-            vencimentoMsg = `Válido até ${new Date(dataVencimentoStr).toLocaleDateString('pt-BR')}`;
+            updateData.vencimento_pfx = dataVencimentoStr;
         }
+
+        await pb.collection('users').update(userId, updateData);
+
+        const vencimentoMsg = dataVencimentoStr 
+            ? `Válido até ${new Date(dataVencimentoStr).toLocaleDateString('pt-BR')}`
+            : "Certificado Ativo (Data não extraída)";
 
         // A senha morre quando essa função limpa o stack!
         res.status(201).json({ 
