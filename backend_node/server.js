@@ -76,35 +76,79 @@ app.use((req, res, next) => {
     next();
 });
 
-// 🔄 PROXY INTELIGENTE PARA POCKETBASE
-// Qualquer coisa que não bater nas rotas abaixo será enviada para o PocketBase
-const proxy = require('express-http-proxy');
-const pbProxy = proxy('http://127.0.0.1:8090', {
-    proxyReqPathResolver: (req) => req.originalUrl,
-    // Garante que o corpo da requisição seja passado corretamente (importante para arquivos)
-    parseReqBody: false 
-});
+// GATEWAY INTELIGENTE - REDIRECIONAMENTO TOTAL
+// Qualquer rota não capturada acima será enviada para o PocketBase
+app.use('/', proxy('http://127.0.0.1:8090', {
+    proxyReqPathResolver: (req) => {
+        console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
+        return req.originalUrl;
+    },
+    // Mantém o corpo da requisição intacto (Vital para Login e Uploads)
+    parseReqBody: false,
+    limit: '10mb'
+}));
 
-// Aplicar o proxy para rotas do PocketBase conhecidas
-app.use('/api/collections', pbProxy);
-app.use('/api/files', pbProxy);
-app.use('/api/admins', pbProxy);
-app.use('/api/health', pbProxy);
-app.use('/api/settings', pbProxy);
-
-// Middleware para capturar 404 e avisar no console
-const catch404 = (req, res, next) => {
-    console.warn(`⚠️ [404] Rota não encontrada no Node: ${req.method} ${req.url}`);
-    // Se caiu aqui e começa com /api, talvez seja algo do PocketBase não mapeado acima
-    if (req.url.startsWith('/api')) {
-        return pbProxy(req, res, next);
-    }
-    res.status(404).json({ error: "Rota não encontrada no servidor Node.js (Meire API)" });
+// Middleware para capturar 404 residuais (Caso o proxy falhe)
+const catch404 = (req, res) => {
+    console.warn(`⚠️ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ error: "Recurso não encontrado no ecossistema Meire." });
 };
 
 // 🟢 ROTA DE STATUS (SAÚDE DO SISTEMA)
-app.get('/serpro/status', (req, res) => {
-    res.json({ status: "Servidor Online", ambiente: config.isProducao ? "producao" : "homologacao" });
+app.get('/api/status', (req, res) => {
+    res.json({ 
+        sucesso: true,
+        status: "OPERACIONAL",
+        motor: "Meire Engine v2.2.0",
+        ambiente: config.isProducao ? "PRODUÇÃO" : "TESTES",
+        vault: "Conectado",
+        timestmap: new Date().toISOString()
+    });
+});
+
+// 🔍 ROTA 6: BUSCA DE CNPJ (BRASIL API)
+app.get('/api/cnpj/:cnpj', async (req, res) => {
+    try {
+        const { cnpj } = req.params;
+        const cleanCnpj = cnpj.replace(/\D/g, '');
+        
+        console.log(`🔍 [CNPJ] Buscando dados da empresa: ${cleanCnpj}`);
+        
+        const response = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`, {
+            timeout: 5000 // 5 segundos de limite
+        });
+
+        if (response.data) {
+            const data = response.data;
+            
+            // Verifica se a empresa está ativa
+            if (data.descricao_situacao_cadastral !== 'ATIVA') {
+                return res.status(400).json({ 
+                    sucesso: false, 
+                    erro: 'Este CNPJ não está ATIVO na Receita Federal.' 
+                });
+            }
+
+            res.json({
+                sucesso: true,
+                razao_social: data.razao_social,
+                nome_fantasia: data.nome_fantasia || data.razao_social,
+                situacao: data.descricao_situacao_cadastral,
+                cep: data.cep,
+                logradouro: data.logradouro,
+                numero: data.numero,
+                bairro: data.bairro,
+                municipio: data.municipio,
+                uf: data.uf
+            });
+        }
+    } catch (error) {
+        console.error("❌ [CNPJ] Erro na consulta:", error.message);
+        if (error.response?.status === 404) {
+            return res.status(404).json({ sucesso: false, erro: "CNPJ não encontrado na base do Governo." });
+        }
+        res.status(500).json({ sucesso: false, erro: "Falha técnica ao consultar o Governo. Tente novamente." });
+    }
 });
 
 // ==========================================

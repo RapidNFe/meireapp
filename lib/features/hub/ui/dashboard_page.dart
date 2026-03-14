@@ -75,7 +75,8 @@ class _HubPageState extends ConsumerState<HubPage> {
           annualRevenueString,
           meiLimitString,
           remainingString,
-          userRecord?.getStringValue('status_registro') ?? 'conta_criada'),
+          userRecord?.getStringValue('status_registro') ?? 'conta_criada',
+          userRecord),
       const InvoiceHistoryPage(),
       const CustomerCentralPage(),
       const ProfilePage(),
@@ -195,7 +196,8 @@ class _HubPageState extends ConsumerState<HubPage> {
       String annualRevenueString,
       String meiLimitString,
       String remainingString,
-      String statusRegistro) {
+      String statusRegistro,
+      dynamic userRecord) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Center(
@@ -206,6 +208,8 @@ class _HubPageState extends ConsumerState<HubPage> {
               final bool isPending = statusRegistro == 'aguardando_procuracao' || statusRegistro == 'conta_criada';
 
               Widget statusCard = Container();
+              final bool possessesCert = userRecord?.getBoolValue('possui_certificado') ?? false;
+
               if (isPending) {
                 statusCard = Padding(
                   padding: const EdgeInsets.only(bottom: 24.0),
@@ -231,6 +235,41 @@ class _HubPageState extends ConsumerState<HubPage> {
                               SizedBox(height: 4),
                               Text(
                                 "Sua e-Procuração está sendo validada pelos nossos contadores. Isso costuma levar pouco tempo. Assim que confirmada, seu emissor de notas será destravado.",
+                                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              } else if (statusRegistro == 'ativado' && possessesCert) {
+                // STATUS 100% VERDINHO E OPERACIONAL
+                statusCard = Padding(
+                  padding: const EdgeInsets.only(bottom: 24.0),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.verified_user_rounded, color: Colors.green, size: 32),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "SISTEMA 100% OPERACIONAL",
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                "Seu motor de emissão está calibrado e o cofre blindado ativo. Você já pode emitir suas NFS-e com segurança total.",
                                 style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
                               ),
                             ],
