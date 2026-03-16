@@ -12,6 +12,7 @@ import 'package:meire/features/clients/provider/client_provider.dart';
 import 'package:meire/features/clients/models/client_model.dart';
 import 'package:shimmer/shimmer.dart';
 
+// ZELADORIA: Ativando suporte a competência retroativa no formulário
 class NfseFormPage extends ConsumerStatefulWidget {
   const NfseFormPage({super.key});
 
@@ -215,7 +216,10 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
           Navigator.pushReplacementNamed(
             context, 
             '/nfse_success', 
-            arguments: responseData, // Passa o {sucesso, chaveAcesso, idNota}
+            arguments: {
+              ...?responseData as Map<String, dynamic>?,
+              'competencia': "${_obterNomeMes(_mesCompetencia.month)} / ${_mesCompetencia.year}",
+            },
           );
         }
       } catch (e) {

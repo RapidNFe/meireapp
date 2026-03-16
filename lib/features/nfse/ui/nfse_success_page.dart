@@ -89,6 +89,12 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
                       const Divider(color: MeireTheme.iceGray),
                       const SizedBox(height: 16),
                       _buildInfoRow('Chave de Acesso Nacional', chaveAcesso),
+                      if (_invoiceData!['competencia'] != null) ...[
+                        const SizedBox(height: 16),
+                        const Divider(color: MeireTheme.iceGray),
+                        const SizedBox(height: 16),
+                        _buildInfoRow('Mês de Referência (Competência)', _invoiceData!['competencia']),
+                      ],
                     ],
                   ),
                 ),
