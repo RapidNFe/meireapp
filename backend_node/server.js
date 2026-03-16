@@ -2,6 +2,7 @@ const config = require('./config');
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const proxy = require('express-http-proxy');
 
 // Importando a sua Engenharia
 const serproAuth = require('./serpro_auth');
@@ -22,8 +23,10 @@ const upload = multer({
     limits: { fileSize: 500 * 1024 } // 500KB Limite para certificados maiores
 });
 
-// Caminho do Banco do PocketBase
-const DB_PATH = 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
+// 🗄️ Caminho do Banco do PocketBase (Conforme orientação do Comandante)
+const DB_PATH = config.isProducao 
+    ? '/home/ubuntu/pb_data/data.db' 
+    : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
 
 function query(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -58,11 +61,12 @@ console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: 
 
 const app = express();
 
-// LIBERAR CORS PARA O CHROME NO NOTEBOOK
+// CONFIGURAÇÃO DE SEGURANÇA CORS (PRODUÇÃO)
 app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    origin: ['https://meireapp.com.br', 'http://localhost:3000', 'http://127.0.0.1:3000'], 
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true
 }));
 
 app.use(express.json());
@@ -70,23 +74,13 @@ app.use(express.json());
 // Log de Debug para todas as requisições
 app.use((req, res, next) => {
     console.log(`🌐 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
-    if (Object.keys(req.body).length > 0) {
-        console.log(`   📦 Body keys: ${Object.keys(req.body).join(', ')}`);
+    if (Object.keys(req.body || {}).length > 0) {
+        console.log(`   📦 Body keys: ${Object.keys(req.body || {}).join(', ')}`);
     }
     next();
 });
 
-// GATEWAY INTELIGENTE - REDIRECIONAMENTO TOTAL
-// Qualquer rota não capturada acima será enviada para o PocketBase
-app.use('/', proxy('http://127.0.0.1:8090', {
-    proxyReqPathResolver: (req) => {
-        console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
-        return req.originalUrl;
-    },
-    // Mantém o corpo da requisição intacto (Vital para Login e Uploads)
-    parseReqBody: false,
-    limit: '10mb'
-}));
+
 
 // Middleware para capturar 404 residuais (Caso o proxy falhe)
 const catch404 = (req, res) => {
@@ -729,6 +723,34 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         pb.authStore.clear(); // Fechar portões!
     }
 });
+
+// 🔄 GATEWAY INTELIGENTE (ESTRATÉGIA MEIRE) - REDIRECIONAMENTO PARA POCKETBASE
+app.use('/', proxy('http://127.0.0.1:8090', {
+    proxyReqPathResolver: (req) => {
+        console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
+        return req.originalUrl;
+    },
+    // Vital para não corromper uploads de arquivos ou corpos de login
+    parseReqBody: false,
+    // Aumentamos o timeout para suportar SSE (Realtime) do PocketBase
+    proxyTimeout: 0, 
+    userResHeaderDecorator: (headers, userReq, userRes, proxyReq, proxyRes) => {
+        // Para Realtime (SSE), precisamos evitar que o proxy faça buffer
+        if (userReq.originalUrl.includes('/api/realtime')) {
+            headers['cache-control'] = 'no-cache';
+            headers['connection'] = 'keep-alive';
+            headers['x-accel-buffering'] = 'no'; // Importante se houver Nginx/Cloudflare
+        }
+
+        // Força os headers de CORS da Meire para evitar bloqueios no Flutter
+        headers['access-control-allow-origin'] = 'https://meireapp.com.br';
+        headers['access-control-allow-credentials'] = 'true';
+        headers['access-control-allow-methods'] = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
+        headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With, Accept';
+        
+        return headers;
+    }
+}));
 
 // Captura rotas não encontradas (Deve ser a última antes do listen)
 app.use(catch404);

@@ -66,16 +66,14 @@ class SecureAuthStore extends AuthStore {
 
 // Configuração de Ambientes
 const String _prodUrl = 'https://api.meireapp.com.br';
-const String _devPbUrl = 'http://127.0.0.1:8090';
-const String _devApiUrl = 'http://127.0.0.1:3000';
+const String _devApiUrl = 'http://127.0.0.1:3000'; // Gateway Inteligente (Node)
 
-// URL do PocketBase (Banco de Dados)
-const String meirePbUrl = kDebugMode ? _devPbUrl : _prodUrl;
-
-// URL da API Node.js (Cofre, Emissão, Dashboard)
+// Em desenvolvimento, apontamos TUDO para o Gateway (3000) para testar o Proxy/CORS localmente
+// Em produção, apontamos para o domínio oficial que faz o roteamento
+const String meirePbUrl = kDebugMode ? _devApiUrl : _prodUrl;
 const String meireApiUrl = kDebugMode ? _devApiUrl : _prodUrl;
 
-// Retrocompatibilidade (para não quebrar outros arquivos agora)
+// Retrocompatibilidade
 const String meireBaseUrl = meirePbUrl;
 
 // Create the global PocketBase client instance with secure storage

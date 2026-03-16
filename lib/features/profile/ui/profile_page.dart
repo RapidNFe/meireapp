@@ -18,7 +18,8 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isLoadingSwitch = false;
-  bool _isEditing = false;
+  bool _isEditingProfile = false;
+  bool _isEditingCert = false;
   bool _isSaving = false;
 
   final _imController = TextEditingController();
@@ -98,8 +99,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       
       if (mounted) {
         setState(() {
-          _isEditing = false;
+          _isEditingProfile = false;
+          _isEditingCert = false;
           _isSaving = false;
+          _pickedFile = null; // Limpa o arquivo após salvar
         });
         HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -305,81 +308,118 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
-                  if (_isEditing) ...[
-                    OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      onPressed: () async {
-                        final result = await FilePicker.platform.pickFiles(
-                          type: FileType.custom,
-                          allowedExtensions: ['pfx'],
-                          withData: true,
-                        );
-                        if (result != null) {
-                          setState(() => _pickedFile = result.files.first);
-                        }
-                      },
-                      icon: const Icon(Icons.upload_file),
-                      label: Text(_pickedFile != null ? 'Arquivo: ${_pickedFile!.name}' : 'Selecionar Certificado .pfx'),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _senhaPfxController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Senha do Certificado',
-                        prefixIcon: Icon(Icons.password),
-                      ),
-                    ),
-                  ] else ...[
-                    _InfoRow(
-                      label: 'Arquivo PFX', 
-                      value: !user.getBoolValue('possui_certificado') ? '❌ Não carregado' : '✅ Protegido no Cofre (Isolado)',
-                      isPending: !user.getBoolValue('possui_certificado'),
-                    ),
-                    const Divider(height: 24),
-                    _InfoRow(
-                      label: 'Senha', 
-                      value: !user.getBoolValue('possui_certificado') ? '❌ Pendente' : '✅ Configurada e Criptografada 🔐',
-                      isPending: !user.getBoolValue('possui_certificado'),
-                    ),
-                    if (user.getStringValue('vencimento_pfx').isNotEmpty) ...[
-                      const Divider(height: 24),
-                      _InfoRow(
-                        label: 'Vencimento', 
-                        value: (() {
-                          try {
-                            final dataStr = user.getStringValue('vencimento_pfx');
-                            final data = DateTime.parse(dataStr).toLocal();
-                            final diferenca = data.difference(DateTime.now()).inDays;
-                            final dataFormatada = '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
-                            if (diferenca < 0) return '❌ Expirado em $dataFormatada';
-                            if (diferenca <= 30) return '⚠️ Vence em $diferenca dias ($dataFormatada)';
-                            return '✅ Válido até $dataFormatada';
-                          } catch (_) {
-                            return 'Formato inválido';
-                          }
-                        })(),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    if (!_isEditing) 
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => setState(() => _isEditing = true),
-                          icon: const Icon(Icons.cloud_upload_outlined),
-                          label: const Text('Atualizar Certificado / Senha'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: MeireTheme.accentColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _isEditingCert 
+                    ? Column(
+                      key: const ValueKey('editing'),
+                      children: [
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 48),
+                          ),
+                          onPressed: () async {
+                            final result = await FilePicker.platform.pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: ['pfx'],
+                              withData: true,
+                            );
+                            if (result != null) {
+                              setState(() => _pickedFile = result.files.first);
+                            }
+                          },
+                          icon: const Icon(Icons.upload_file),
+                          label: Text(_pickedFile != null ? 'Arquivo: ${_pickedFile!.name}' : 'Selecionar Certificado .pfx'),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _senhaPfxController,
+                          obscureText: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Senha do Certificado',
+                            prefixIcon: Icon(Icons.password),
                           ),
                         ),
-                      ),
-                  ]
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => setState(() {
+                                  _isEditingCert = false;
+                                  _pickedFile = null;
+                                }),
+                                child: const Text('Cancelar'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isSaving ? null : _saveProfile,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: _isSaving 
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Text('Salvar no Cofre'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                    : Column(
+                      key: const ValueKey('display'),
+                      children: [
+                        _InfoRow(
+                          label: 'Arquivo PFX', 
+                          value: !user.getBoolValue('possui_certificado') ? '❌ Não carregado' : '✅ Protegido no Cofre (Isolado)',
+                          isPending: !user.getBoolValue('possui_certificado'),
+                        ),
+                        const Divider(height: 24),
+                        _InfoRow(
+                          label: 'Senha', 
+                          value: !user.getBoolValue('possui_certificado') ? '❌ Pendente' : '✅ Configurada e Criptografada 🔐',
+                          isPending: !user.getBoolValue('possui_certificado'),
+                        ),
+                        if (user.getStringValue('vencimento_pfx').isNotEmpty) ...[
+                          const Divider(height: 24),
+                          _InfoRow(
+                            label: 'Vencimento', 
+                            value: (() {
+                              try {
+                                final dataStr = user.getStringValue('vencimento_pfx');
+                                final data = DateTime.parse(dataStr).toLocal();
+                                final diferenca = data.difference(DateTime.now()).inDays;
+                                final dataFormatada = '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
+                                if (diferenca < 0) return '❌ Expirado em $dataFormatada';
+                                if (diferenca <= 30) return '⚠️ Vence em $diferenca dias ($dataFormatada)';
+                                return '✅ Válido até $dataFormatada';
+                              } catch (_) {
+                                return 'Formato inválido';
+                              }
+                            })(),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => setState(() => _isEditingCert = true),
+                            icon: const Icon(Icons.cloud_upload_outlined),
+                            label: const Text('Atualizar Certificado / Senha'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: MeireTheme.accentColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
 
@@ -392,17 +432,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 icon: Icons.person_outline,
                 extra: TextButton.icon(
                   onPressed: _isSaving ? null : () {
-                    if (_isEditing) {
+                    if (_isEditingProfile) {
                       _saveProfile();
                     } else {
                       _initializeControllers();
-                      setState(() => _isEditing = true);
+                      setState(() => _isEditingProfile = true);
                     }
                   },
-                  icon: Icon(_isEditing ? Icons.check : Icons.edit),
-                  label: Text(_isEditing ? 'Salvar' : 'Editar'),
+                  icon: Icon(_isEditingProfile ? Icons.check : Icons.edit),
+                  label: Text(_isEditingProfile ? 'Salvar' : 'Editar'),
                   style: TextButton.styleFrom(
-                    foregroundColor: _isEditing ? Colors.green : MeireTheme.accentColor,
+                    foregroundColor: _isEditingProfile ? Colors.green : MeireTheme.accentColor,
                   ),
                 ),
                 children: [
@@ -414,37 +454,41 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const Divider(height: 24),
                   _InfoRow(label: 'CNPJ', value: _formatDocument(cnpj)),
                   const Divider(height: 24),
-                  if (_isEditing)
-                    Column(
-                      children: [
-                        TextFormField(
-                          controller: _imController,
-                          decoration: const InputDecoration(labelText: 'Inscrição Municipal'),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _cepController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(labelText: 'CEP'),
-                        ),
-                      ],
-                    )
-                  else
-                    Column(
-                      children: [
-                        _InfoRow(
-                          label: 'Insc. Municipal', 
-                          value: user.getStringValue('inscricao_municipal').isEmpty ? '⚠️ Pendente' : user.getStringValue('inscricao_municipal'),
-                          isPending: user.getStringValue('inscricao_municipal').isEmpty,
-                        ),
-                        const Divider(height: 24),
-                        _InfoRow(
-                          label: 'CEP', 
-                          value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
-                          isPending: user.getStringValue('cep').isEmpty,
-                        ),
-                      ],
-                    ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _isEditingProfile
+                    ? Column(
+                        key: const ValueKey('editing_profile'),
+                        children: [
+                          TextFormField(
+                            controller: _imController,
+                            decoration: const InputDecoration(labelText: 'Inscrição Municipal'),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _cepController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'CEP'),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        key: const ValueKey('display_profile'),
+                        children: [
+                          _InfoRow(
+                            label: 'Insc. Municipal', 
+                            value: user.getStringValue('inscricao_municipal').isEmpty ? '⚠️ Pendente' : user.getStringValue('inscricao_municipal'),
+                            isPending: user.getStringValue('inscricao_municipal').isEmpty,
+                          ),
+                          const Divider(height: 24),
+                          _InfoRow(
+                            label: 'CEP', 
+                            value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
+                            isPending: user.getStringValue('cep').isEmpty,
+                          ),
+                        ],
+                      ),
+                  ),
                 ],
               ),
 
