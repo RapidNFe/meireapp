@@ -219,7 +219,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             '/nfse_success', 
             arguments: {
               ...?responseData as Map<String, dynamic>?,
-              'competencia': DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
+              'competencia': DateFormat("dd 'de' MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
             },
           );
         }
@@ -470,7 +470,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
           if (picked != null) {
             setState(() {
-              _mesCompetencia = DateTime(picked.year, picked.month, 1);
+              _mesCompetencia = picked;
             });
           }
         },
@@ -486,7 +486,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
+                  DateFormat("dd 'de' MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
