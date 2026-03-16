@@ -226,6 +226,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
 
     try {
         console.log(`📡 [Nacional] Requisição recebida do usuário: ${userId}`);
+        console.log(`📌 [Competência] Mês de Referência recebido: ${payload?.competencia || 'Não informado (usará hoje)'}`);
 
         // 1. Busca dados do Prestador
         const results = await query(`SELECT cnpj, razao_social, producao, inscricao_municipal FROM users WHERE id = ?`, [userId]);
@@ -252,6 +253,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
         payload.ambiente = prestadorDb.producao ? "1" : "2";
 
         // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
+        console.log(`📡 [VORTEX] Payload Final para Motor:`, JSON.stringify({ ...payload, certPath: 'redacted' }, null, 2));
         const resultado = await vortex.emitirNacional(payload, certPath, certPass, prestadorDb.producao);
 
         let novoRegistroId = null;
@@ -287,12 +289,14 @@ app.post('/api/nacional/emitir', async (req, res) => {
         }
 
         if (resultado.sucesso) {
+            console.log(`✅ [Nacional] Nota emitida com sucesso! Chave: ${resultado.dados.chaveAcesso}`);
             res.json({ 
                 sucesso: true, 
                 chaveAcesso: resultado.dados.chaveAcesso,
                 idNota: novoRegistroId
             });
         } else {
+            console.error("❌ [Nacional] O Governo REJEITOU a nota:", JSON.stringify(resultado.dados, null, 2));
             res.status(400).json({ 
                 sucesso: false, 
                 erros: resultado.dados?.erros || [{ Descricao: "O Governo rejeitou a nota. Verifique o seu certificado e dados." }] 
