@@ -10,6 +10,7 @@ import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
 import 'package:meire/features/clients/ui/customer_central_page.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
@@ -41,8 +42,7 @@ class _HubPageState extends ConsumerState<HubPage> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final authService = ref.watch(authServiceProvider);
-    final userRecord = authService.currentUser;
+    final userRecord = ref.watch(userProvider);
     
     var fullName = userRecord?.getStringValue('name') ?? '';
     if (fullName.isEmpty) fullName = userRecord?.getStringValue('nome_fantasia') ?? '';

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import '../../../core/services/pocketbase_service.dart';
-import '../../auth/services/auth_service.dart';
 import 'dart:async';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:http/http.dart' as http;
@@ -48,8 +47,7 @@ class NotaFiscal {
 
 final historicoNotasProvider = StreamProvider.autoDispose<List<NotaFiscal>>((ref) async* {
   final pb = ref.watch(pbProvider);
-  final authService = ref.watch(authServiceProvider);
-  final user = authService.currentUser;
+  final user = ref.watch(userProvider);
 
   if (user == null) {
     yield [];
@@ -126,9 +124,9 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
   ref.keepAlive();
 
   final pb = ref.watch(pbProvider);
-  final authService = ref.watch(authServiceProvider);
+  final user = ref.watch(userProvider);
 
-  if (authService.currentUser == null) {
+  if (user == null) {
     return RevenueStats.empty();
   }
 
@@ -136,7 +134,7 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
     // Busca apenas as notas do ano atual para otimizar velocidade
     final records = await pb.collection('notas_fiscais').getFullList(
           sort: '-created',
-          filter: 'user = "${authService.currentUser!.id}" && created >= "${DateTime.now().year}-01-01 00:00:00"',
+          filter: 'user = "${user.id}" && created >= "${DateTime.now().year}-01-01 00:00:00"',
         );
 
     final notas = records.map((e) => e.toJson()).toList();
@@ -220,8 +218,7 @@ class ImpostoEstimativa {
 
 final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async {
   ref.keepAlive(); // Cacheia o resultado da estimativa
-  final authService = ref.watch(authServiceProvider);
-  final user = authService.currentUser;
+  final user = ref.watch(userProvider);
 
   if (user == null) {
     return ImpostoEstimativa.empty();
@@ -266,8 +263,7 @@ class HistoricoMes {
 
 final historicoFaturamentoProvider = FutureProvider<List<HistoricoMes>>((ref) async {
   ref.keepAlive(); // Mantém o gráfico carregado instantaneamente
-  final authService = ref.watch(authServiceProvider);
-  final user = authService.currentUser;
+  final user = ref.watch(userProvider);
 
   if (user == null) return [];
 

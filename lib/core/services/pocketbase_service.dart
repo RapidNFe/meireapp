@@ -87,3 +87,10 @@ final pbProvider = Provider<PocketBase>((ref) => pb);
 final pbAuthChangeProvider = StreamProvider<AuthStoreEvent>((ref) {
   return pb.authStore.onChange;
 });
+
+// Provider reativo do Usuário Logado - ESSENCIAL PARA REATIVIDADE DO APP
+final userProvider = Provider<RecordModel?>((ref) {
+  // Observa mudanças no estado de autenticação para invalidar este provider
+  ref.watch(pbAuthChangeProvider);
+  return pb.authStore.record;
+});

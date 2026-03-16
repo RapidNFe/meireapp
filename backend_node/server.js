@@ -23,10 +23,13 @@ const upload = multer({
     limits: { fileSize: 500 * 1024 } // 500KB Limite para certificados maiores
 });
 
-// 🗄️ Caminho do Banco do PocketBase (Conforme orientação do Comandante)
 const DB_PATH = config.isProducao 
     ? '/home/ubuntu/pb_data/data.db' 
     : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
+
+const STORAGE_PATH = config.isProducao
+    ? '/home/ubuntu/pb_data/storage/cofrecertific00'
+    : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00';
 
 function query(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -63,7 +66,13 @@ const app = express();
 
 // CONFIGURAÇÃO DE SEGURANÇA CORS (PRODUÇÃO)
 app.use(cors({
-    origin: ['https://meireapp.com.br', 'http://localhost:3000', 'http://127.0.0.1:3000'], 
+    origin: [
+        'https://meireapp.com.br', 
+        'https://www.meireapp.com.br', 
+        'http://localhost:3000', 
+        'http://127.0.0.1:3000',
+        'http://localhost:55660' // Porta comum do Flutter Web debug
+    ], 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true
@@ -175,7 +184,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
             });
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', prestadorDb.cofre_id, prestadorDb.arquivo_pfx);
+        const certPath = path.resolve(STORAGE_PATH, prestadorDb.cofre_id, prestadorDb.arquivo_pfx);
         const certPass = decrypt(prestadorDb.senha_encriptada);
 
         if (!certPass) {
@@ -311,7 +320,7 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
             return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
         const certPass = decrypt(userDb.senha_encriptada);
 
         if (!certPass) {
@@ -375,7 +384,7 @@ app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
             return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
         const certPass = decrypt(userDb.senha_encriptada);
 
         if (!certPass) {
@@ -730,8 +739,19 @@ app.use('/', proxy('http://127.0.0.1:8090', {
         console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
         return req.originalUrl;
     },
-    // Vital para não corromper uploads de arquivos ou corpos de login
-    parseReqBody: false,
+    // A MÁGICA: Empacota o body de novo se o Node já o tiver consumido (express.json)
+    proxyReqBodyDecorator: function(bodyContent, srcReq) {
+        if (['POST', 'PATCH', 'PUT'].includes(srcReq.method) && srcReq.body && Object.keys(srcReq.body).length > 0) {
+            return JSON.stringify(srcReq.body);
+        }
+        return bodyContent;
+    },
+    proxyReqOptDecorator: function(proxyReqOpts, srcReq) {
+        if (['POST', 'PATCH', 'PUT'].includes(srcReq.method) && srcReq.body && Object.keys(srcReq.body).length > 0) {
+            proxyReqOpts.headers['Content-Type'] = 'application/json';
+        }
+        return proxyReqOpts;
+    },
     // Aumentamos o timeout para suportar SSE (Realtime) do PocketBase
     proxyTimeout: 0, 
     userResHeaderDecorator: (headers, userReq, userRes, proxyReq, proxyRes) => {
@@ -743,7 +763,15 @@ app.use('/', proxy('http://127.0.0.1:8090', {
         }
 
         // Força os headers de CORS da Meire para evitar bloqueios no Flutter
-        headers['access-control-allow-origin'] = 'https://meireapp.com.br';
+        const allowedOrigins = [
+            'https://meireapp.com.br', 
+            'https://www.meireapp.com.br', 
+            'http://localhost:3000', 
+            'http://127.0.0.1:3000',
+            'http://localhost:55660'
+        ];
+        const origin = userReq.headers.origin;
+        headers['access-control-allow-origin'] = allowedOrigins.includes(origin) ? origin : 'https://meireapp.com.br';
         headers['access-control-allow-credentials'] = 'true';
         headers['access-control-allow-methods'] = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
         headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With, Accept';

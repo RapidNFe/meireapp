@@ -52,17 +52,19 @@ class MeireApp extends ConsumerWidget {
     ref.listen(pbAuthChangeProvider, (previous, next) {
       if (next.hasValue) {
         final event = next.value;
-        if (event != null) {
-          if (event.token.isEmpty || event.record == null) {
-            // User logged out entirely, throw them to login instantly
-            navigatorKey.currentState
-                ?.pushNamedAndRemoveUntil('/login', (route) => false);
-          } else {
-            // Re-authenticated properly, move to hub if we are on login screen
-            final eventIsAdmin = event.record?.getStringValue('email') == 'thiago514@hotmail.com';
-            navigatorKey.currentState
-                ?.pushNamedAndRemoveUntil(eventIsAdmin ? '/admin_hub' : '/hub', (route) => false);
-          }
+        if (event == null) return;
+
+        final isLoggedOut = event.token.isEmpty || event.record == null;
+        
+        // Só redirecionamos se houver uma mudança real de status (Login -> Logout ou vice-versa)
+        // Caso contrário, deixamos o usuário onde ele está (ex: salvando perfil)
+        final wasLoggedOut = previous?.value?.token.isEmpty ?? !isAuthenticated;
+
+        if (isLoggedOut && !wasLoggedOut) {
+          navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+        } else if (!isLoggedOut && wasLoggedOut) {
+          final eventIsAdmin = event.record?.getStringValue('email') == 'thiago514@hotmail.com';
+          navigatorKey.currentState?.pushNamedAndRemoveUntil(eventIsAdmin ? '/admin_hub' : '/hub', (route) => false);
         }
       }
     });

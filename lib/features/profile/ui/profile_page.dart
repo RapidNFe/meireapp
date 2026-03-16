@@ -182,8 +182,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final authService = ref.watch(authServiceProvider);
-    final user = authService.currentUser;
+    final user = ref.watch(userProvider);
 
     if (user == null) {
       return const Center(child: Text('Nenhum dado do usuário encontrado.'));
