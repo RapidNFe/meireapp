@@ -35,12 +35,11 @@ function gerarXmlDPS(dados) {
   // Formata perfeitamente: YYYY-MM-DDTHH:mm:ss-03:00
   const dhEmiTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}T${pad(dataBrasil.getHours())}:${pad(dataBrasil.getMinutes())}:${pad(dataBrasil.getSeconds())}-03:00`;
   
-  // Força dCompet a ter formato compatível. T09:00:00Z é usado como contorno para APIs que ignoram data pura.
-  const dCompetTratada = dados.competencia 
-    ? (dados.competencia.includes('T') ? dados.competencia : `${dados.competencia.substring(0, 10)}T09:00:00Z`)
-    : `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}T09:00:00Z`;
+  // Força dCompet a ter exatamente 10 caracteres (YYYY-MM-DD). 
+  // O Governo Nacional exige este formato puro para notas retroativas.
+  const dCompetTratada = (dados.competencia || "").substring(0, 10) || `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}`;
   
-  console.log(`🖋️ [Gerador] dhEmi: ${dhEmiTratada} | dCompet: ${dCompetTratada}`);
+  console.log(`🖋️ [Gerador] dCompet Final no XML: ${dCompetTratada}`);
 
   // 3. Construindo a Árvore XML com os dados do Flutter
   const objXML = {
