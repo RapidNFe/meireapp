@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
@@ -218,7 +219,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             '/nfse_success', 
             arguments: {
               ...?responseData as Map<String, dynamic>?,
-              'competencia': "${_obterNomeMes(_mesCompetencia.month)} / ${_mesCompetencia.year}",
+              'competencia': DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
             },
           );
         }
@@ -462,6 +463,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             initialDate: _mesCompetencia,
             firstDate: DateTime(2024),
             lastDate: DateTime.now(),
+            locale: const Locale("pt", "BR"),
             initialDatePickerMode: DatePickerMode.year,
             helpText: "SELECIONE O MÊS DO SERVIÇO",
           );
@@ -484,7 +486,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  "${_obterNomeMes(_mesCompetencia.month)} / ${_mesCompetencia.year}",
+                  DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
@@ -498,14 +500,6 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         ),
       ),
     );
-  }
-
-  String _obterNomeMes(int mes) {
-    const meses = [
-      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-    ];
-    return meses[mes - 1];
   }
 
   Widget _buildCard({required Widget child}) {

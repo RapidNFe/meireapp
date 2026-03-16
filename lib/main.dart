@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:meire/core/ui/theme.dart';
@@ -76,6 +77,15 @@ class MeireApp extends ConsumerWidget {
       theme: MeireTheme.lightTheme(settings.isCompact),
       darkTheme: MeireTheme.darkTheme(settings.isCompact),
       themeMode: settings.themeMode,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('pt', 'BR'),
+      ],
+      locale: const Locale('pt', 'BR'),
       home: isAuthenticated ? (isAdmin ? const AdminDashboardPage() : const HubPage()) : const LoginPage(),
       routes: {
         '/login': (context) => const LoginPage(),
