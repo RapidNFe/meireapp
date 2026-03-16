@@ -59,13 +59,24 @@ const PocketBase = require('pocketbase/cjs');
 const pb = new PocketBase(config.pocketbase.url);
 console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: ${config.pocketbase.adminEmail})`);
 
+// 🛡️ MOTOR DE SOBERANIA: Autentica como SUPERUSER globalmente para ignorar API Rules
+async function autenticarAdmin() {
+    try {
+        await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+        console.log("🚀 Backend autenticado como SUPERUSER. API Rules ignoradas.");
+    } catch (e) {
+        console.error("❌ Falha ao autenticar admin no PocketBase", e.message);
+    }
+}
+autenticarAdmin();
+
 /**
  * ZELADORIA ON-DEMAND: Busca no governo, salva no PocketBase e retorna o buffer.
  */
 async function sincronizarESalvarPDF(userId, chaveAcesso, notaId) {
     try {
-        // 1. LOGIN ADMINISTRATIVO (Necessário para acessar o cofre blindado)
-        await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+        // 1. O Backend já opera como SUPERUSER automaticamente via startup.
+
 
         // 2. BUSCA O USUÁRIO (Para saber se é Produção ou Homologação)
         const userResults = await query(`SELECT producao FROM users WHERE id = ?`, [userId]);
@@ -108,7 +119,7 @@ async function sincronizarESalvarPDF(userId, chaveAcesso, notaId) {
         console.error("❌ [Zeladoria-Falha]:", err.message);
         throw err;
     } finally {
-        pb.authStore.clear();
+        // pb.authStore.clear(); // Mantemos o portão aberto para o Superusuário
     }
 }
 
@@ -246,7 +257,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
         let novoRegistroId = null;
         // 4. Salva no Banco de Dados via SDK (Mais seguro que SQL direto para colunas novas)
         try {
-            await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+            // O Backend já opera como SUPERUSER
             
             const logData = {
                 "user": userId,
@@ -272,7 +283,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
             console.error("❌ ERRO NO POCKETBASE:", JSON.stringify(errLog.data || errLog.message, null, 2));
             console.error("⚠️ [Vault] Erro ao salvar log no PocketBase (mas a emissão ocorreu):", errLog.message);
         } finally {
-            pb.authStore.clear(); 
+            // pb.authStore.clear(); 
         }
 
         if (resultado.sucesso) {
@@ -753,7 +764,8 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         }
 
         // 1. Autentica como Superusuário (Necessário para acessar coleções com regras restritas)
-        await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+        // O Backend já opera como SUPERUSER
+
 
         // 2. Transfere arquivo RAM (Buffer) => File (Padrão PB SDK)
         const formData = new FormData();
@@ -812,7 +824,7 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         console.error("❌ Erro no Vault Blindado:", error.message);
         res.status(500).json({ erro: "Falha interna ao depositar no cofre." });
     } finally {
-        pb.authStore.clear(); // Fechar portões!
+        // pb.authStore.clear(); // Mantenha os portões abertos para o Admin
     }
 });
 
