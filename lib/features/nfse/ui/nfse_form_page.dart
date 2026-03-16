@@ -359,14 +359,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                                 // 1. Preenchimento Automático da Descrição com Inteligência de Quinzena
                                 _descriptionController.text = _processarDescricaoInteligente(
                                     selectedService.descricaoBase);
-                                
-                                // 2. Preenchimento do Valor Base (se existir)
-                                if (selectedService.valorBase != null) {
-                                  final valorS = selectedService.valorBase!.toStringAsFixed(2).replaceAll('.', ',');
-                                  _valueController.text = "R\$ $valorS";
-                                }
 
-                                // 3. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
+                                // 2. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
                                 if (selectedService.idClientePadrao != null) {
                                   clientsAsync.whenData((clients) {
                                     try {

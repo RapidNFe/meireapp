@@ -5,7 +5,6 @@ import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/ui/notifications_modal.dart';
 import 'package:meire/features/history/ui/invoice_history_page.dart';
 import 'package:meire/features/profile/ui/profile_page.dart';
-import 'package:meire/features/auth/ui/gov_integration_page.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
@@ -27,14 +26,6 @@ class _HubPageState extends ConsumerState<HubPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = ref.read(authServiceProvider).currentUser;
-      if (user?.getStringValue('status_registro') == 'conta_criada') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const GovIntegrationPage()),
-        );
-      }
-    });
   }
 
   int _currentIndex = 0;
@@ -205,87 +196,9 @@ class _HubPageState extends ConsumerState<HubPage> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final bool isPending = statusRegistro == 'aguardando_procuracao' || statusRegistro == 'conta_criada';
-
-              Widget statusCard = Container();
-              final bool possessesCert = userRecord?.getBoolValue('possui_certificado') ?? false;
-
-              if (isPending) {
-                statusCard = Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: MeireTheme.accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.hourglass_empty_rounded, color: MeireTheme.accentColor, size: 32),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Análise em Andamento",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MeireTheme.primaryColor),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "Sua e-Procuração está sendo validada pelos nossos contadores. Isso costuma levar pouco tempo. Assim que confirmada, seu emissor de notas será destravado.",
-                                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              } else if (statusRegistro == 'ativado' && possessesCert) {
-                // STATUS 100% VERDINHO E OPERACIONAL
-                statusCard = Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.verified_user_rounded, color: Colors.green, size: 32),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "SISTEMA 100% OPERACIONAL",
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF065F46)),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                "Seu motor de emissão está calibrado e o cofre blindado ativo. Você já pode emitir suas NFS-e com segurança total.",
-                                style: TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              // Breakpoint adjusted for earlier mobile-format switch
               if (constraints.maxWidth > 950) {
                 return Column(
                   children: [
-                    statusCard,
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -337,7 +250,6 @@ class _HubPageState extends ConsumerState<HubPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    statusCard,
                     _buildTermometroCard(context),
                     const SizedBox(height: 16),
                     _buildPerformanceSemestral(context),
@@ -603,6 +515,34 @@ class _HubPageState extends ConsumerState<HubPage> {
                     style:
                         const TextStyle(color: Colors.white60, fontSize: 11)),
                 const SizedBox(height: 16),
+                // Card Educativo
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Como emitir em 3 passos:',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildPassoRapido(Icons.copy, 'Nós copiamos seu CNPJ'),
+                      _buildPassoRapido(Icons.paste, 'Cole no site do Governo'),
+                      _buildPassoRapido(Icons.check_circle_outline, 'Clique em Continuar'),
+                    ],
+                  ),
+                ),
+
                 ElevatedButton.icon(
                   onPressed: () async {
                     final user = ref.read(authServiceProvider).currentUser;
@@ -628,16 +568,17 @@ class _HubPageState extends ConsumerState<HubPage> {
                     }
                   },
                   icon: const Icon(Icons.qr_code_scanner,
-                      color: MeireTheme.primaryColor, size: 18),
+                      color: MeireTheme.primaryColor, size: 20),
                   label: const Text("Pagar Agora (PIX)",
                       style: TextStyle(
                           color: MeireTheme.primaryColor,
-                          fontWeight: FontWeight.bold)),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 44),
+                    minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ],
@@ -648,119 +589,17 @@ class _HubPageState extends ConsumerState<HubPage> {
     );
   }
 
-  void _showActivationBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 60,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(2),
-              ),
-              alignment: Alignment.center,
-              child: const SizedBox.shrink(),
-            ),
-            const Icon(Icons.rocket_launch_outlined, color: MeireTheme.accentColor, size: 48),
-            const SizedBox(height: 24),
-            const Text(
-              "Emissor em Ativação",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Nossa equipe está validando sua e-Procuração junto à Receita Federal. Esse processo é rápido.\n\nEnquanto isso, você já pode cadastrar seus clientes e serviços no aplicativo.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.5),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: MeireTheme.primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text("Entendi", style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildQuickActionsGrid(BuildContext context, String statusRegistro) {
-    final bool isAwaiting = statusRegistro == 'aguardando_procuracao';
-    final bool isCreated = statusRegistro == 'conta_criada';
-    final bool isLocked = isAwaiting || isCreated;
-
     return Column(
       children: [
-        if (isLocked)
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: MeireTheme.accentColor.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.5)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.verified_user_outlined, color: MeireTheme.accentColor),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isAwaiting ? "Quase lá! Ativando Acesso" : "Configure o Emissor Nacional",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isAwaiting 
-                          ? "Estamos habilitando seu perfil na Receita Federal. Navegue pelo app enquanto isso!"
-                          : "Você precisa validar seus dados para começar a emitir notas fiscais pelo app.",
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+        // Canal Liberado: Removido banner de bloqueio e-CAC
+        const SizedBox.shrink(),
         _buildActionItem(
           context, 
           Icons.receipt_long,
-          "Emitir Minha Primeira Nota", 
-          "Nota Fiscal de Serviço", 
-          () {
-            if (isCreated) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const GovIntegrationPage()));
-            } else if (isAwaiting) {
-              _showActivationBottomSheet(context);
-            } else {
-              Navigator.pushNamed(context, '/nfse_form');
-            }
-          }, 
-          isLocked: isLocked,
-          showLockIcon: isAwaiting,
+          "Emitir Nota Fiscal", 
+          "Emissão Nacional da NFSe", 
+          () => Navigator.pushNamed(context, '/nfse_form'),
         ),
         const SizedBox(height: 12),
         _buildActionItem(
@@ -772,7 +611,12 @@ class _HubPageState extends ConsumerState<HubPage> {
         const SizedBox(height: 12),
         _buildActionItem(context, Icons.description_outlined,
             "Declaração Anual", "DASN-SIMEI 2024", 
-            () => Navigator.pushNamed(context, '/dasn_copiloto')),
+            () async {
+              final uri = Uri.parse('https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            }),
       ],
     );
   }
@@ -996,6 +840,22 @@ class _HubPageState extends ConsumerState<HubPage> {
               icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPassoRapido(IconData icon, String texto) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.blueAccent.shade100, size: 16),
+          const SizedBox(width: 8),
+          Text(
+            texto,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
+          ),
         ],
       ),
     );

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
-import 'package:meire/features/auth/ui/gov_integration_page.dart';
+
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
@@ -195,7 +195,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (displayName.isEmpty) displayName = user.getStringValue('razao_social');
     
     final email = user.getStringValue('email');
-    final statusRegistro = user.getStringValue('status_registro');
     final modoProducao = user.getBoolValue('producao');
 
     return SingleChildScrollView(
@@ -494,48 +493,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
               const SizedBox(height: 24),
 
-              // 🏦 4. INTEGRAÇÃO GOVERNAMENTAL
-              _buildCard(
-                context: context,
-                title: 'Integração Governamental',
-                icon: Icons.account_balance,
-                children: [
-                  if (statusRegistro == 'conta_criada')
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Conecte seu acesso ao Governo para sincronizar dados e facilitar a gestão do seu MEI.',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (_) => const GovIntegrationPage()));
-                          },
-                          icon: const Icon(Icons.add_moderator),
-                          label: const Text('Conectar via e-CAC'),
-                        ),
-                      ],
-                    )
-                  else if (statusRegistro == 'aguardando_procuracao')
-                    const Row(
-                      children: [
-                        Icon(Icons.hourglass_top, color: Colors.orange, size: 20),
-                        SizedBox(width: 8),
-                        Text('Análise da e-Procuração em curso...', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ],
-                    )
-                  else
-                    const Row(
-                      children: [
-                        Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
-                        SizedBox(width: 8),
-                        Text('Acesso Delegado Ativo ✓', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                      ],
-                    ),
-                ],
-              ),
+
               
               const SizedBox(height: 32),
               

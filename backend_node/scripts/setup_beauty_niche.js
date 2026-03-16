@@ -18,7 +18,6 @@ async function setupBeautyNiche(userId) {
             "user": userId,
             "apelido": "COMISSÃO SALÃO (QUINZENA)",
             "descricao_padrao": "Nota fiscal referente a serviços de estética e beleza (Salão Parceiro) prestados no período de {QUINZENA_PASSADA}.",
-            "valor_base": 1200.00,
             "codigo_nacional": "060101",
             "iss_retido": false,
             "is_nicho_beleza": true

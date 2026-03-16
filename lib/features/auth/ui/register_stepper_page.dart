@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
-import 'package:meire/features/auth/ui/gov_integration_page.dart';
 import 'package:meire/core/services/brasil_api_service.dart';
 import 'package:meire/core/utils/validators.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -95,9 +94,8 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           );
 
       if (mounted) {
-        // Go to Delegation Screen (Step 3)
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => const GovIntegrationPage()));
+        // Go directly to Success Page
+        Navigator.pushReplacementNamed(context, '/success');
       }
     } catch (e) {
       if (mounted) {

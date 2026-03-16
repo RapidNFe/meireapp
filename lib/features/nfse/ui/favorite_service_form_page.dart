@@ -124,38 +124,41 @@ class _FavoriteServiceFormPageState
                     ),
                     const SizedBox(height: 16),
                     _buildNichoBelezaSection(),
-                    const SizedBox(height: 24),
-                    const Text('Configuração Tributária Avançada',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey)),
-                    const SizedBox(height: 12),
-                    const Text('Selecione a Classificação Tributária (CNAE) *',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: MeireTheme.primaryColor)),
-                    const SizedBox(height: 8),
-                    ServiceSelector(
-                      onServiceSelected: (selection) {
+                    if (!_isNichoBeleza) ...[
+                      const SizedBox(height: 24),
+                      const Text('Configuração Tributária Avançada',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey)),
+                      const SizedBox(height: 12),
+                      const Text(
+                          'Selecione a Classificação Tributária (CNAE) *',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: MeireTheme.primaryColor)),
+                      const SizedBox(height: 8),
+                      ServiceSelector(
+                        onServiceSelected: (selection) {
+                          setState(() {
+                            _codigoTributacaoController.text =
+                                "${selection['tributacao_codigo']} - ${selection['tributacao_descricao']}";
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('Selecione a Classificação NBS (IBGE) *',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: MeireTheme.primaryColor)),
+                      const SizedBox(height: 8),
+                      NbsSelector(onNbsSelected: (nbsSelection) {
                         setState(() {
-                          _codigoTributacaoController.text =
-                              "${selection['tributacao_codigo']} - ${selection['tributacao_descricao']}";
+                          _itemNbsController.text =
+                              "${nbsSelection.id} - ${nbsSelection.nome}";
                         });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Selecione a Classificação NBS (IBGE) *',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: MeireTheme.primaryColor)),
-                    const SizedBox(height: 8),
-                    NbsSelector(onNbsSelected: (nbsSelection) {
-                      setState(() {
-                        _itemNbsController.text =
-                            "${nbsSelection.id} - ${nbsSelection.nome}";
-                      });
-                    }),
+                      }),
+                    ],
                     // Campos ocultos mas obrigatórios para submissão validada
                     Offstage(
                       offstage: true,
@@ -233,7 +236,7 @@ class _FavoriteServiceFormPageState
             ),
             Switch(
               value: _isNichoBeleza,
-              activeColor: MeireTheme.accentColor,
+              activeThumbColor: MeireTheme.accentColor,
               onChanged: (val) => setState(() => _isNichoBeleza = val),
             ),
           ],

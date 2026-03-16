@@ -32,6 +32,9 @@ class FavoriteService {
     String? codigoTributacao,
     String? itemNbs,
     String? descricaoBase,
+    double? valorBase,
+    String? idClientePadrao,
+    bool? isNichoBeleza,
   }) {
     return FavoriteService(
       id: id,
@@ -99,7 +102,6 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         itemNbs: '126021000 - Serviços de cabeleireiros e barbeiros',
         descricaoBase: 'Nota fiscal referente a serviços de estética e beleza (Salão Parceiro) prestados no período de {QUINZENA_PASSADA}.',
         isNichoBeleza: true,
-        valorBase: 1200.00,
       ),
       FavoriteService(
         municipio: 'São Paulo/SP',
