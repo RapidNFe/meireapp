@@ -19,6 +19,7 @@ class NotasFiscaisService {
     required double amount,
     required String description,
     String? competencia,
+    String? cnae,
   }) async {
     final userId = _auth.currentUser?.id;
     if (userId == null) throw Exception("Usuário não autenticado");
@@ -53,7 +54,7 @@ class NotasFiscaisService {
             },
             "servico": {
               "municipioPrestacao": "5208707",
-              "codigoTribNacional": "060101",
+              "codigoTribNacional": cnae?.replaceAll(RegExp(r'[^0-9]'), '') ?? "060101",
               "descricao": description,
               "valor": amount.toStringAsFixed(2),
             }

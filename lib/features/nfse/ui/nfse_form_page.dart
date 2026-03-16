@@ -8,6 +8,8 @@ import 'package:meire/core/utils/validators.dart';
 import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
+import 'package:meire/features/nfse/provider/cnae_provider.dart';
+import 'package:meire/features/nfse/ui/widgets/buscador_tributario_avancado.dart';
 import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
 import 'package:meire/features/clients/provider/client_provider.dart';
 import 'package:meire/features/clients/models/client_model.dart';
@@ -31,6 +33,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   final _descriptionController = TextEditingController();
 
   String? _selectedServiceId;
+  String? _selectedCnae;
   DateTime _mesCompetencia = DateTime.now();
   bool _isLoading = false;
   bool _initialized = false;
@@ -177,6 +180,14 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         );
         return;
       }
+      
+      if (_selectedCnae == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Por favor, selecione o CNAE tributário.')),
+        );
+        return;
+      }
 
       setState(() {
         _isLoading = true;
@@ -201,6 +212,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
               amount: amount,
               description: _descriptionController.text,
               competencia: _mesCompetencia.toIso8601String().split('T')[0],
+              cnae: _selectedCnae, // Passando o CNAE selecionado
             );
 
         // Refresh dashboard data
@@ -374,6 +386,21 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                             });
                           },
                         ),
+                      const SizedBox(height: 16),
+                      
+                      // Buscador Tributário Avançado (CNAE)
+                      ref.watch(cnaeProvider).when(
+                        data: (cnaes) => BuscadorTributarioAvancado(
+                          listaCnaes: cnaes,
+                          onSelected: (selecao) {
+                            setState(() {
+                              _selectedCnae = selecao['codigo'];
+                            });
+                          },
+                        ),
+                        loading: () => const LinearProgressIndicator(),
+                        error: (err, stack) => Text('Erro ao carregar classificações: $err'),
+                      ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _descriptionController,
