@@ -59,6 +59,55 @@ const PocketBase = require('pocketbase/cjs');
 const pb = new PocketBase(config.pocketbase.url);
 console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: ${config.pocketbase.adminEmail})`);
 
+/**
+ * ZELADORIA ON-DEMAND: Busca no governo, salva no PocketBase e retorna o buffer.
+ */
+async function sincronizarESalvarPDF(userId, chaveAcesso, notaId) {
+    try {
+        const results = await query(
+            `SELECT u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
+             FROM users u 
+             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
+            [userId]
+        );
+
+        if (results.length === 0) throw new Error("Usuário não encontrado.");
+        const userDb = results[0];
+
+        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
+            throw new Error("Certificado não encontrado no cofre blindado.");
+        }
+
+        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
+        const certPass = decrypt(userDb.senha_encriptada);
+
+        if (!certPass) throw new Error("Falha na descriptografia da senha.");
+
+        // 2. Monta o túnel mTLS e busca o PDF
+        const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
+        const ambiente = userDb.producao ? '1' : '2';
+        const pdfBuffer = await baixarDanfsePDF(chaveAcesso, ambiente, chaves.agente);
+
+        // 3. PERSISTÊNCIA: Cache no PocketBase para acessos futuros
+        try {
+            await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+            const formData = new FormData();
+            formData.append('pdf_oficial', new Blob([pdfBuffer], { type: 'application/pdf' }), `DANFSE-${chaveAcesso}.pdf`);
+            formData.append('status', 'CONCLUIDA');
+            await pb.collection('notas_fiscais').update(notaId, formData);
+            console.log(`✅ [ZELADORIA-ON-DEMAND] PDF arquivado e status sincronizado para nota: ${notaId}`);
+        } catch (errPb) {
+            console.error("⚠️ [Vault] Erro ao arquivar PDF (mas a entrega continuará):", errPb.message);
+        } finally {
+            pb.authStore.clear();
+        }
+
+        return pdfBuffer;
+    } catch (err) {
+        throw err;
+    }
+}
+
 // Nota: Removemos checkPBAuth porque agora o Node fala direto com o BD SQLITE do PocketBase
 // para evitar conflitos de versão do SDK ou regras de acesso (403/404).
 
@@ -203,33 +252,42 @@ app.post('/api/nacional/emitir', async (req, res) => {
         // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
         const resultado = await vortex.emitirNacional(payload, certPath, certPass, prestadorDb.producao);
 
-        // 4. Salva no Banco de Dados (Log de Sucesso/Chave)
-        let now = new Date().toISOString().replace('T', ' ').replace('Z', '');
-        const logId = Math.random().toString(36).substring(2, 17);
+        let novoRegistroId = null;
+        // 4. Salva no Banco de Dados via SDK (Mais seguro que SQL direto para colunas novas)
+        try {
+            await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
+            
+            const logData = {
+                "user": userId,
+                "tomador_cnpj": payload.tomador.cnpj,
+                "tomador_nome": payload.tomador.nome || payload.tomador.razaoSocial,
+                "valor": parseFloat(payload.servico.valor) || 0,
+                "servico": payload.servico.descricao,
+                "numero_nota": payload.numeroDPS,
+                "status": resultado.sucesso ? 'CONCLUIDA' : 'ERRO',
+                "chave_acesso": resultado.dados?.chaveAcesso || '',
+                "xml_nota": resultado.dados?.xmlDecodificado || '',
+                "motivo_rejeicao": resultado.sucesso ? '' : (resultado.dados?.erros?.[0]?.Descricao || 'Rejeição desconhecida pelo Governo')
+            };
 
-        await run(`
-            INSERT INTO notas_fiscais (id, user, tomador_cnpj, tomador_nome, valor, servico, numero_nota, status, chave_acesso, xml_nota, created, updated)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [
-            logId, 
-            userId, 
-            payload.tomador.cnpj, 
-            payload.tomador.nome || payload.tomador.razaoSocial, 
-            payload.servico.valor,
-            payload.servico.descricao,
-            payload.numeroDPS,
-            resultado.sucesso ? 'CONCLUIDA' : 'ERRO',
-            resultado.dados?.chaveAcesso || null,
-            resultado.dados?.xmlDecodificado || null,
-            now, 
-            now
-        ]);
+            console.log("📝 Tentando registrar no PocketBase...");
+            // console.log("Dados do Log:", JSON.stringify(logData, null, 2));
+
+            const novoRegistro = await pb.collection('notas_fiscais').create(logData);
+            novoRegistroId = novoRegistro.id;
+            console.log("✅ Log salvo com sucesso! ID:", novoRegistroId);
+        } catch (errLog) {
+            console.error("❌ ERRO NO POCKETBASE:", JSON.stringify(errLog.data || errLog.message, null, 2));
+            console.error("⚠️ [Vault] Erro ao salvar log no PocketBase (mas a emissão ocorreu):", errLog.message);
+        } finally {
+            pb.authStore.clear(); 
+        }
 
         if (resultado.sucesso) {
             res.json({ 
                 sucesso: true, 
                 chaveAcesso: resultado.dados.chaveAcesso,
-                idNota: logId
+                idNota: novoRegistroId
             });
         } else {
             res.status(400).json({ 
@@ -363,56 +421,101 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
 });
 
 // ==========================================
-// 📄 ROTA 1.3: BUSCAR PDF DO DANFSE
+// 📄 ROTA 1.3: BUSCAR PDF DO DANFSE (JSON para Flutter)
 // ==========================================
 app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
     try {
         const { userId, chaveAcesso } = req.params;
 
-        // 1. Busca do cofre isolado
-        const results = await query(
-            `SELECT u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
-             FROM users u 
-             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
-            [userId]
+        const notaCheck = await query(
+            `SELECT id, status, pdf_oficial FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
+            [userId, chaveAcesso]
         );
 
-        if (results.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
-        const userDb = results[0];
-
-        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
-            return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
+        if (notaCheck.length === 0) {
+            return res.status(404).json({ sucesso: false, erro: "Nota não encontrada." });
         }
 
-        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
-        const certPass = decrypt(userDb.senha_encriptada);
+        const notaDb = notaCheck[0];
 
-        if (!certPass) {
-             return res.status(403).json({ error: "Falha na descriptografia da senha." });
+        // 1. CHECAGEM DE CACHE LOCAL
+        if (notaDb.pdf_oficial) {
+            const storagePathNf = config.isProducao
+                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`
+                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`;
+            
+            if (fs.existsSync(storagePathNf)) {
+                console.log(`⚡ [Cache] Enviando PDF local para: ${chaveAcesso}`);
+                const pdfBuffer = fs.readFileSync(storagePathNf);
+                return res.json({
+                    sucesso: true,
+                    pdfBase64: pdfBuffer.toString('base64'),
+                    nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`,
+                    origem: 'cache_local'
+                });
+            }
         }
 
-        // 2. Monta o túnel mTLS
-        const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
-        
-        // 3. Busca o PDF
-        const ambiente = userDb.producao ? '1' : '2';
-        const pdfBuffer = await baixarDanfsePDF(chaveAcesso, ambiente, chaves.agente);
-
-        // 4. Converte para Base64
-        const pdfBase64 = pdfBuffer.toString('base64');
+        // 2. DISPARO DE ZELADORIA ON-DEMAND (Se não tem no cache)
+        console.log(`🌐 [Zeladoria] Capturando PDF oficial no Governo para: ${chaveAcesso}`);
+        const pdfBuffer = await sincronizarESalvarPDF(userId, chaveAcesso, notaDb.id);
 
         res.json({
             sucesso: true,
-            pdfBase64: pdfBase64,
-            nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`
+            pdfBase64: pdfBuffer.toString('base64'),
+            nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`,
+            origem: 'governo_real'
         });
 
     } catch (error) {
         console.error("❌ Erro ao buscar DANFSe:", error.message);
-        if (error.message.includes('ERRO_404')) {
-            return res.status(404).json({ sucesso: false, erro: "O Governo ainda não gerou o PDF desta nota. Tente em alguns minutos." });
+        const isGovWait = error.message.includes('ERRO_404') || error.message.includes('not found');
+        res.status(isGovWait ? 404 : 500).json({ 
+            sucesso: false, 
+            erro: isGovWait ? "O Governo ainda está gerando o PDF. Aguarde 60s e tente novamente." : error.message 
+        });
+    }
+});
+
+// ==========================================
+// 📄 ROTA 1.3.1: BUSCAR PDF BINÁRIO (Proxy Direto / Navegador)
+// ==========================================
+app.get('/api/nacional/pdf/:userId/:chaveAcesso', async (req, res) => {
+    try {
+        const { userId, chaveAcesso } = req.params;
+
+        // 1. Localizar nota
+        const notaCheck = await query(
+            `SELECT id, status, pdf_oficial FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
+            [userId, chaveAcesso]
+        );
+
+        if (notaCheck.length === 0) return res.status(404).send("Nota não encontrada.");
+        const notaDb = notaCheck[0];
+
+        // 2. Cache ou Governo
+        let pdfBuffer;
+        if (notaDb.pdf_oficial) {
+            const storagePathNf = config.isProducao
+                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`
+                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`;
+            
+            if (fs.existsSync(storagePathNf)) {
+                pdfBuffer = fs.readFileSync(storagePathNf);
+            }
         }
-        res.status(500).json({ sucesso: false, erro: error.message });
+
+        if (!pdfBuffer) {
+            pdfBuffer = await sincronizarESalvarPDF(userId, chaveAcesso, notaDb.id);
+        }
+
+        res.contentType("application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename=DANFSE-${chaveAcesso}.pdf`);
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        console.error("❌ [PDF-PROXY] Erro:", error.message);
+        res.status(404).send("PDF ainda não disponível no Governo. Tente em instantes.");
     }
 });
 
@@ -437,7 +540,7 @@ app.post('/api/serpro/das/emitir', async (req, res) => {
             throw new Error("Certificado não encontrado no cofre.");
         }
 
-        const certPath = path.resolve('C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00', userDb.cofre_id, userDb.arquivo_pfx);
+        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
         const certPass = decrypt(userDb.senha_encriptada);
 
         if (!certPass) {
@@ -497,7 +600,7 @@ app.get('/api/impostos/estimativa/:userId', async (req, res) => {
         const records = await query(`
             SELECT valor FROM notas_fiscais 
             WHERE user = ? 
-            AND status IN ('emitida', 'processando')
+            AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
             AND created LIKE ?
         `, [userId, `${anoAtual}-${mesAtualNum}%`]);
 
@@ -538,7 +641,7 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
         const records = await query(`
             SELECT valor, created FROM notas_fiscais 
             WHERE user = ? 
-            AND status IN ('emitida', 'processando')
+            AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
             ORDER BY created DESC
         `, [userId]);
 

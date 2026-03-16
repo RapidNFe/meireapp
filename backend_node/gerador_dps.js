@@ -9,11 +9,34 @@ function gerarXmlDPS(dados) {
   const tipoInscricao = dados.prestador.cnpj.length === 14 ? '2' : '1'; 
   const numeroDpsFormatado = String(dados.numeroDPS).padStart(15, '0');
   const serieFormatada = String(dados.numeroSerie).padStart(5, '0');
-  const idDPS = `DPS${dados.codigoMunicipioEmissor}${tipoInscricao}${dados.prestador.cnpj}${serieFormatada}${numeroDpsFormatado}`;
 
-  // 2. Data sem milissegundos (Fundamental para evitar E0714 em alguns servidores)
-  // Ex: de 2026-03-13T10:54:50.123-03:00 para 2026-03-13T10:54:50-03:00
-  const dhEmiTratada = dados.dataHoraEmissao.replace(/\.\d+(?=[+-]|Z|$)/, "");
+  // CORREÇÃO: Blindagem do Município. Se vier vazio, assume 5201405 (Aparecida de Goiânia - Caso da Ana)
+  const cLocEmiTratado = dados.codigoMunicipioEmissor || "5201405"; 
+  
+  const idDPS = `DPS${cLocEmiTratado}${tipoInscricao}${dados.prestador.cnpj}${serieFormatada}${numeroDpsFormatado}`;
+
+  // 2. MÁQUINA DE LAVAR TEXTOS (Remove Enters e quebras de linha que o Governo odeia)
+  const nomeTomadorLimpo = dados.tomador.nome ? dados.tomador.nome.replace(/[\r\n]+/g, " ").trim() : "";
+  const descricaoLimpa = dados.servico.descricao ? dados.servico.descricao.replace(/[\r\n]+/g, " ").trim() : "";
+  const logradouroLimpo = dados.tomador.endereco.logradouro ? dados.tomador.endereco.logradouro.replace(/[\r\n]+/g, " ").trim() : "Nao Informado";
+
+  // 3. O RELÓGIO SEGURO (Força a hora atual do Brasil UTC-3, independentemente de onde o servidor está)
+  const agora = new Date();
+  
+  // Converte a hora atual para o fuso horário de São Paulo/Brasília (-3 horas ou -180 minutos)
+  const offsetBrasilMinutos = -180;
+  const dataBrasil = new Date(agora.getTime() + (agora.getTimezoneOffset() + offsetBrasilMinutos) * 60000);
+  
+  // Atrasa 5 minutos por segurança
+  dataBrasil.setMinutes(dataBrasil.getMinutes() - 5);
+  
+  const pad = n => String(n).padStart(2, '0');
+  
+  // Formata perfeitamente: YYYY-MM-DDTHH:mm:ss-03:00
+  const dhEmiTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}T${pad(dataBrasil.getHours())}:${pad(dataBrasil.getMinutes())}:${pad(dataBrasil.getSeconds())}-03:00`;
+  
+  // Força dCompet a ter apenas 10 caracteres (YYYY-MM-DD) usando a data do Brasil
+  const dCompetTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}`;
 
   // 3. Construindo a Árvore XML com os dados do Flutter
   const objXML = {
@@ -27,13 +50,14 @@ function gerarXmlDPS(dados) {
         verAplic: 'MeireApp1.0', 
         serie: dados.numeroSerie,
         nDPS: dados.numeroDPS,
-        dCompet: dados.competencia,
+        dCompet: dCompetTratada,
         tpEmit: '1', 
-        cLocEmi: dados.codigoMunicipioEmissor,
+        cLocEmi: cLocEmiTratado,
         
         prest: {
           CNPJ: dados.prestador.cnpj,
-          ...(dados.prestador.im ? { IM: dados.prestador.im } : {}),
+          // ❌ REMOVIDO: O Governo Nacional recusa Inscrição Municipal para MEIs na maioria das cidades
+          // ...(dados.prestador.im ? { IM: dados.prestador.im } : {}),
           regTrib: {
             opSimpNac: dados.prestador.opcaoSimplesNacional,
             regEspTrib: dados.prestador.regimeEspecialTributacao
@@ -41,16 +65,16 @@ function gerarXmlDPS(dados) {
         },
         
         toma: {
-          CNPJ: dados.tomador.cnpj,
-          xNome: dados.tomador.nome,
+          ...(dados.tomador.cnpj.length === 11 ? { CPF: dados.tomador.cnpj } : { CNPJ: dados.tomador.cnpj }),
+          xNome: nomeTomadorLimpo,
           end: {
             endNac: {
               cMun: dados.tomador.endereco.municipio,
               CEP: dados.tomador.endereco.cep
             },
-            xLgr: dados.tomador.endereco.logradouro,
-            nro: dados.tomador.endereco.numero,
-            xCpl: dados.tomador.endereco.complemento,
+            xLgr: logradouroLimpo,
+            nro: dados.tomador.endereco.numero || "S/N", 
+            ...(dados.tomador.endereco.complemento ? { xCpl: dados.tomador.endereco.complemento } : {}),
             xBairro: dados.tomador.endereco.bairro
           }
         },
@@ -61,7 +85,7 @@ function gerarXmlDPS(dados) {
           },
           cServ: {
             cTribNac: dados.servico.codigoTribNacional,
-            xDescServ: dados.servico.descricao
+            xDescServ: descricaoLimpa
           }
         },
         

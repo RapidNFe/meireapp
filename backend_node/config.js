@@ -1,5 +1,16 @@
 // config.js
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const envPath = path.resolve(__dirname, '.env');
+
+try {
+    const envConfig = require('dotenv').parse(fs.readFileSync(envPath));
+    for (const k in envConfig) {
+        process.env[k] = envConfig[k];
+    }
+} catch (err) {
+    // Silencioso aqui para não poluir
+}
 
 const isProducao = process.env.NODE_ENV === 'producao';
 

@@ -5,6 +5,7 @@ class InvoiceModel {
   final double amount;
   final DateTime issueDate;
   final String status;
+  final String? chaveAcesso;
 
   InvoiceModel({
     required this.id,
@@ -13,5 +14,6 @@ class InvoiceModel {
     required this.amount,
     required this.issueDate,
     required this.status,
+    this.chaveAcesso,
   });
 }

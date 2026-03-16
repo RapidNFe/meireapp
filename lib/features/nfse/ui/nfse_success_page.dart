@@ -1,14 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:meire/core/ui/theme.dart';
+import 'package:meire/features/nfse/ui/widgets/painel_processamento_pdf.dart';
 
-class NfseSuccessPage extends StatelessWidget {
+class NfseSuccessPage extends StatefulWidget {
   const NfseSuccessPage({super.key});
 
   @override
+  State<NfseSuccessPage> createState() => _NfseSuccessPageState();
+}
+
+class _NfseSuccessPageState extends State<NfseSuccessPage> {
+  bool _canViewPdf = false;
+  Map<String, dynamic>? _invoiceData;
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _invoiceData = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      _initialized = true;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Generate mock random invoice numbers
-    const String invoiceNumber = '000.003.542';
-    const String verificationCode = 'B9A1-X4C2-93KL';
+    if (_invoiceData == null) {
+      return const Scaffold(body: Center(child: Text("Erro: Dados da nota não encontrados.")));
+    }
+
+    final String chaveAcesso = _invoiceData!['chaveAcesso'] ?? 'N/A';
+    final String idNota = _invoiceData!['idNota'] ?? 'N/A';
 
     return Scaffold(
       backgroundColor: MeireTheme.primaryColor,
@@ -41,7 +63,19 @@ class NfseSuccessPage extends StatelessWidget {
                   style: TextStyle(fontSize: 14, color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
+                
+                // 🕒 PAINEL DE SINCRONIZAÇÃO (Sala de Espera)
+                PainelProcessamentoPDF(
+                  chaveAcesso: chaveAcesso,
+                  onFinalizado: () {
+                    setState(() {
+                      _canViewPdf = true;
+                    });
+                  },
+                ),
+                
+                const SizedBox(height: 32),
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
@@ -50,33 +84,44 @@ class NfseSuccessPage extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('Número da Nota', invoiceNumber),
+                      _buildInfoRow('ID da Nota (Meire)', idNota),
                       const SizedBox(height: 16),
                       const Divider(color: MeireTheme.iceGray),
                       const SizedBox(height: 16),
-                      _buildInfoRow('Código de Verificação', verificationCode),
+                      _buildInfoRow('Chave de Acesso Nacional', chaveAcesso),
                     ],
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    // Mock View PDF
-                  },
-                  icon: const Icon(Icons.picture_as_pdf, color: MeireTheme.primaryColor),
-                  label: const Text('Visualizar PDF', style: TextStyle(color: MeireTheme.primaryColor)),
+                  onPressed: _canViewPdf ? () {
+                    Navigator.pushNamed(context, '/pdf_viewer', arguments: chaveAcesso);
+                  } : null,
+                  icon: Icon(
+                    Icons.picture_as_pdf, 
+                    color: _canViewPdf ? Colors.white : Colors.grey
+                  ),
+                  label: Text(
+                    _canViewPdf ? 'Ver Nota Fiscal Oficial' : 'Gerando PDF Oficial...', 
+                    style: TextStyle(
+                      color: _canViewPdf ? Colors.white : Colors.grey,
+                      fontWeight: FontWeight.bold
+                    )
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
+                    backgroundColor: _canViewPdf ? const Color(0xFF00E676) : Colors.white,
                     minimumSize: const Size(double.infinity, 54),
+                    disabledBackgroundColor: Colors.white.withValues(alpha: 0.6),
+                    elevation: _canViewPdf ? 4 : 0,
                   ),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
-                  onPressed: () {
-                    // Mock Share
-                  },
+                  onPressed: _canViewPdf ? () {
+                    Navigator.pushNamed(context, '/pdf_viewer', arguments: chaveAcesso);
+                  } : null,
                   icon: const Icon(Icons.share, color: Colors.white),
-                  label: const Text('Compartilhar Recibo', style: TextStyle(color: Colors.white)),
+                  label: const Text('Compartilhar Nota', style: TextStyle(color: Colors.white)),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.white38),
                     minimumSize: const Size(double.infinity, 54),
@@ -102,7 +147,11 @@ class NfseSuccessPage extends StatelessWidget {
       children: [
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: MeireTheme.primaryColor)),
+        Text(
+          value, 
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }

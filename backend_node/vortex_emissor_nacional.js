@@ -22,6 +22,9 @@ async function emitirNacional(payload, certPath, certPassword, isProducao) {
     // 1. GERAÇÃO DO XML DPS
     const { idDPS, xmlAssinavel } = gerarXmlDPS(payload);
     console.log(`✅ [VORTEX] XML DPS Gerado: ${idDPS}`);
+    console.log("=== XML ASSINÁVEL ===");
+    console.log(xmlAssinavel);
+    console.log("=====================");
 
     // 2. ASSINATURA DIGITAL
     // Passamos o certificado e senha dinâmicos do cliente

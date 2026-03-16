@@ -1,9 +1,24 @@
 const crypto = require('crypto');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const envPath = path.resolve(__dirname, '.env');
+
+try {
+    const envConfig = require('dotenv').parse(fs.readFileSync(envPath));
+    for (const k in envConfig) {
+        process.env[k] = envConfig[k];
+    }
+} catch (err) {
+    console.error(`⚠️ Aviso: Não foi possível ler o arquivo .env em ${envPath}`);
+}
 
 const MASTER_KEY_HEX = process.env.MASTER_KEY_AES;
-if (!MASTER_KEY_HEX || MASTER_KEY_HEX.length !== 64) {
-    console.error("❌ ERRO GRAVE: MASTER_KEY_AES não configurada corretamente. O sistema não pode encriptar os certificados.");
+if (!MASTER_KEY_HEX) {
+    console.error(`❌ ERRO: MASTER_KEY_AES não encontrada no ambiente após tentativa de leitura em: ${envPath}`);
+    process.exit(1);
+}
+if (MASTER_KEY_HEX.length !== 64) {
+    console.error("❌ ERRO: MASTER_KEY_AES deve ter 64 caracteres (hex de 32 bytes).");
     process.exit(1);
 }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -67,6 +69,29 @@ class NotasFiscaisService {
       return response.data;
     } on DioException catch (e) {
       throw Exception("Erro de conexão com o Gateway: ${e.response?.data?['erro'] ?? e.message}");
+    }
+  }
+
+  Future<Uint8List> getDanfsePdf(String chaveAcesso) async {
+    final userId = _auth.currentUser?.id;
+    if (userId == null) throw Exception("Usuário não autenticado");
+
+    final String pdfUrl = '${_pb.baseURL}/api/nacional/danfse/$userId/$chaveAcesso';
+
+    try {
+      final response = await _dio.get(pdfUrl);
+
+      if (response.data['sucesso'] == true && response.data['pdfBase64'] != null) {
+        final String base64Pdf = response.data['pdfBase64'];
+        return base64Decode(base64Pdf);
+      } else {
+        throw Exception(response.data['erro'] ?? "Falha ao obter o PDF da nota.");
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        throw Exception("ERRO_404: O Governo ainda não gerou o PDF. Tente novamente em 1 minuto.");
+      }
+      throw Exception("Erro ao buscar PDF: ${e.message}");
     }
   }
 }

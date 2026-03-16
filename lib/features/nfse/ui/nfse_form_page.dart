@@ -192,7 +192,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
       // Add to PocketBase via Service
       try {
-        await ref.read(notasFiscaisServiceProvider).addNotaFiscal(
+        final responseData = await ref.read(notasFiscaisServiceProvider).addNotaFiscal(
               clientName: _nameController.text,
               clientCnpj: _documentController.text,
               amount: amount,
@@ -210,7 +210,11 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
           HapticFeedback.mediumImpact();
 
           if (!mounted) return;
-          Navigator.pushReplacementNamed(context, '/nfse_success');
+          Navigator.pushReplacementNamed(
+            context, 
+            '/nfse_success', 
+            arguments: responseData, // Passa o {sucesso, chaveAcesso, idNota}
+          );
         }
       } catch (e) {
         if (mounted) {

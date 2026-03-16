@@ -65,26 +65,45 @@ class InvoiceListTile extends StatelessWidget {
                             fontSize: 12, color: Colors.grey.shade600),
                       ),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: invoice.status == 'Emitida'
-                              ? Colors.green.shade50
-                              : Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          invoice.status,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: invoice.status == 'Emitida'
-                                ? Colors.green.shade700
-                                : Colors.orange.shade700,
+                      Builder(builder: (context) {
+                        final now = DateTime.now();
+                        final diff = now.difference(invoice.issueDate).inMinutes;
+                        final isWaiting = diff < 1 && (invoice.status == 'Autorizada' || invoice.status == 'Emitida');
+                        
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isWaiting 
+                                ? Colors.blue.shade50
+                                : invoice.status == 'Emitida' || invoice.status == 'Autorizada' || invoice.status == 'CONCLUIDA'
+                                    ? Colors.green.shade50
+                                    : Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isWaiting) ...[
+                                Icon(Icons.access_time, size: 10, color: Colors.blue.shade700),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                isWaiting ? 'Aguardando Sincronização' : invoice.status,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isWaiting
+                                      ? Colors.blue.shade700
+                                      : invoice.status == 'Emitida' || invoice.status == 'Autorizada' || invoice.status == 'CONCLUIDA'
+                                          ? Colors.green.shade700
+                                          : Colors.orange.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ],

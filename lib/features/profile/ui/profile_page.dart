@@ -74,13 +74,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         }
 
         final uri = Uri.parse('$meireApiUrl/api/certificados/upload');
+        final cnpj = user.getStringValue('cnpj').replaceAll(RegExp(r'\D'), '');
         final request = http.MultipartRequest('POST', uri)
           ..fields['userId'] = user.id
           ..fields['senha_pfx'] = senhaDigitada
           ..files.add(http.MultipartFile.fromBytes(
             'arquivo_pfx',
             _pickedFile!.bytes!,
-            filename: _pickedFile!.name,
+            filename: '$cnpj.pfx',
           ));
 
         final response = await request.send();

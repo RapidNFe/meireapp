@@ -4,7 +4,6 @@ import 'package:meire/features/history/models/invoice_model.dart';
 import 'package:meire/features/history/ui/widgets/invoice_list_tile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
-import 'package:meire/features/nfse/ui/pdf_viewer_page.dart';
 
 class InvoiceHistoryPage extends ConsumerStatefulWidget {
   const InvoiceHistoryPage({super.key});
@@ -72,6 +71,7 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
             amount: parseValor(n['valor_servico'] ?? n['valor'] ?? '0'),
             issueDate: parseDate(n['created'] ?? n['emissao']),
             status: n['status'] ?? 'Emitida',
+            chaveAcesso: n['chave_acesso'],
           );
         }).toList() ??
         [];
@@ -184,17 +184,16 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
         return InvoiceListTile(
           invoice: invoice,
           onTap: () {
-            Navigator.push(
+            if (invoice.chaveAcesso == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Esta é uma nota antiga e não possui PDF oficial disponível.')),
+              );
+              return;
+            }
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(
-                builder: (context) => PdfViewerPage(
-                  clientName: invoice.clientName,
-                  clientCnpj: invoice.clientCnpj,
-                  amount: invoice.amount,
-                  description:
-                      'Prestação de serviços (Simulação) conforme nota fiscal ${invoice.id}. Serviços prestados com excelência.',
-                ),
-              ),
+              '/pdf_viewer',
+              arguments: invoice.chaveAcesso,
             );
           },
         );
