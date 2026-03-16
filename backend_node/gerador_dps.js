@@ -35,8 +35,11 @@ function gerarXmlDPS(dados) {
   // Formata perfeitamente: YYYY-MM-DDTHH:mm:ss-03:00
   const dhEmiTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}T${pad(dataBrasil.getHours())}:${pad(dataBrasil.getMinutes())}:${pad(dataBrasil.getSeconds())}-03:00`;
   
-  // Força dCompet a ter apenas 10 caracteres (YYYY-MM-DD) usando a data do Brasil
-  const dCompetTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}`;
+  // Força dCompet a ter apenas 10 caracteres (YYYY-MM-DD)
+  // Se vier no payload (ex: da Ana escolhendo o mês), usa ela. Se não, usa hoje.
+  const dCompetTratada = dados.competencia 
+    ? dados.competencia.substring(0, 10) 
+    : `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}`;
 
   // 3. Construindo a Árvore XML com os dados do Flutter
   const objXML = {

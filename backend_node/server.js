@@ -28,8 +28,8 @@ const DB_PATH = config.isProducao
     : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
 
 const STORAGE_PATH = config.isProducao
-    ? '/home/ubuntu/pb_data/storage/cofrecertific00'
-    : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/cofrecertific00';
+    ? '/home/ubuntu/pb_data/storage'
+    : 'C:/Users/Fernando/Desktop/pocketbase/pb_data/storage';
 
 function query(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -64,47 +64,51 @@ console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: 
  */
 async function sincronizarESalvarPDF(userId, chaveAcesso, notaId) {
     try {
-        const results = await query(
-            `SELECT u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
-             FROM users u 
-             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
-            [userId]
-        );
+        // 1. LOGIN ADMINISTRATIVO (Necessário para acessar o cofre blindado)
+        await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
 
-        if (results.length === 0) throw new Error("Usuário não encontrado.");
-        const userDb = results[0];
+        // 2. BUSCA O USUÁRIO (Para saber se é Produção ou Homologação)
+        const userResults = await query(`SELECT producao FROM users WHERE id = ?`, [userId]);
+        if (userResults.length === 0) throw new Error("Usuário não encontrado.");
+        const isProducao = userResults[0].producao === 1;
 
-        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
-            throw new Error("Certificado não encontrado no cofre blindado.");
+        // 3. BUSCA O CERTIFICADO via SDK para pegar o collectionId dinâmico
+        const certRecord = await pb.collection('cofre_certificados').getFirstListItem(`usuario="${userId}" && valido=true`);
+        
+        // 3.1 Construção do Caminho Absoluto Dinâmico
+        const certPath = path.resolve(STORAGE_PATH, certRecord.collectionId, certRecord.id, certRecord.arquivo_pfx);
+        
+        console.log(`📂 [Zeladoria] Tentando abrir certificado em: ${certPath} (Ambiente: ${isProducao ? 'PRD' : 'HOM'})`);
+
+        if (!fs.existsSync(certPath)) {
+            throw new Error("ERRO_PFX: Arquivo físico do certificado não localizado no servidor.");
         }
 
-        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
-        const certPass = decrypt(userDb.senha_encriptada);
+        const certPass = decrypt(certRecord.senha_encriptada);
+        if (!certPass) throw new Error("Falha na descriptografia da senha do certificado.");
 
-        if (!certPass) throw new Error("Falha na descriptografia da senha.");
+        // 4. Monta o túnel mTLS e busca o PDF no Governo
+        const tokensGov = await serproAuth.getTokens(certPath, certPass, isProducao);
+        const ambienteGov = isProducao ? '1' : '2';
+        const pdfBuffer = await baixarDanfsePDF(chaveAcesso, ambienteGov, tokensGov.agente);
 
-        // 2. Monta o túnel mTLS e busca o PDF
-        const chaves = await serproAuth.getTokens(certPath, certPass, userDb.producao);
-        const ambiente = userDb.producao ? '1' : '2';
-        const pdfBuffer = await baixarDanfsePDF(chaveAcesso, ambiente, chaves.agente);
-
-        // 3. PERSISTÊNCIA: Cache no PocketBase para acessos futuros
+        // 5. PERSISTÊNCIA: Cache no PocketBase para acessos futuros
         try {
-            await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
             const formData = new FormData();
-            formData.append('pdf_oficial', new Blob([pdfBuffer], { type: 'application/pdf' }), `DANFSE-${chaveAcesso}.pdf`);
+            formData.append('pdf_nota', new Blob([pdfBuffer], { type: 'application/pdf' }), `DANFSE-${chaveAcesso}.pdf`);
             formData.append('status', 'CONCLUIDA');
             await pb.collection('notas_fiscais').update(notaId, formData);
-            console.log(`✅ [ZELADORIA-ON-DEMAND] PDF arquivado e status sincronizado para nota: ${notaId}`);
+            console.log(`✅ [ZELADORIA-ON-DEMAND] PDF arquivado com sucesso no campo 'pdf_nota'.`);
         } catch (errPb) {
             console.error("⚠️ [Vault] Erro ao arquivar PDF (mas a entrega continuará):", errPb.message);
-        } finally {
-            pb.authStore.clear();
         }
 
         return pdfBuffer;
     } catch (err) {
+        console.error("❌ [Zeladoria-Falha]:", err.message);
         throw err;
+    } finally {
+        pb.authStore.clear();
     }
 }
 
@@ -212,29 +216,16 @@ app.post('/api/nacional/emitir', async (req, res) => {
     try {
         console.log(`📡 [Nacional] Requisição recebida do usuário: ${userId}`);
 
-        // 1. Busca dados do Prestador e Certificado no Cofre (Joins soberanos)
-        const results = await query(
-            `SELECT u.cnpj, u.razao_social, u.producao, u.inscricao_municipal, u.possui_certificado,
-                    c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
-             FROM users u 
-             LEFT JOIN cofre_certificados c ON c.usuario = u.id 
-             WHERE u.id = ?`, 
-            [userId]
-        );
-
+        // 1. Busca dados do Prestador
+        const results = await query(`SELECT cnpj, razao_social, producao, inscricao_municipal FROM users WHERE id = ?`, [userId]);
         if (results.length === 0) throw new Error("Usuário não encontrado.");
         const prestadorDb = results[0];
 
-        // 🛡️ TRAVA SOBERANA: Sem certificado do cofre, não há emissão.
-        if (!prestadorDb.possui_certificado || !prestadorDb.arquivo_pfx || !prestadorDb.senha_encriptada) {
-            return res.status(403).json({ 
-                sucesso: false, 
-                erro: "Certificado Digital protegido não encontrado. Faça o upload no Perfil." 
-            });
-        }
-
-        const certPath = path.resolve(STORAGE_PATH, prestadorDb.cofre_id, prestadorDb.arquivo_pfx);
-        const certPass = decrypt(prestadorDb.senha_encriptada);
+        // 2. Busca o Certificado via SDK (Cofre Blindado)
+        const certRecord = await pb.collection('cofre_certificados').getFirstListItem(`usuario="${userId}" && valido=true`);
+        
+        const certPath = path.resolve(STORAGE_PATH, certRecord.collectionId, certRecord.id, certRecord.arquivo_pfx);
+        const certPass = decrypt(certRecord.senha_encriptada);
 
         if (!certPass) {
              return res.status(403).json({ sucesso: false, erro: "Senha do cofre inválida ou corrompida. Por favor, recadastre o certificado." });
@@ -267,6 +258,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
                 "status": resultado.sucesso ? 'CONCLUIDA' : 'ERRO',
                 "chave_acesso": resultado.dados?.chaveAcesso || '',
                 "xml_nota": resultado.dados?.xmlDecodificado || '',
+                "competencia": payload.competencia || new Date().toISOString().split('T')[0],
                 "motivo_rejeicao": resultado.sucesso ? '' : (resultado.dados?.erros?.[0]?.Descricao || 'Rejeição desconhecida pelo Governo')
             };
 
@@ -312,12 +304,12 @@ app.get('/api/dashboard/resumo/:userId', async (req, res) => {
         // Formato SQLite: YYYY-MM-DD HH:MM:SS
         const inicioAno = `${anoAtual}-01-01 00:00:00`; 
 
-        // 1. Busca o faturamento acumulado do ano
+        // 1. Busca o faturamento acumulado do ano (priorizando a data de competência)
         const somaRows = await query(`
             SELECT SUM(valor) as total, COUNT(id) as qtd 
             FROM notas_fiscais 
-            WHERE user = ? AND status = 'CONCLUIDA' AND created >= ?
-        `, [userId, inicioAno]);
+            WHERE user = ? AND status = 'CONCLUIDA' AND (competencia >= ? OR (competencia IS NULL AND created >= ?))
+        `, [userId, inicioAno, inicioAno]);
 
         const faturamentoTotal = somaRows[0].total || 0;
         const qtdEmitida = somaRows[0].qtd || 0;
@@ -363,23 +355,16 @@ app.get('/api/serpro/ccmei/:userId', async (req, res) => {
     try {
         const { userId } = req.params;
         
-        // 1. Busca do cofre isolado
-        const results = await query(
-            `SELECT u.cnpj, u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
-             FROM users u 
-             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
-            [userId]
-        );
-
+        // 1. Busca o usuário
+        const results = await query(`SELECT cnpj, producao FROM users WHERE id = ?`, [userId]);
         if (results.length === 0) return res.status(404).json({ error: "Usuário não encontrado" });
         const userDb = results[0];
 
-        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
-            return res.status(403).json({ error: "Certificado não encontrado no cofre blindado." });
-        }
-
-        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
-        const certPass = decrypt(userDb.senha_encriptada);
+        // 2. Busca o certificado via SDK (Dinâmico)
+        const certRecord = await pb.collection('cofre_certificados').getFirstListItem(`usuario="${userId}" && valido=true`);
+        
+        const certPath = path.resolve(STORAGE_PATH, certRecord.collectionId, certRecord.id, certRecord.arquivo_pfx);
+        const certPass = decrypt(certRecord.senha_encriptada);
 
         if (!certPass) {
              return res.status(403).json({ error: "Falha na descriptografia da senha. Recadastre no Perfil." });
@@ -428,7 +413,7 @@ app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
         const { userId, chaveAcesso } = req.params;
 
         const notaCheck = await query(
-            `SELECT id, status, pdf_oficial FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
+            `SELECT id, status, pdf_nota FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
             [userId, chaveAcesso]
         );
 
@@ -439,10 +424,10 @@ app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
         const notaDb = notaCheck[0];
 
         // 1. CHECAGEM DE CACHE LOCAL
-        if (notaDb.pdf_oficial) {
+        if (notaDb.pdf_nota) {
             const storagePathNf = config.isProducao
-                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`
-                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`;
+                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_nota}`
+                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_nota}`;
             
             if (fs.existsSync(storagePathNf)) {
                 console.log(`⚡ [Cache] Enviando PDF local para: ${chaveAcesso}`);
@@ -486,7 +471,7 @@ app.get('/api/nacional/pdf/:userId/:chaveAcesso', async (req, res) => {
 
         // 1. Localizar nota
         const notaCheck = await query(
-            `SELECT id, status, pdf_oficial FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
+            `SELECT id, status, pdf_nota FROM notas_fiscais WHERE user = ? AND chave_acesso = ?`,
             [userId, chaveAcesso]
         );
 
@@ -495,10 +480,10 @@ app.get('/api/nacional/pdf/:userId/:chaveAcesso', async (req, res) => {
 
         // 2. Cache ou Governo
         let pdfBuffer;
-        if (notaDb.pdf_oficial) {
+        if (notaDb.pdf_nota) {
             const storagePathNf = config.isProducao
-                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`
-                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_oficial}`;
+                ? `/home/ubuntu/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_nota}`
+                : `C:/Users/Fernando/Desktop/pocketbase/pb_data/storage/pbc_423607009/${notaDb.id}/${notaDb.pdf_nota}`;
             
             if (fs.existsSync(storagePathNf)) {
                 pdfBuffer = fs.readFileSync(storagePathNf);
@@ -526,22 +511,16 @@ app.post('/api/serpro/das/emitir', async (req, res) => {
     const { userId, periodo } = req.body; 
 
     try {
-        const results = await query(
-            `SELECT u.cnpj, u.producao, u.possui_certificado, c.id as cofre_id, c.arquivo_pfx, c.senha_encriptada
-             FROM users u 
-             LEFT JOIN cofre_certificados c ON c.usuario = u.id WHERE u.id = ?`, 
-            [userId]
-        );
-
+        // 1. Busca dados do usuário
+        const results = await query(`SELECT cnpj, producao FROM users WHERE id = ?`, [userId]);
         if (results.length === 0) throw new Error("Usuário não encontrado.");
         const userDb = results[0];
 
-        if (!userDb.possui_certificado || !userDb.arquivo_pfx || !userDb.senha_encriptada) {
-            throw new Error("Certificado não encontrado no cofre.");
-        }
-
-        const certPath = path.resolve(STORAGE_PATH, userDb.cofre_id, userDb.arquivo_pfx);
-        const certPass = decrypt(userDb.senha_encriptada);
+        // 2. Busca o certificado via SDK
+        const certRecord = await pb.collection('cofre_certificados').getFirstListItem(`usuario="${userId}" && valido=true`);
+        
+        const certPath = path.resolve(STORAGE_PATH, certRecord.collectionId, certRecord.id, certRecord.arquivo_pfx);
+        const certPass = decrypt(certRecord.senha_encriptada);
 
         if (!certPass) {
              throw new Error("Falha ao abrir chave da AES Master do cofre.");
@@ -596,13 +575,13 @@ app.get('/api/impostos/estimativa/:userId', async (req, res) => {
 
         console.log(`📊 Calculando impostos para o usuário: ${userId} (${refMes})`);
 
-        // Buscamos notas 'emitida' ou 'processando' deste mês
+        // Buscamos notas pelo campo de competência (mais preciso para impostos)
         const records = await query(`
             SELECT valor FROM notas_fiscais 
             WHERE user = ? 
             AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
-            AND created LIKE ?
-        `, [userId, `${anoAtual}-${mesAtualNum}%`]);
+            AND (competencia LIKE ? OR (competencia IS NULL AND created LIKE ?))
+        `, [userId, `${anoAtual}-${mesAtualNum}%`, `${anoAtual}-${mesAtualNum}%`]);
 
         console.log(`✅ Notas filtradas (Mês Atual): ${records.length}`);
 
@@ -637,12 +616,12 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
         const { userId } = req.params;
         console.log(`📈 Gerando histórico para o usuário: ${userId}`);
 
-        // Buscamos notas 'emitida' ou 'processando'
+        // Priorizamos a data de competência para o histórico visual
         const records = await query(`
-            SELECT valor, created FROM notas_fiscais 
+            SELECT valor, created, competencia FROM notas_fiscais 
             WHERE user = ? 
             AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
-            ORDER BY created DESC
+            ORDER BY COALESCE(competencia, created) DESC
         `, [userId]);
 
         console.log(`✅ Notas no histórico: ${records.length}`);
@@ -664,8 +643,9 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
 
         // 3. Agregamos os valores das notas no mês correspondente
         records.forEach(nota => {
-            // PocketBase armazena datas ISO UTC. Convertemos para local do servidor
-            const dataNota = new Date(nota.created);
+            // Usa competência se disponível, senão usa a data de criação
+            const dataBase = nota.competencia || nota.created;
+            const dataNota = new Date(dataBase);
             
             // Encontramos o bucket de mês/ano correto no histórico
             const item = historico.find(h => h.mesNum === dataNota.getMonth() && h.ano === dataNota.getFullYear());

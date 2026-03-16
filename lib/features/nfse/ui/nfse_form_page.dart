@@ -29,6 +29,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   final _descriptionController = TextEditingController();
 
   String? _selectedServiceId;
+  DateTime _mesCompetencia = DateTime.now();
   bool _isLoading = false;
   bool _initialized = false;
 
@@ -197,6 +198,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
               clientCnpj: _documentController.text,
               amount: amount,
               description: _descriptionController.text,
+              competencia: _mesCompetencia.toIso8601String().split('T')[0],
             );
 
         // Refresh dashboard data
@@ -311,7 +313,10 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                _buildSectionTitle('2. Informações da DPS (Serviço)'),
+                _buildSectionTitle('2. Mês de Referência (Competência)'),
+                _buildSeletorCompetencia(),
+                const SizedBox(height: 24),
+                _buildSectionTitle('3. Informações da DPS (Serviço)'),
                 _buildCard(
                   child: Column(
                     children: [
@@ -436,6 +441,67 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildSeletorCompetencia() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: MeireTheme.accentColor.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.2)),
+      ),
+      child: InkWell(
+        onTap: () async {
+          final DateTime? picked = await showDatePicker(
+            context: context,
+            initialDate: _mesCompetencia,
+            firstDate: DateTime(2024),
+            lastDate: DateTime.now(),
+            initialDatePickerMode: DatePickerMode.year,
+            helpText: "SELECIONE O MÊS DO SERVIÇO",
+          );
+
+          if (picked != null) {
+            setState(() {
+              _mesCompetencia = DateTime(picked.year, picked.month, 1);
+            });
+          }
+        },
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_month, color: MeireTheme.accentColor),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Mês que o serviço foi realizado",
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  "${_obterNomeMes(_mesCompetencia.month)} / ${_mesCompetencia.year}",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const Spacer(),
+            const Text(
+              "Alterar",
+              style: TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _obterNomeMes(int mes) {
+    const meses = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    return meses[mes - 1];
   }
 
   Widget _buildCard({required Widget child}) {

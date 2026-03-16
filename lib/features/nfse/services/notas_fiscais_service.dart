@@ -18,6 +18,7 @@ class NotasFiscaisService {
     required String clientCnpj,
     required double amount,
     required String description,
+    String? competencia,
   }) async {
     final userId = _auth.currentUser?.id;
     if (userId == null) throw Exception("Usuário não autenticado");
@@ -37,7 +38,7 @@ class NotasFiscaisService {
             "numeroDPS": (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(), // Número único baseado em tempo
             "numeroSerie": "900",
             "dataHoraEmissao": formattedDate,
-            "competencia": "${now.year}-${now.month.toString().padLeft(2, '0')}-01",
+            "competencia": competencia ?? "${now.year}-${now.month.toString().padLeft(2, '0')}-01",
             "codigoMunicipioEmissor": _auth.currentUser?.getStringValue('codigo_municipio') ?? "5208707",
             "tomador": {
               "cnpj": clientCnpj.replaceAll(RegExp(r'[^0-9]'), ''),

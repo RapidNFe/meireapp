@@ -166,7 +166,7 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
       if (status != 'emitida' && status != 'processando') continue;
 
       final date =
-          parseDate(n['created'] ?? n['data_competencia'] ?? n['emissao']);
+          parseDate(n['competencia'] ?? n['created'] ?? n['emissao']);
       final valStr = n['valor_servico'] ?? n['valor'] ?? '0';
       final val = parseValor(valStr.toString().replaceAll(',', '.'));
 
