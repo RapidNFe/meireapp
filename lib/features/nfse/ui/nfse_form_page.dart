@@ -355,8 +355,27 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                               if (val != null) {
                                 final selectedService = favoriteServices
                                     .firstWhere((s) => s.id == val);
-                                _descriptionController.text =
-                                    selectedService.descricaoBase;
+                                
+                                // 1. Preenchimento Automático da Descrição com Inteligência de Quinzena
+                                _descriptionController.text = _processarDescricaoInteligente(
+                                    selectedService.descricaoBase);
+                                
+                                // 2. Preenchimento do Valor Base (se existir)
+                                if (selectedService.valorBase != null) {
+                                  final valorS = selectedService.valorBase!.toStringAsFixed(2).replaceAll('.', ',');
+                                  _valueController.text = "R\$ $valorS";
+                                }
+
+                                // 3. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
+                                if (selectedService.idClientePadrao != null) {
+                                  clientsAsync.whenData((clients) {
+                                    try {
+                                      final cliente = clients.firstWhere((c) => c.id == selectedService.idClientePadrao);
+                                      _documentController.text = cliente.cnpj;
+                                      _nameController.text = cliente.razaoSocial;
+                                    } catch (_) {}
+                                  });
+                                }
                               }
                             });
                           },
@@ -519,5 +538,31 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       ),
       child: child,
     );
+  }
+
+  // === MOTOR DE INTELIGÊNCIA FISCAL (NICHO BELEZA) ===
+
+  String _calcularQuinzenaPassada() {
+    DateTime hoje = DateTime.now();
+
+    if (hoje.day <= 15) {
+      // 2ª Quinzena do mês passado
+      DateTime mesPassado = DateTime(hoje.year, hoje.month - 1, 1);
+      int ultimoDia = DateTime(hoje.year, hoje.month, 0).day;
+      String mesStr = mesPassado.month.toString().padLeft(2, '0');
+      return "16/$mesStr a $ultimoDia/$mesStr";
+    } else {
+      // 1ª Quinzena deste mês
+      String mesStr = hoje.month.toString().padLeft(2, '0');
+      return "01/$mesStr a 15/$mesStr";
+    }
+  }
+
+  String _processarDescricaoInteligente(String template) {
+    String texto = template;
+    if (texto.contains('{QUINZENA_PASSADA}')) {
+      texto = texto.replaceAll('{QUINZENA_PASSADA}', _calcularQuinzenaPassada());
+    }
+    return texto;
   }
 }

@@ -17,6 +17,9 @@ const { baixarDanfsePDF } = require('./danfse_service');
 const fs = require('fs');
 const multer = require('multer');
 
+// Nicho Beleza
+const { setupBeautyNiche } = require('./scripts/setup_beauty_niche');
+
 // Configura o Multer para RAM
 const upload = multer({ 
     storage: multer.memoryStorage(),
@@ -215,6 +218,19 @@ app.get('/api/cnpj/:cnpj', async (req, res) => {
             return res.status(404).json({ sucesso: false, erro: "CNPJ não encontrado na base do Governo." });
         }
         res.status(500).json({ sucesso: false, erro: "Falha técnica ao consultar o Governo. Tente novamente." });
+    }
+});
+
+// ==========================================
+// 🌸 ROTA 0: ONBOARDING NICHO BELEZA
+// ==========================================
+app.post('/api/onboarding/beauty', async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const record = await setupBeautyNiche(userId);
+        res.json({ sucesso: true, mensagem: "Configuração de Beleza concluída!", favoritoId: record.id });
+    } catch (e) {
+        res.status(500).json({ sucesso: false, erro: e.message });
     }
 });
 

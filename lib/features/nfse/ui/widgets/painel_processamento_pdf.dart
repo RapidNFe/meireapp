@@ -13,7 +13,7 @@ class PainelProcessamentoPDF extends StatefulWidget {
   });
 
   @override
-  _PainelProcessamentoPDFState createState() => _PainelProcessamentoPDFState();
+  State<PainelProcessamentoPDF> createState() => _PainelProcessamentoPDFState();
 }
 
 class _PainelProcessamentoPDFState extends State<PainelProcessamentoPDF> {
@@ -92,7 +92,7 @@ class _PainelProcessamentoPDFState extends State<PainelProcessamentoPDF> {
             const SizedBox(height: 10),
             Text(
               "O PDF oficial estará pronto em $segundosRestantes segundos",
-              style: TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(color: Colors.black54, fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ] else ...[
             const Icon(Icons.check_circle, color: Colors.green, size: 40),

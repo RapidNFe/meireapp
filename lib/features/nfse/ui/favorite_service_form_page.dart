@@ -4,6 +4,8 @@ import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/utils/validators.dart';
 import 'package:meire/core/ui/widgets/service_selector.dart';
 import 'package:meire/core/ui/widgets/nbs_selector.dart';
+import 'package:meire/core/utils/currency_input_formatter.dart';
+import 'package:meire/features/nfse/data/catalogo_beleza.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
 
 class FavoriteServiceFormPage extends ConsumerStatefulWidget {
@@ -23,6 +25,8 @@ class _FavoriteServiceFormPageState
   final _codigoTributacaoController = TextEditingController();
   final _itemNbsController = TextEditingController();
   final _descricaoBaseController = TextEditingController();
+  final _valorBaseController = TextEditingController();
+  bool _isNichoBeleza = true; // Inicia true para o foco atual
 
   @override
   void dispose() {
@@ -31,17 +35,27 @@ class _FavoriteServiceFormPageState
     _codigoTributacaoController.dispose();
     _itemNbsController.dispose();
     _descricaoBaseController.dispose();
+    _valorBaseController.dispose();
     super.dispose();
   }
 
   void _saveFavorite() {
     if (_formKey.currentState?.validate() ?? false) {
+      final cleanValue = _valorBaseController.text
+          .replaceAll('R\$', '')
+          .replaceAll('.', '')
+          .replaceAll(',', '.')
+          .trim();
+      final double? valorBase = double.tryParse(cleanValue);
+
       final newService = FavoriteService(
         municipio: _municipioController.text,
         apelido: _apelidoController.text.toUpperCase(),
         codigoTributacao: _codigoTributacaoController.text,
         itemNbs: _itemNbsController.text,
         descricaoBase: _descricaoBaseController.text,
+        valorBase: valorBase,
+        isNichoBeleza: _isNichoBeleza,
       );
 
       ref.read(favoriteServicesProvider.notifier).addService(newService);
@@ -109,6 +123,14 @@ class _FavoriteServiceFormPageState
                           Validators.validateRequired(val, 'Apelido'),
                     ),
                     const SizedBox(height: 16),
+                    _buildNichoBelezaSection(),
+                    const SizedBox(height: 24),
+                    const Text('Configuração Tributária Avançada',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey)),
+                    const SizedBox(height: 12),
                     const Text('Selecione a Classificação Tributária (CNAE) *',
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
@@ -165,6 +187,16 @@ class _FavoriteServiceFormPageState
                       validator: (val) =>
                           Validators.validateRequired(val, 'Descrição Base'),
                     ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _valorBaseController,
+                      inputFormatters: [CurrencyInputFormatter()],
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Valor Base (Opcional)',
+                        hintText: 'R\$ 0,00',
+                      ),
+                    ),
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: _saveFavorite,
@@ -181,6 +213,74 @@ class _FavoriteServiceFormPageState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNichoBelezaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Nicho de Beleza / Salão Parceiro',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MeireTheme.primaryColor)),
+                Text('Habilita automação de quinzena', style: TextStyle(fontSize: 12, color: Colors.grey)),
+              ],
+            ),
+            Switch(
+              value: _isNichoBeleza,
+              activeColor: MeireTheme.accentColor,
+              onChanged: (val) => setState(() => _isNichoBeleza = val),
+            ),
+          ],
+        ),
+        if (_isNichoBeleza) ...[
+          const SizedBox(height: 16),
+          Autocomplete<Map<String, dynamic>>(
+            displayStringForOption: (Map<String, dynamic> option) => option['titulo_amigavel'],
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<Map<String, dynamic>>.empty();
+              }
+              String busca = textEditingValue.text.toLowerCase();
+              return catalogoBeleza.where((servico) {
+                bool bateuTitulo = servico['titulo_amigavel'].toString().toLowerCase().contains(busca);
+                List<String> tags = List<String>.from(servico['palavras_chave']);
+                bool bateuTag = tags.any((tag) => tag.contains(busca));
+                return bateuTitulo || bateuTag;
+              });
+            },
+            onSelected: (Map<String, dynamic> selection) {
+              setState(() {
+                _codigoTributacaoController.text = "${selection['codigo_nacional']} - ${selection['titulo_amigavel']}";
+                // Fixamos NBS para beleza se for o nicho
+                _itemNbsController.text = "126021000 - Serviços de cabeleireiros e barbeiros";
+                
+                if (_descricaoBaseController.text.isEmpty) {
+                  _descricaoBaseController.text = "Nota fiscal referente a serviços de estética e beleza (Salão Parceiro) prestados no período de {QUINZENA_PASSADA}.";
+                }
+              });
+            },
+            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+              return TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                onEditingComplete: onEditingComplete,
+                decoration: InputDecoration(
+                  labelText: 'O que você faz? (Ex: unha, cabelo, cílios)',
+                  prefixIcon: const Icon(Icons.search, color: MeireTheme.accentColor),
+                  filled: true,
+                  fillColor: MeireTheme.accentColor.withValues(alpha: 0.05),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
     );
   }
 }

@@ -610,7 +610,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                     
                     if (cnpj.isNotEmpty) {
                       await Clipboard.setData(ClipboardData(text: cnpj));
-                      if (context.mounted) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("✨ CNPJ $cnpj copiado para o pagamento!"),
