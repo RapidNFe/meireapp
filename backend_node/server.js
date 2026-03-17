@@ -245,8 +245,9 @@ app.post('/api/onboarding/beauty', async (req, res) => {
 // ==========================================
 // 🚀 ROTA 1: EMISSÃO NACIONAL (ADN/SEFIN) - MOTOR VORTEX
 // 🛡️ ESCUDO MEIRI: Proibido alterar sem rodar sacred_guard.js
+// 🔒 FUTUREPROOF: Ambos /emitir e /emit apontam pro mesmo handler
 // ==========================================
-app.post('/api/nacional/emit', async (req, res) => {
+async function handleEmissaoNacional(req, res) {
     await assegurarAutenticacao();
     const { userId, payload } = req.body; 
 
@@ -347,7 +348,9 @@ app.post('/api/nacional/emit', async (req, res) => {
         console.error("❌ Erro na Emissão Nacional:", error.message);
         res.status(500).json({ sucesso: false, erro: error.message });
     }
-});
+}
+app.post('/api/nacional/emitir', handleEmissaoNacional);
+app.post('/api/nacional/emit', handleEmissaoNacional);
 
 // ==========================================
 // 📊 ROTA 1.0.1: RESUMO DO DASHBOARD (MÉTRICAS METICULOSAS)
