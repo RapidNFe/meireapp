@@ -17,8 +17,13 @@ const { baixarDanfsePDF } = require('./danfse_service');
 const fs = require('fs');
 const multer = require('multer');
 
-// Nicho Beleza
-const { setupBeautyNiche } = require('./scripts/setup_beauty_niche');
+// Nicho Beleza (Carregamento resiliente — não derruba o servidor se ausente)
+let setupBeautyNiche = null;
+try {
+    ({ setupBeautyNiche } = require('./scripts/setup_beauty_niche'));
+} catch (e) {
+    console.warn("⚠️ Módulo 'setup_beauty_niche' não encontrado. Rota /api/onboarding/beauty desativada.");
+}
 
 // Configura o Multer para RAM
 const upload = multer({ 
@@ -232,6 +237,7 @@ app.get('/api/cnpj/:cnpj', async (req, res) => {
 // 🌸 ROTA 0: ONBOARDING NICHO BELEZA
 // ==========================================
 app.post('/api/onboarding/beauty', async (req, res) => {
+    if (!setupBeautyNiche) return res.status(503).json({ sucesso: false, erro: "Módulo de Beleza indisponível neste servidor." });
     await assegurarAutenticacao();
     const { userId } = req.body;
     try {
