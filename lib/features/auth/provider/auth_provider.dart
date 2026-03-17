@@ -5,7 +5,7 @@ class RegistrationState {
   final String email;
   final String phone;
   final String govPassword; // Sensitive - government access
-  final String appPassword; // Password to login into Meiri
+  final String appPassword; // Password to login into Meire
   final String ecacCode;
   final String cpf;
 

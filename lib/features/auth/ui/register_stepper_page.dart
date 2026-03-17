@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/features/auth/services/auth_service.dart';
-import 'package:meiri/core/services/brasil_api_service.dart';
-import 'package:meiri/core/utils/validators.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/features/auth/services/auth_service.dart';
+import 'package:meire/core/services/brasil_api_service.dart';
+import 'package:meire/core/utils/validators.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class RegisterStepperPage extends ConsumerStatefulWidget {
@@ -119,11 +117,11 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       appBar: AppBar(
         title: Text(
           _currentStep == 0 ? 'Conectar Empresa' : 'Seus Dados',
-          style: const TextStyle(color: MeiriTheme.primaryColor, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: MeiriTheme.primaryColor),
+        iconTheme: const IconThemeData(color: MeireTheme.primaryColor),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -139,7 +137,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        color: MeiriTheme.primaryColor,
+                        color: MeireTheme.primaryColor,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -149,7 +147,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        color: _currentStep == 1 ? MeiriTheme.primaryColor : Colors.grey.shade200,
+                        color: _currentStep == 1 ? MeireTheme.primaryColor : Colors.grey.shade200,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -173,11 +171,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SvgPicture.asset(
-            'assets/images/logo.svg',
-            height: 64,
-          ),
-
+          const Icon(Icons.business_center_outlined, size: 64, color: MeireTheme.primaryColor),
           const SizedBox(height: 24),
           const Text(
             'Qual o CNPJ da sua MEI?',
@@ -185,7 +179,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: MeiriTheme.primaryColor,
+              color: MeireTheme.primaryColor,
               letterSpacing: -0.5,
             ),
           ),
@@ -208,7 +202,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             decoration: InputDecoration(
               hintText: '00.000.000/0000-00',
               filled: true,
-              fillColor: MeiriTheme.iceGray,
+              fillColor: MeireTheme.iceGray,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -233,7 +227,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     }
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: MeiriTheme.primaryColor,
+              backgroundColor: MeireTheme.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
@@ -267,13 +261,13 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: MeiriTheme.accentColor.withValues(alpha: 0.05),
+              color: MeireTheme.accentColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MeiriTheme.accentColor.withValues(alpha: 0.2)),
+              border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.2)),
             ),
             child: Column(
               children: [
-                const Icon(Icons.verified, color: MeiriTheme.accentColor, size: 32),
+                const Icon(Icons.verified, color: MeireTheme.accentColor, size: 32),
                 const SizedBox(height: 12),
                 if (_razaoSocial != 'Preenchimento Manual')
                   Text(
@@ -282,7 +276,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: MeiriTheme.primaryColor,
+                      color: MeireTheme.primaryColor,
                     ),
                   )
                 else
@@ -304,7 +298,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: MeiriTheme.primaryColor,
+              color: MeireTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 24),
@@ -354,7 +348,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                 width: 24,
                 child: Checkbox(
                   value: _aceitouTermos,
-                  activeColor: MeiriTheme.accentColor,
+                  activeColor: MeireTheme.accentColor,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                   onChanged: (bool? value) {
                     setState(() {
@@ -377,7 +371,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                         TextSpan(
                           text: 'Termos de Uso e Política de Privacidade.',
                           style: TextStyle(
-                            color: MeiriTheme.primaryColor,
+                            color: MeireTheme.primaryColor,
                             fontWeight: FontWeight.bold,
                             decoration: TextDecoration.underline,
                           ),
@@ -393,7 +387,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           ElevatedButton(
             onPressed: (_isLoading || !_aceitouTermos) ? null : _performRegistration,
             style: ElevatedButton.styleFrom(
-              backgroundColor: MeiriTheme.primaryColor,
+              backgroundColor: MeireTheme.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               elevation: 0,
@@ -446,7 +440,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
-        fillColor: MeiriTheme.iceGray,
+        fillColor: MeireTheme.iceGray,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

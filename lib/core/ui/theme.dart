@@ -1,22 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class MeiriTheme {
+class MeireTheme {
   // Dark blue representing technical authority and trust
   // Otimização de Performance: Cores cacheadas e temas imutáveis
-  // Brand colors from MEIRI.svg
-  // Brand colors from MEIRI branding guide
-  static const Color primaryColor = Color(0xFF1A4D35); // Leaf Green (Primary)
-  static const Color accentColor = Color(0xFFFFB700);  // Bright Gold
-  static const Color deepGreen = Color(0xFF061A11);   // Deep Green
-  static const Color lushGreen = Color(0xFF0A2619);   // Lush Green
-  static const Color forestGreen = Color(0xFF123A27); // Forest Green
-  static const Color turquoiseColor = forestGreen;    // Compatibility mapping
-  static const Color backgroundColor = Color(0xFFF8F8F5); // Light Background
-  static const Color iceGray = Color(0xFFE2E8F0);     // Modern Slate Gray
+  static const Color primaryColor = Color(0xFF001F3D);
+  static const Color accentColor = Color(0xFF3B82F6);
+  static const Color backgroundColor = Color(0xFFF5F7F8);
+  static const Color iceGray = Color(0xFFE6EDF4);
   static const Color textBodyColor = Color(0xFF334155);
-
-
 
   static ThemeData getTheme(Brightness brightness, bool isCompact) {
     final isDark = brightness == Brightness.dark;
@@ -31,7 +23,7 @@ class MeiriTheme {
       useMaterial3: true,
       brightness: brightness,
       scaffoldBackgroundColor:
-          isDark ? deepGreen : backgroundColor,
+          isDark ? const Color(0xFF0F172A) : backgroundColor,
       colorScheme: ColorScheme.fromSeed(
         brightness: brightness,
         seedColor: isDark ? accentColor : primaryColor,
@@ -60,8 +52,7 @@ class MeiriTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? lushGreen : Colors.white,
-
+        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
@@ -99,21 +90,18 @@ class MeiriTheme {
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: isDark ? lushGreen : Colors.white,
-
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         foregroundColor: isDark ? Colors.white : primaryColor,
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: isDark ? lushGreen : Colors.white,
-
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         selectedItemColor: isDark ? accentColor : primaryColor,
         unselectedItemColor: isDark ? const Color(0xFF64748B) : Colors.grey,
         selectedLabelStyle: TextStyle(fontSize: 10 * scale),
         unselectedLabelStyle: TextStyle(fontSize: 10 * scale),
       ),
-
     );
   }
 

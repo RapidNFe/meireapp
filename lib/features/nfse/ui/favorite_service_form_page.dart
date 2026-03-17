@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/core/utils/validators.dart';
-import 'package:meiri/core/ui/widgets/service_selector.dart';
-import 'package:meiri/core/ui/widgets/nbs_selector.dart';
-import 'package:meiri/core/utils/currency_input_formatter.dart';
-import 'package:meiri/features/nfse/data/catalogo_beleza.dart';
-import 'package:meiri/features/nfse/provider/favorite_services_provider.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/core/utils/validators.dart';
+import 'package:meire/core/ui/widgets/service_selector.dart';
+import 'package:meire/core/ui/widgets/nbs_selector.dart';
+import 'package:meire/core/utils/currency_input_formatter.dart';
+import 'package:meire/features/nfse/data/catalogo_beleza.dart';
+import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
 
 class FavoriteServiceFormPage extends ConsumerStatefulWidget {
   const FavoriteServiceFormPage({super.key});
@@ -77,7 +77,7 @@ class _FavoriteServiceFormPageState
       appBar: AppBar(
         title: const Text('Cadastrar Serviço Favorito'),
         backgroundColor: Colors.white,
-        foregroundColor: MeiriTheme.primaryColor,
+        foregroundColor: MeireTheme.primaryColor,
         elevation: 1,
       ),
       body: SingleChildScrollView(
@@ -92,7 +92,7 @@ class _FavoriteServiceFormPageState
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: MeiriTheme.iceGray),
+                  border: Border.all(color: MeireTheme.iceGray),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.02),
@@ -136,7 +136,7 @@ class _FavoriteServiceFormPageState
                           'Selecione a Classificação Tributária (CNAE) *',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: MeiriTheme.primaryColor)),
+                              color: MeireTheme.primaryColor)),
                       const SizedBox(height: 8),
                       ServiceSelector(
                         onServiceSelected: (selection) {
@@ -150,7 +150,7 @@ class _FavoriteServiceFormPageState
                       const Text('Selecione a Classificação NBS (IBGE) *',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: MeiriTheme.primaryColor)),
+                              color: MeireTheme.primaryColor)),
                       const SizedBox(height: 8),
                       NbsSelector(onNbsSelected: (nbsSelection) {
                         setState(() {
@@ -230,13 +230,13 @@ class _FavoriteServiceFormPageState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Nicho de Beleza / Salão Parceiro',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MeiriTheme.primaryColor)),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MeireTheme.primaryColor)),
                 Text('Habilita automação de quinzena', style: TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
             Switch(
               value: _isNichoBeleza,
-              activeThumbColor: MeiriTheme.accentColor,
+              activeThumbColor: MeireTheme.accentColor,
               onChanged: (val) => setState(() => _isNichoBeleza = val),
             ),
           ],
@@ -275,9 +275,9 @@ class _FavoriteServiceFormPageState
                 onEditingComplete: onEditingComplete,
                 decoration: InputDecoration(
                   labelText: 'O que você faz? (Ex: unha, cabelo, cílios)',
-                  prefixIcon: const Icon(Icons.search, color: MeiriTheme.accentColor),
+                  prefixIcon: const Icon(Icons.search, color: MeireTheme.accentColor),
                   filled: true,
-                  fillColor: MeiriTheme.accentColor.withValues(alpha: 0.05),
+                  fillColor: MeireTheme.accentColor.withValues(alpha: 0.05),
                 ),
               );
             },

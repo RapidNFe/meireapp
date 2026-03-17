@@ -20,7 +20,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
     final statsAsync = ref.watch(dasnCopilotoProvider(_selectedYear));
 
     return Scaffold(
-      backgroundColor: MeiriTheme.backgroundColor,
+      backgroundColor: MeireTheme.backgroundColor,
       appBar: AppBar(
         title: const Text("Declaração Anual (DASN)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         elevation: 0,
@@ -37,7 +37,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: MeiriTheme.accentColor,
+                color: MeireTheme.accentColor,
                 letterSpacing: 1.2,
               ),
             ),
@@ -59,7 +59,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
               desc: "Acesse o portal oficial para declarar",
               url: "https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao",
               icon: Icons.rocket_launch,
-              color: MeiriTheme.primaryColor,
+              color: MeireTheme.primaryColor,
             ),
             const SizedBox(height: 48),
             Container(
@@ -74,7 +74,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "O Meiri gera o resumo com base nas notas emitidas pelo App. Confira se houve algum faturamento externo antes de declarar.",
+                      "O Meire gera o resumo com base nas notas emitidas pelo App. Confira se houve algum faturamento externo antes de declarar.",
                       style: TextStyle(fontSize: 12, color: Colors.blue, height: 1.4),
                     ),
                   ),
@@ -94,7 +94,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: MeiriTheme.iceGray),
+          border: Border.all(color: MeireTheme.iceGray),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.02),
@@ -116,7 +116,7 @@ class _DasnCopilotoPageState extends ConsumerState<DasnCopilotoPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Prestação de Serviços", style: TextStyle(color: MeiriTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 14)),
+                const Text("Prestação de Serviços", style: TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 14)),
                 Text(NumberFormat.currency(locale: 'pt_BR', symbol: r"R$").format(stats.servicos), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
               ],
             ),

@@ -1,5 +1,5 @@
 /**
- * meiri CO-PILOTO - SINCRONIZADOR DE NOTAS FANTASMA
+ * MEIRE CO-PILOTO - SINCRONIZADOR DE NOTAS FANTASMA
  * Este script verifica notas que ficaram presas no status 'PENDENTE'
  * e tenta validar se foram autorizadas ou se devem ser descartadas.
  */

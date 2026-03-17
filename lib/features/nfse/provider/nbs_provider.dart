@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/services/nbs_service.dart';
+import 'package:meire/core/services/nbs_service.dart';
 
 // Represents individual node from IBGE API
 class NbsModel {

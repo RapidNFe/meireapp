@@ -35,11 +35,15 @@ function gerarXmlDPS(dados) {
   // Formata perfeitamente: YYYY-MM-DDTHH:mm:ss-03:00
   const dhEmiTratada = `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}T${pad(dataBrasil.getHours())}:${pad(dataBrasil.getMinutes())}:${pad(dataBrasil.getSeconds())}-03:00`;
   
-  // Força dCompet a ter apenas 10 caracteres (YYYY-MM-DD)
-  // Se vier no payload (ex: da Ana escolhendo o mês), usa ela. Se não, usa hoje.
-  const dCompetTratada = dados.competencia 
-    ? dados.competencia.substring(0, 10) 
-    : `${dataBrasil.getFullYear()}-${pad(dataBrasil.getMonth()+1)}-${pad(dataBrasil.getDate())}`;
+  // 1. TRATAMENTO RIGOROSO DA VARIÁVEL:
+  // Removemos o fallback de dataBrasil. Agora usamos apenas o que o cliente enviou.
+  const dCompetTratada = dados.competencia ? dados.competencia.substring(0, 10) : null;
+
+  // LOG DE AUDITORIA CRÍTICO:
+  if (!dCompetTratada) {
+      console.error(`❌ [Gerador] ERRO CRÍTICO: Competência não informada pelo cliente!`);
+      throw new Error("A data de competência é obrigatória para gerar o XML.");
+  }
 
   console.log(`🖋️ [Gerador] dCompet Final no XML: ${dCompetTratada}`);
 
@@ -52,7 +56,7 @@ function gerarXmlDPS(dados) {
         '@Id': idDPS,
         tpAmb: dados.ambiente,
         dhEmi: dhEmiTratada,
-        verAplic: 'meiriApp1.0', 
+        verAplic: 'MeireApp1.0', 
         serie: dados.numeroSerie,
         nDPS: dados.numeroDPS,
         dCompet: dCompetTratada,

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:meiri/core/ui/theme.dart';
+import 'package:meire/core/ui/theme.dart';
 
 class PainelProcessamentoPDF extends StatefulWidget {
   final String chaveAcesso;
@@ -60,9 +60,9 @@ class _PainelProcessamentoPDFState extends State<PainelProcessamentoPDF> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: MeiriTheme.primaryColor.withValues(alpha: 0.1),
+        color: MeireTheme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: MeiriTheme.primaryColor.withValues(alpha: 0.5)),
+        border: Border.all(color: MeireTheme.primaryColor.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [
@@ -73,19 +73,19 @@ class _PainelProcessamentoPDFState extends State<PainelProcessamentoPDF> {
                 SizedBox(
                   width: 16,
                   height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: MeiriTheme.primaryColor),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: MeireTheme.primaryColor),
                 ),
                 SizedBox(width: 12),
                 Text(
                   "Sincronizando com o Governo...",
-                  style: TextStyle(color: MeiriTheme.primaryColor, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             const SizedBox(height: 15),
             LinearProgressIndicator(
               value: progresso,
-              backgroundColor: MeiriTheme.iceGray,
+              backgroundColor: MeireTheme.iceGray,
               color: Colors.green, 
               minHeight: 8,
             ),
@@ -99,7 +99,7 @@ class _PainelProcessamentoPDFState extends State<PainelProcessamentoPDF> {
             const SizedBox(height: 10),
             const Text(
               "PDF Oficial Liberado!",
-              style: TextStyle(color: MeiriTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
         ],

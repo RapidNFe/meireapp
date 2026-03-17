@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/core/error/ui/government_error_view.dart';
-import 'package:meiri/features/history/ui/invoice_history_page.dart';
-import 'package:meiri/features/nfse/ui/nfse_form_page.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/core/error/ui/government_error_view.dart';
+import 'package:meire/features/history/ui/invoice_history_page.dart';
+import 'package:meire/features/nfse/ui/nfse_form_page.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() {
@@ -17,12 +17,12 @@ void main() {
       return ProviderScope(
         child: MaterialApp(
           // Use standard theme to avoid executing GoogleFonts.interTextTheme()
-          // which is statically evaluated inside MeiriTheme.lightTheme
+          // which is statically evaluated inside MeireTheme.lightTheme
           theme: ThemeData.light().copyWith(
-            primaryColor: MeiriTheme.primaryColor,
-            scaffoldBackgroundColor: MeiriTheme.backgroundColor,
+            primaryColor: MeireTheme.primaryColor,
+            scaffoldBackgroundColor: MeireTheme.backgroundColor,
             colorScheme:
-                const ColorScheme.light(primary: MeiriTheme.primaryColor),
+                const ColorScheme.light(primary: MeireTheme.primaryColor),
           ),
           debugShowCheckedModeBanner: false,
           home: Scaffold(body: child),

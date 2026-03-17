@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/services/pocketbase_service.dart';
-import 'package:meiri/features/clients/models/client_model.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:meire/features/clients/models/client_model.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 final clientListProvider = FutureProvider.autoDispose<List<ClientModel>>((ref) async {

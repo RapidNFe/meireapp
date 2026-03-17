@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/services/brasil_api_service.dart';
-import 'package:meiri/core/services/pocketbase_service.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/core/utils/validators.dart';
-import 'package:meiri/features/clients/provider/client_provider.dart';
+import 'package:meire/core/services/brasil_api_service.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/core/utils/validators.dart';
+import 'package:meire/features/clients/provider/client_provider.dart';
 
 class AddClientPage extends ConsumerStatefulWidget {
   const AddClientPage({super.key});
@@ -131,7 +131,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
       appBar: AppBar(
         title: const Text('Cadastrar Tomador'),
         backgroundColor: Colors.white,
-        foregroundColor: MeiriTheme.primaryColor,
+        foregroundColor: MeireTheme.primaryColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),

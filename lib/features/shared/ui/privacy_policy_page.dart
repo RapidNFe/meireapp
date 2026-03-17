@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meiri/core/ui/theme.dart';
+import 'package:meire/core/ui/theme.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
@@ -11,11 +11,11 @@ class PrivacyPolicyPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Privacidade e Soberania',
-          style: TextStyle(color: MeiriTheme.primaryColor, fontWeight: FontWeight.bold),
+          style: TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: MeiriTheme.primaryColor),
+        iconTheme: const IconThemeData(color: MeireTheme.primaryColor),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -25,15 +25,15 @@ class PrivacyPolicyPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Center(
-                child: Icon(Icons.shield_outlined, size: 64, color: MeiriTheme.accentColor),
+                child: Icon(Icons.shield_outlined, size: 64, color: MeireTheme.accentColor),
               ),
               const SizedBox(height: 24),
               const Text(
-                '🛡️ Política de Privacidade e Soberania de Dados (Meiri App)',
+                '🛡️ Política de Privacidade e Soberania de Dados (Meire App)',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: MeiriTheme.primaryColor,
+                  color: MeireTheme.primaryColor,
                 ),
               ),
               const SizedBox(height: 8),
@@ -44,7 +44,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               const SizedBox(height: 32),
               _buildSection(
                 'Nossa Filosofia',
-                'Bem-vindo à Meiri, a plataforma de inteligência fiscal desenvolvida pela SAID Contabilidade.\n\nNossa arquitetura foi construída sob o princípio do privilégio mínimo: nós não queremos, não precisamos e não comercializamos os seus dados. O nosso ecossistema existe exclusivamente para automatizar o seu faturamento e garantir a sua conformidade tributária com "fricção zero".\n\nPara estarmos em total conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), detalhamos abaixo, de forma transparente e direta, como a sua operação é blindada em nossos servidores.',
+                'Bem-vindo à Meire, a plataforma de inteligência fiscal desenvolvida pela SAID Contabilidade.\n\nNossa arquitetura foi construída sob o princípio do privilégio mínimo: nós não queremos, não precisamos e não comercializamos os seus dados. O nosso ecossistema existe exclusivamente para automatizar o seu faturamento e garantir a sua conformidade tributária com "fricção zero".\n\nPara estarmos em total conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018), detalhamos abaixo, de forma transparente e direta, como a sua operação é blindada em nossos servidores.',
               ),
               _buildSection(
                 '1. Os Dados que Movimentamos',
@@ -55,7 +55,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
               _buildSection(
                 '2. O Motor de Processamento',
-                'A Meiri atua como uma ponte criptografada (via tecnologia mTLS) entre o seu celular e a Receita Federal/Prefeituras.\n\nO payload das suas notas fiscais é transmitido diretamente para o Integrador Contador (SERPRO), que é o órgão governamental oficial para validação da NFS-e Nacional.\n\nNós não compartilhamos, alugamos ou vendemos sua lista de clientes ou histórico de faturamento para nenhuma ferramenta de marketing ou empresa de terceiros.',
+                'A Meire atua como uma ponte criptografada (via tecnologia mTLS) entre o seu celular e a Receita Federal/Prefeituras.\n\nO payload das suas notas fiscais é transmitido diretamente para o Integrador Contador (SERPRO), que é o órgão governamental oficial para validação da NFS-e Nacional.\n\nNós não compartilhamos, alugamos ou vendemos sua lista de clientes ou histórico de faturamento para nenhuma ferramenta de marketing ou empresa de terceiros.',
               ),
               _buildSection(
                 '3. Onde o seu dado repousa',
@@ -63,7 +63,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
               _buildSection(
                 '4. O Seu Poder de Comando (Seus Direitos LGPD)',
-                'Você é o soberano da sua operação. Através do aplicativo Meiri, você tem o direito imediato de:\n\n'
+                'Você é o soberano da sua operação. Através do aplicativo Meire, você tem o direito imediato de:\n\n'
                 '• Acessar: Visualizar todo o seu histórico financeiro e cadastral em tempo real.\n'
                 '• Retificar: Alterar dados incorretos de clientes ou do seu próprio perfil.\n'
                 '• O Direito ao Esquecimento: Você pode, a qualquer momento, acessar a aba "Perfil" e acionar o botão "Excluir Minha Conta e Dados". Nossa arquitetura executará uma exclusão em cascata, pulverizando imediatamente seu usuário, suas notas processadas e sua agenda de clientes de nossos servidores. Esta ação é irreversível.',
@@ -75,7 +75,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               const SizedBox(height: 48),
               Center(
                 child: Text(
-                  'Soberania. Privacidade. Meiri.',
+                  'Soberania. Privacidade. Meire.',
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
                     color: Colors.grey.shade400,
@@ -101,7 +101,7 @@ class PrivacyPolicyPage extends StatelessWidget {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: MeiriTheme.primaryColor,
+              color: MeireTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 12),

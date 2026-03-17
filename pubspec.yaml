@@ -1,6 +1,6 @@
 # Deploy Web: flutter build web --release --web-renderer html --tree-shake-icons
-name: meiri
-description: Meiri Frontend Foundation (v1.0)
+name: meire
+description: Meire Frontend Foundation (v1.0)
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -40,5 +40,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/cnae.json
-    - assets/images/
-    - assets/animations/

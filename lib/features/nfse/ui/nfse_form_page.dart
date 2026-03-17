@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/core/utils/currency_input_formatter.dart';
-import 'package:meiri/core/utils/validators.dart';
-import 'package:meiri/features/nfse/services/notas_fiscais_service.dart';
-import 'package:meiri/features/hub/provider/notas_fiscais_provider.dart';
-import 'package:meiri/features/nfse/provider/favorite_services_provider.dart';
-import 'package:meiri/features/nfse/provider/cnae_provider.dart';
-import 'package:meiri/features/nfse/ui/widgets/buscador_tributario_avancado.dart';
-import 'package:meiri/features/shared/ui/widgets/meiri_assistant_widget.dart';
-import 'package:meiri/features/clients/provider/client_provider.dart';
-import 'package:meiri/features/clients/models/client_model.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/core/utils/currency_input_formatter.dart';
+import 'package:meire/core/utils/validators.dart';
+import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
+import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
+import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
+import 'package:meire/features/nfse/provider/cnae_provider.dart';
+import 'package:meire/features/nfse/ui/widgets/buscador_tributario_avancado.dart';
+import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
+import 'package:meire/features/clients/provider/client_provider.dart';
+import 'package:meire/features/clients/models/client_model.dart';
 import 'package:shimmer/shimmer.dart';
 
 // ZELADORIA: Ativando suporte a competência retroativa no formulário
@@ -94,7 +94,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                     children: [
                       const Text(
                         'Selecionar Cliente',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MeiriTheme.primaryColor),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close),
@@ -133,8 +133,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                             return ListTile(
                               contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                               leading: CircleAvatar(
-                                backgroundColor: MeiriTheme.accentColor.withValues(alpha: 1.0),
-                                child: Text(client.apelido.substring(0, 1).toUpperCase(), style: const TextStyle(color: MeiriTheme.accentColor, fontWeight: FontWeight.bold)),
+                                backgroundColor: MeireTheme.accentColor.withValues(alpha: 1.0),
+                                child: Text(client.apelido.substring(0, 1).toUpperCase(), style: const TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold)),
                               ),
                               title: Text(client.apelido, style: const TextStyle(fontWeight: FontWeight.bold)),
                               subtitle: Text('${client.razaoSocial}\nCNPJ: ${client.cnpj}'),
@@ -248,7 +248,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
     }
   }
 
-  String get _meiriMessage {
+  String get _meireMessage {
     if (_documentController.text.isEmpty) {
       return "Lembre-se de conferir o CNPJ do tomador.";
     } else if (_selectedServiceId == null) {
@@ -267,13 +267,13 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       appBar: AppBar(
         title: const Text('Emitir NFS-e'),
         backgroundColor: Colors.white,
-        foregroundColor: MeiriTheme.primaryColor,
+        foregroundColor: MeireTheme.primaryColor,
         elevation: 1,
       ),
       body:
           _isLoading ? _buildLoadingState() : _buildFormState(favoriteServices),
       floatingActionButton:
-          _isLoading ? null : MeiriAssistantWidget(message: _meiriMessage),
+          _isLoading ? null : MeireAssistantWidget(message: _meireMessage),
     );
   }
 
@@ -303,7 +303,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                       icon: const Icon(Icons.search, size: 18),
                       label: const Text('Buscar Salvo'),
                       style: TextButton.styleFrom(
-                        foregroundColor: MeiriTheme.accentColor,
+                        foregroundColor: MeireTheme.accentColor,
                         padding: EdgeInsets.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -451,10 +451,10 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Shimmer.fromColors(
-            baseColor: MeiriTheme.iceGray,
+            baseColor: MeireTheme.iceGray,
             highlightColor: Colors.white,
             child: const Icon(Icons.receipt_long,
-                size: 80, color: MeiriTheme.primaryColor),
+                size: 80, color: MeireTheme.primaryColor),
           ),
           const SizedBox(height: 24),
           const Text(
@@ -462,7 +462,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: MeiriTheme.primaryColor),
+                color: MeireTheme.primaryColor),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -482,7 +482,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w800,
-          color: MeiriTheme.primaryColor,
+          color: MeireTheme.primaryColor,
         ),
       ),
     );
@@ -492,9 +492,9 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MeiriTheme.accentColor.withValues(alpha: 0.05),
+        color: MeireTheme.accentColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MeiriTheme.accentColor.withValues(alpha: 0.2)),
+        border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.2)),
       ),
       child: InkWell(
         onTap: () async {
@@ -516,7 +516,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         },
         child: Row(
           children: [
-            const Icon(Icons.calendar_month, color: MeiriTheme.accentColor),
+            const Icon(Icons.calendar_month, color: MeireTheme.accentColor),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,7 +534,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             const Spacer(),
             const Text(
               "Alterar",
-              style: TextStyle(color: MeiriTheme.accentColor, fontWeight: FontWeight.bold),
+              style: TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -548,7 +548,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MeiriTheme.iceGray),
+        border: Border.all(color: MeireTheme.iceGray),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),

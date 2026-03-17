@@ -1,7 +1,7 @@
 {
-  "name": "meiri-backend",
+  "name": "meire-backend",
   "version": "1.0.0",
-  "description": "meiri Node.js Backend Processor",
+  "description": "Meire Node.js Backend Processor",
   "main": "extrator_imediato.js",
   "scripts": {
     "start": "node extrator_imediato.js"

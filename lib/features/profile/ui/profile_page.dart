@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:meiri/core/ui/theme.dart';
-import 'package:meiri/core/ui/widgets/vault_tunneling_loading.dart';
-import 'package:meiri/features/auth/services/auth_service.dart';
+import 'package:meire/core/ui/theme.dart';
+import 'package:meire/features/auth/services/auth_service.dart';
 
-
-import 'package:meiri/core/services/pocketbase_service.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
@@ -75,7 +73,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             throw Exception('Você precisa fornecer a senha verdadeira para salvar o novo certificado.');
         }
 
-        final uri = Uri.parse('$meiriApiUrl/api/certificados/upload');
+        final uri = Uri.parse('$meireApiUrl/api/certificados/upload');
         final cnpj = user.getStringValue('cnpj').replaceAll(RegExp(r'\D'), '');
         final request = http.MultipartRequest('POST', uri)
           ..fields['userId'] = user.id
@@ -169,14 +167,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 16),
             ...pendencias.map((p) => Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text('• $p', style: const TextStyle(fontWeight: FontWeight.bold, color: MeiriTheme.primaryColor)),
+              child: Text('• $p', style: const TextStyle(fontWeight: FontWeight.bold, color: MeireTheme.primaryColor)),
             )),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Entendi', style: TextStyle(color: MeiriTheme.accentColor, fontWeight: FontWeight.bold)),
+            child: const Text('Entendi', style: TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold)),
           )
         ],
       ),
@@ -262,7 +260,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(value ? '🚀 Meiri em Produção!' : '🛠️ Modo de Testes Ativado.'),
+                                    content: Text(value ? '🚀 Meire em Produção!' : '🛠️ Modo de Testes Ativado.'),
                                     backgroundColor: value ? Colors.green : Colors.orange,
                                   ),
                                 );
@@ -362,8 +360,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   foregroundColor: Colors.white,
                                 ),
                                 child: _isSaving 
-                                  ? const SizedBox(width: 24, height: 24, child: VaultTunnelingLoading())
-
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                   : const Text('Salvar no Cofre'),
                               ),
                             ),
@@ -412,7 +409,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             icon: const Icon(Icons.cloud_upload_outlined),
                             label: const Text('Atualizar Certificado / Senha'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: MeiriTheme.accentColor,
+                              backgroundColor: MeireTheme.accentColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -444,7 +441,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   icon: Icon(_isEditingProfile ? Icons.check : Icons.edit),
                   label: Text(_isEditingProfile ? 'Salvar' : 'Editar'),
                   style: TextButton.styleFrom(
-                    foregroundColor: _isEditingProfile ? Colors.green : MeiriTheme.accentColor,
+                    foregroundColor: _isEditingProfile ? Colors.green : MeireTheme.accentColor,
                   ),
                 ),
                 children: [
@@ -598,7 +595,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: MeiriTheme.primaryColor,
+            color: MeireTheme.primaryColor,
           ),
         ),
         SizedBox(height: 8),
@@ -627,14 +624,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isVault
-              ? MeiriTheme.accentColor.withValues(alpha: 0.5)
-              : (isDark ? Colors.white10 : MeiriTheme.iceGray),
+              ? MeireTheme.accentColor.withValues(alpha: 0.5)
+              : (isDark ? Colors.white10 : MeireTheme.iceGray),
           width: isVault ? 2 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: isVault
-                ? MeiriTheme.accentColor.withValues(alpha: 0.05)
+                ? MeireTheme.accentColor.withValues(alpha: 0.05)
                 : Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
@@ -648,8 +645,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             children: [
               Icon(icon,
                   color: isVault
-                      ? MeiriTheme.accentColor
-                      : MeiriTheme.primaryColor),
+                      ? MeireTheme.accentColor
+                      : MeireTheme.primaryColor),
               const SizedBox(width: 8),
               Text(
                 title,
