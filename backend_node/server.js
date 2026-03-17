@@ -144,11 +144,12 @@ const app = express();
 // CONFIGURAÇÃO DE SEGURANÇA CORS (PRODUÇÃO)
 app.use(cors({
     origin: (origin, callback) => {
-        // Permite qualquer localhost (comum no Flutter Web debug) ou os domínios oficiais
+        // Permite qualquer localhost, qualquer subdomínio de meireapp.com.br, ou sem origin (request direto)
         if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || 
-            origin === 'https://meireapp.com.br' || origin === 'https://www.meireapp.com.br') {
+            origin.endsWith('meireapp.com.br') || origin.endsWith('meireapp.com.br/')) {
             callback(null, true);
         } else {
+            console.warn(`🚫 [CORS] Origin bloqueado: ${origin}`);
             callback(new Error('Bloqueado pelo CORS do Meire'));
         }
     },
