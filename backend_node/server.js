@@ -270,8 +270,15 @@ app.post('/api/nacional/emitir', async (req, res) => {
         };
         payload.ambiente = prestadorDb.producao ? "1" : "2";
 
+        console.log(`🌍 [Nacional] Ambiente: ${payload.ambiente === "1" ? "PRODUÇÃO" : "HOMOLOGAÇÃO"}`);
+        console.log(`🏢 [Nacional] Prestador: ${payload.prestador.cnpj}`);
+        console.log(`👤 [Nacional] Tomador: ${payload.tomador.cnpj} (${payload.tomador.nome})`);
+
         // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
-        console.log(`📡 [VORTEX] Payload Final para Motor:`, JSON.stringify({ ...payload, certPath: 'redacted' }, null, 2));
+        console.log(`📡 [VORTEX] Payload Final para Motor:`, JSON.stringify({ 
+            ...payload, 
+            prestador: { ...payload.prestador, certPath: 'redacted' } 
+        }, null, 2));
         const resultado = await vortex.emitirNacional(payload, certPath, certPass, prestadorDb.producao);
 
         let novoRegistroId = null;

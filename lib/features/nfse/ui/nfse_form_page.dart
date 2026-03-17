@@ -307,8 +307,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                         controller: _documentController,
                         inputFormatters: [Validators.cnpjMask],
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'CPF ou CNPJ (apenas números)'),
-                        validator: Validators.validateCpfCnpj,
+                        decoration: const InputDecoration(labelText: 'CNPJ do Tomador (apenas números)'),
+                        validator: Validators.validateCnpj,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(

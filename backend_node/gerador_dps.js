@@ -6,7 +6,7 @@ const { create } = require('xmlbuilder2');
 function gerarXmlDPS(dados) {
   
   // 1. Montagem do ID da DPS (Regra da Sefaz: DPS + cMun(7) + tpInsc(1) + CNPJ(14) + Serie(5) + nDPS(15))
-  const tipoInscricao = dados.prestador.cnpj.length === 14 ? '2' : '1'; 
+  const tipoInscricao = '2'; // SEMPRE CNPJ (Tipo 2)
   const numeroDpsFormatado = String(dados.numeroDPS).padStart(15, '0');
   const serieFormatada = String(dados.numeroSerie).padStart(5, '0');
 
@@ -74,7 +74,7 @@ function gerarXmlDPS(dados) {
         },
         
         toma: {
-          ...(dados.tomador.cnpj.length === 11 ? { CPF: dados.tomador.cnpj } : { CNPJ: dados.tomador.cnpj }),
+          CNPJ: dados.tomador.cnpj.replaceAll(/[^\d]/g, ''),
           xNome: nomeTomadorLimpo,
           end: {
             endNac: {

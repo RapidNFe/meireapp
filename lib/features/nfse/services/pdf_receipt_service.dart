@@ -63,7 +63,7 @@ class PdfReceiptService {
               pw.Text("TOMADOR DE SERVIÇOS", style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
               pw.SizedBox(height: 4),
               pw.Text("Nome/Razão Social: $clientName"),
-              pw.Text("CPF/CNPJ: $clientCnpj"),
+              pw.Text("CNPJ: $clientCnpj"),
               pw.SizedBox(height: 16),
 
               // Discriminação

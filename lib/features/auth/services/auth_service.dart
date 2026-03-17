@@ -26,14 +26,12 @@ class AuthService {
     required String password,
     required String nomeCompleto,
     required String razaoSocial,
-    required String cpf,
     required String cnpj,
   }) async {
     try {
-      final cleanCpf = cpf.replaceAll(RegExp(r'\D'), '');
       final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
 
-      // Check if email or CPF already exists locally on PB
+      // Check if email or CNPJ already exists locally on PB
       try {
         await _pb.collection('users').getFirstListItem('email="$email"');
         throw Exception('Este e-mail já está cadastrado.');
@@ -41,13 +39,6 @@ class AuthService {
         if (!e.toString().contains('404')) rethrow;
       }
 
-      try {
-        await _pb.collection('users').getFirstListItem('cpf="$cleanCpf"');
-        throw Exception('Este CPF já está cadastrado.');
-      } catch (e) {
-        if (!e.toString().contains('404')) rethrow;
-      }
-      
       try {
         await _pb.collection('users').getFirstListItem('cnpj="$cleanCnpj"');
         throw Exception('Este CNPJ já está vinculado a uma conta.');
@@ -65,7 +56,7 @@ class AuthService {
         "passwordConfirm": password,
         "name": nomeCompleto,
         "razao_social": razaoSocial,
-        "cpf": cleanCpf,
+        "cpf": "",
         "cnpj": cleanCnpj,
         "status_registro": "conta_criada",
         "mei_ativo": true,

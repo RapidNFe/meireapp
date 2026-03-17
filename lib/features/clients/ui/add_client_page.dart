@@ -73,7 +73,6 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
       }
     } else if (cleanText.length < 14 && _nameController.text.isNotEmpty) {
        setState(() {
-         // Limpa caso o usuario apague o CNPJ
          _nameController.clear();
        });
     }
@@ -88,7 +87,6 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
         final userId = pb.authStore.record?.id;
         if (userId == null) throw Exception('Sessão expirada. Faça login novamente.');
 
-        // Clean document before saving
         final cleanCnpj = _documentController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
         await pb.collection('clientes_tomadores').create(body: {
@@ -99,7 +97,6 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
           'email': _emailController.text,
         });
 
-        // Refresh riverpod list
         ref.invalidate(clientListProvider);
 
         if (mounted) {
@@ -141,7 +138,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Digite o CNPJ para preenchimento automático usando a Brasil API.',
+                'Digite o CNPJ para preenchimento automático.',
                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
               ),
               const SizedBox(height: 24),
@@ -162,7 +159,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
                         )
                       : null,
                 ),
-                validator: Validators.validateCpfCnpj,
+                validator: Validators.validateCnpj,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -177,7 +174,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
               ),
               const SizedBox(height: 16),
               TextFormField(
-                controller: _nicknameFocus.hasFocus ? _nicknameController : _nicknameController,
+                controller: _nicknameController,
                 focusNode: _nicknameFocus,
                 decoration: const InputDecoration(
                   labelText: 'Apelido do Cliente *',

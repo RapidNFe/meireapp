@@ -449,8 +449,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   const Divider(height: 24),
                   _InfoRow(label: 'E-mail', value: email),
                   const Divider(height: 24),
-                  _InfoRow(label: 'CPF', value: _formatDocument(user.getStringValue('cpf'))),
-                  const Divider(height: 24),
+
                   _InfoRow(label: 'CNPJ', value: _formatDocument(cnpj)),
                   const Divider(height: 24),
                   AnimatedSwitcher(
@@ -571,9 +570,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   String _formatDocument(String doc) {
-    if (doc.length == 11) {
-       return '${doc.substring(0, 3)}.${doc.substring(3, 6)}.${doc.substring(6, 9)}-${doc.substring(9, 11)}';
-    } else if (doc.length == 14) {
+    if (doc.length == 14) {
       return '${doc.substring(0, 2)}.${doc.substring(2, 5)}.${doc.substring(5, 8)}/${doc.substring(8, 12)}-${doc.substring(12, 14)}';
     }
     return doc;

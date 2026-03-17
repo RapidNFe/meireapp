@@ -25,8 +25,6 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   // Masks
   final _cnpjMask = MaskTextInputFormatter(
       mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9]')});
-  final _cpfMask = MaskTextInputFormatter(
-      mask: '###.###.###-##', filter: {"#": RegExp(r'[0-9]')});
 
   // State Step 1
   String _cnpj = '';
@@ -81,7 +79,6 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     setState(() => _isLoading = true);
 
     try {
-      final cleanCpf = _cpfMask.getUnmaskedText();
       final cleanCnpj = _cnpjMask.getUnmaskedText();
 
       await ref.read(authServiceProvider).signUp(
@@ -89,12 +86,10 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             password: _password,
             nomeCompleto: _nomeCompleto,
             razaoSocial: _razaoSocial,
-            cpf: cleanCpf,
             cnpj: cleanCnpj,
           );
 
       if (mounted) {
-        // Go directly to Success Page
         Navigator.pushReplacementNamed(context, '/success');
       }
     } catch (e) {
@@ -130,10 +125,9 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Progress Indicator elegant
               Row(
                 children: [
-                  Expanded(
+                   Expanded(
                     child: Container(
                       height: 4,
                       decoration: BoxDecoration(
@@ -319,14 +313,6 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             keyboardType: TextInputType.emailAddress,
             validator: Validators.validateEmail,
             onSaved: (val) => _email = val?.trim() ?? '',
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            label: 'CPF do Titular',
-            icon: Icons.badge_outlined,
-            keyboardType: TextInputType.number,
-            inputFormatters: [_cpfMask],
-            validator: Validators.validateCpf,
           ),
           const SizedBox(height: 16),
           _buildTextField(
