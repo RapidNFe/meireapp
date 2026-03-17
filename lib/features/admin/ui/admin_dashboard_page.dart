@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/services/pocketbase_service.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/services/pocketbase_service.dart';
+import 'package:meiri/core/ui/theme.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import '../../auth/services/auth_service.dart';
@@ -56,7 +56,7 @@ class AdminDashboardPage extends ConsumerWidget {
               label: const Text('Acessar Meu Painel MEI (Emissor)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
-                backgroundColor: MeireTheme.primaryColor,
+                backgroundColor: MeiriTheme.primaryColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -66,7 +66,7 @@ class AdminDashboardPage extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: MeireTheme.accentColor,
+                color: MeiriTheme.accentColor,
                 letterSpacing: 1.2,
               ),
             ),
@@ -80,7 +80,7 @@ class AdminDashboardPage extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+                      border: Border.all(color: isDark ? Colors.white10 : MeiriTheme.iceGray),
                     ),
                     child: Column(
                       children: [
@@ -107,7 +107,7 @@ class AdminDashboardPage extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+                        border: Border.all(color: isDark ? Colors.white10 : MeiriTheme.iceGray),
                       ),
                       child: Row(
                         children: [

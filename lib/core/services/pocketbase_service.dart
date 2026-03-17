@@ -70,15 +70,15 @@ const String _devApiUrl = 'http://127.0.0.1:3000'; // Gateway Inteligente (Node)
 
 // Em desenvolvimento, apontamos TUDO para o Gateway (3000) para testar o Proxy/CORS localmente
 // Em produção, apontamos para o domínio oficial que faz o roteamento
-const String meirePbUrl = kDebugMode ? _devApiUrl : _prodUrl;
-const String meireApiUrl = kDebugMode ? _devApiUrl : _prodUrl;
+const String meiriPbUrl = kDebugMode ? _devApiUrl : _prodUrl;
+const String meiriApiUrl = kDebugMode ? _devApiUrl : _prodUrl;
 
 // Retrocompatibilidade
-const String meireBaseUrl = meirePbUrl;
+const String meiriBaseUrl = meiriPbUrl;
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();
-final pb = PocketBase(meireBaseUrl, authStore: pocketBaseAuthStore);
+final pb = PocketBase(meiriBaseUrl, authStore: pocketBaseAuthStore);
 
 // Create a provider for easier injection
 final pbProvider = Provider<PocketBase>((ref) => pb);

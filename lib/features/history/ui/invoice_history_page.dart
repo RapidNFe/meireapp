@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/history/models/invoice_model.dart';
-import 'package:meire/features/history/ui/widgets/invoice_list_tile.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/history/models/invoice_model.dart';
+import 'package:meiri/features/history/ui/widgets/invoice_list_tile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
+import 'package:meiri/features/hub/provider/notas_fiscais_provider.dart';
 
 class InvoiceHistoryPage extends ConsumerStatefulWidget {
   const InvoiceHistoryPage({super.key});
@@ -106,7 +106,7 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: MeireTheme.primaryColor,
+              color: MeiriTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 8),
@@ -124,11 +124,11 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
               fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
-                borderSide: BorderSide(color: MeireTheme.iceGray),
+                borderSide: BorderSide(color: MeiriTheme.iceGray),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
-                borderSide: BorderSide(color: MeireTheme.iceGray),
+                borderSide: BorderSide(color: MeiriTheme.iceGray),
               ),
               contentPadding: EdgeInsets.symmetric(vertical: 0),
             ),
@@ -162,14 +162,14 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
       onSelected: (selected) {
         if (selected) setState(() => _selectedFilterIndex = index);
       },
-      selectedColor: MeireTheme.primaryColor,
+      selectedColor: MeiriTheme.primaryColor,
       backgroundColor: Colors.white,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : MeireTheme.primaryColor,
+        color: isSelected ? Colors.white : MeiriTheme.primaryColor,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
       side: BorderSide(
-          color: isSelected ? MeireTheme.primaryColor : MeireTheme.iceGray),
+          color: isSelected ? MeiriTheme.primaryColor : MeiriTheme.iceGray),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }

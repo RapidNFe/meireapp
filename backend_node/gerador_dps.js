@@ -56,7 +56,7 @@ function gerarXmlDPS(dados) {
         '@Id': idDPS,
         tpAmb: dados.ambiente,
         dhEmi: dhEmiTratada,
-        verAplic: 'MeireApp1.0', 
+        verAplic: 'meiriApp1.0', 
         serie: dados.numeroSerie,
         nDPS: dados.numeroDPS,
         dCompet: dCompetTratada,

@@ -1,6 +1,6 @@
 module.exports = {
   apps : [{
-    name: "MEIRE-GATEWAY",
+    name: "meiri-GATEWAY",
     script: "./server.js",
     watch: true,
     env: {
@@ -8,7 +8,7 @@ module.exports = {
       PORT: 3000
     }
   }, {
-    name: "MEIRE-ROBO",
+    name: "meiri-ROBO",
     script: "./robo_noturno.js",
     cron_restart: "0 3 * * *", // Reinicia/Garante execução às 03h
     autorestart: false

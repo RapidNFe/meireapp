@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/constants/service_codes.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/constants/service_codes.dart';
+import 'package:meiri/core/ui/theme.dart';
 
 class ServiceSelector extends StatefulWidget {
   final Function(Map<String, String>) onServiceSelected;
@@ -67,7 +67,7 @@ class _ServiceSelectorState extends State<ServiceSelector> {
             labelText: 'Buscar Serviço (Ex: "Marketing", "Sistemas")',
             hintText: 'Digite para buscar um serviço da Receita Federal',
             prefixIcon:
-                const Icon(Icons.search, color: MeireTheme.primaryColor),
+                const Icon(Icons.search, color: MeiriTheme.primaryColor),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.clear),

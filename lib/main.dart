@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/auth/ui/login_page.dart';
-import 'package:meire/features/auth/ui/register_stepper_page.dart';
-import 'package:meire/features/auth/ui/success_page.dart';
-import 'package:meire/features/hub/ui/dashboard_page.dart';
-import 'package:meire/features/nfse/ui/favorite_service_form_page.dart';
-import 'package:meire/features/nfse/ui/nfse_form_page.dart';
-import 'package:meire/features/nfse/ui/nfse_success_page.dart';
-import 'package:meire/features/admin/ui/admin_dashboard_page.dart';
-import 'package:meire/features/clients/ui/add_client_page.dart';
-import 'package:meire/features/clients/ui/customer_central_page.dart';
-import 'package:meire/core/services/pocketbase_service.dart';
-import 'package:meire/core/provider/settings_provider.dart';
-import 'package:meire/features/shared/ui/privacy_policy_page.dart';
-import 'package:meire/features/copiloto/ui/dasn_copiloto_page.dart';
-import 'package:meire/features/nfse/ui/pdf_viewer_page.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/auth/ui/login_page.dart';
+import 'package:meiri/features/auth/ui/register_stepper_page.dart';
+import 'package:meiri/features/auth/ui/success_page.dart';
+import 'package:meiri/features/hub/ui/dashboard_page.dart';
+import 'package:meiri/features/nfse/ui/favorite_service_form_page.dart';
+import 'package:meiri/features/nfse/ui/nfse_form_page.dart';
+import 'package:meiri/features/nfse/ui/nfse_success_page.dart';
+import 'package:meiri/features/admin/ui/admin_dashboard_page.dart';
+import 'package:meiri/features/clients/ui/add_client_page.dart';
+import 'package:meiri/features/clients/ui/customer_central_page.dart';
+import 'package:meiri/core/services/pocketbase_service.dart';
+import 'package:meiri/core/provider/settings_provider.dart';
+import 'package:meiri/features/shared/ui/privacy_policy_page.dart';
+import 'package:meiri/features/copiloto/ui/dasn_copiloto_page.dart';
+import 'package:meiri/features/nfse/ui/pdf_viewer_page.dart';
 
 // Create a global navigator key to allow navigation from anywhere, like auth listeners
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -35,11 +35,11 @@ void main() async {
   }
   
   await initializeDateFormatting('pt_BR', null);
-  runApp(const ProviderScope(child: MeireApp()));
+  runApp(const ProviderScope(child: MeiriApp()));
 }
 
-class MeireApp extends ConsumerWidget {
-  const MeireApp({super.key});
+class MeiriApp extends ConsumerWidget {
+  const MeiriApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -73,9 +73,9 @@ class MeireApp extends ConsumerWidget {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Meire',
-      theme: MeireTheme.lightTheme(settings.isCompact),
-      darkTheme: MeireTheme.darkTheme(settings.isCompact),
+      title: 'Meiri',
+      theme: MeiriTheme.lightTheme(settings.isCompact),
+      darkTheme: MeiriTheme.darkTheme(settings.isCompact),
       themeMode: settings.themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

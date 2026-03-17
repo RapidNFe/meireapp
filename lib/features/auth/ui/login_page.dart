@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:meiri/core/ui/widgets/vault_tunneling_loading.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-import 'package:meire/core/utils/validators.dart';
-import 'package:meire/features/auth/services/auth_service.dart';
+import 'package:meiri/core/utils/validators.dart';
+import 'package:meiri/features/auth/services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -66,14 +68,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.business_center,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary,
+                  SvgPicture.asset(
+                    'assets/images/logo.svg',
+                    height: 80,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Meire',
+                    'Meiri',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,
@@ -114,12 +115,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     onPressed: _isLoading ? null : _login,
                     child: _isLoading
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                            height: 24,
+                            width: 24,
+                            child: VaultTunnelingLoading(),
                           )
                         : const Text('Entrar'),
                   ),

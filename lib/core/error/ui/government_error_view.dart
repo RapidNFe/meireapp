@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/ui/theme.dart';
 
 class GovernmentErrorView extends StatelessWidget {
   final VoidCallback onRetry;
@@ -18,7 +18,7 @@ class GovernmentErrorView extends StatelessWidget {
             SizedBox(width: 12),
             Expanded(
                 child: Text(
-                    "Tudo certo! A Meire vai te avisar quando o sistema voltar.")),
+                    "Tudo certo! A Meiri vai te avisar quando o sistema voltar.")),
           ],
         ),
         backgroundColor: Color(0xFF388E3C), // Colors.green.shade700
@@ -32,7 +32,7 @@ class GovernmentErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: MeireTheme.backgroundColor,
+      backgroundColor: MeiriTheme.backgroundColor,
       appBar: AppBar(
         title: const Text('Ops, sistema instável'),
         backgroundColor: Colors.white,
@@ -49,13 +49,13 @@ class GovernmentErrorView extends StatelessWidget {
                 width: 160,
                 height: 160,
                 decoration: const BoxDecoration(
-                  color: MeireTheme.iceGray,
+                  color: MeiriTheme.iceGray,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.cloud_off_rounded,
                   size: 80,
-                  color: MeireTheme.primaryColor,
+                  color: MeiriTheme.primaryColor,
                 ),
               ),
               const SizedBox(height: 32),
@@ -65,7 +65,7 @@ class GovernmentErrorView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: MeireTheme.primaryColor,
+                  color: MeiriTheme.primaryColor,
                 ),
               ),
               const SizedBox(height: 16),
@@ -75,7 +75,7 @@ class GovernmentErrorView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.5,
-                  color: MeireTheme.textBodyColor,
+                  color: MeiriTheme.textBodyColor,
                 ),
               ),
               const SizedBox(height: 48),
@@ -85,7 +85,7 @@ class GovernmentErrorView extends StatelessWidget {
                 label: const Text("Me avise quando voltar"),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
-                  backgroundColor: MeireTheme.primaryColor,
+                  backgroundColor: MeiriTheme.primaryColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -94,13 +94,13 @@ class GovernmentErrorView extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh, color: MeireTheme.primaryColor),
+                icon: const Icon(Icons.refresh, color: MeiriTheme.primaryColor),
                 label: const Text("Tentar novamente agora"),
                 style: TextButton.styleFrom(
                   minimumSize: const Size(double.infinity, 54),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: MeireTheme.primaryColor),
+                    side: const BorderSide(color: MeiriTheme.primaryColor),
                   ),
                 ),
               )

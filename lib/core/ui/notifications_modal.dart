@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/ui/theme.dart';
 
 class NotificationsModal extends StatelessWidget {
   const NotificationsModal({super.key});
@@ -37,7 +37,7 @@ class NotificationsModal extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: MeireTheme.primaryColor,
+                    color: MeiriTheme.primaryColor,
                   ),
                 ),
                 IconButton(
@@ -92,12 +92,12 @@ class NotificationsModal extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: MeireTheme.primaryColor,
+                    color: MeiriTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Você não tem pendências no momento. A Meire te avisará se algo precisar de atenção.",
+                  "Você não tem pendências no momento. A Meiri te avisará se algo precisar de atenção.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Color(0xFF757575)), // Colors.grey
                 ),
@@ -126,11 +126,11 @@ class NotificationsModal extends StatelessWidget {
                 const SizedBox(height: 16),
                 _buildNotificationItem(
                   context,
-                  title: 'Bem-vindo ao Meire!',
+                  title: 'Bem-vindo ao Meiri!',
                   message:
                       'Sua conta MEI está configurada e fiscalmente ativa. Explore seu Business Hub.',
                   icon: Icons.celebration_outlined,
-                  color: MeireTheme.accentColor,
+                  color: MeiriTheme.accentColor,
                   time: 'Ontem',
                   isUnread: false,
                 ),
@@ -185,7 +185,7 @@ class NotificationsModal extends StatelessWidget {
                         style: TextStyle(
                           fontWeight:
                               isUnread ? FontWeight.bold : FontWeight.w600,
-                          color: MeireTheme.primaryColor,
+                          color: MeiriTheme.primaryColor,
                         ),
                       ),
                     ),

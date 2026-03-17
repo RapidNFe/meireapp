@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:meiri/core/services/pocketbase_service.dart';
 
 class BrasilApiService {
   static final Dio _dio = Dio();
 
-  // Retorna um Map com os dados da empresa via nosso Backend Meire
+  // Retorna um Map com os dados da empresa via nosso Backend Meiri
   static Future<Map<String, dynamic>> buscarCnpj(String cnpj) async {
     final cnpjLimpo = cnpj.replaceAll(RegExp(r'[^0-9]'), '');
 
@@ -13,8 +13,8 @@ class BrasilApiService {
     }
 
     try {
-      // Usamos a Meire API para centralizar a busca e evitar CORS/Bloqueios
-      final response = await _dio.get('$meireApiUrl/api/cnpj/$cnpjLimpo');
+      // Usamos a Meiri API para centralizar a busca e evitar CORS/Bloqueios
+      final response = await _dio.get('$meiriApiUrl/api/cnpj/$cnpjLimpo');
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -36,7 +36,7 @@ class BrasilApiService {
         throw Exception('CNPJ não encontrado na base da Receita.');
       }
       final serverMsg = e.response?.data?['erro'];
-      throw Exception(serverMsg ?? 'Sem conexão com o servidor Meire.');
+      throw Exception(serverMsg ?? 'Sem conexão com o servidor Meiri.');
     } catch (e) {
       throw Exception('Erro ao validar CNPJ: $e');
     }

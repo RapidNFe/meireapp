@@ -8,7 +8,7 @@ flutter build web --release --web-renderer html --tree-shake-icons --no-source-m
 ```
 
 ### 🎯 Por que estas flags?
-1. **--web-renderer html**: Reduz o tamanho do bundle inicial em ~3MB (evita o download do CanvasKit WASM). É ideal para apps de gestão como a Meire.
+1. **--web-renderer html**: Reduz o tamanho do bundle inicial em ~3MB (evita o download do CanvasKit WASM). É ideal para apps de gestão como a Meiri.
 2. **--tree-shake-icons**: Remove ícones não utilizados das fontes, diminuindo o peso final.
 3. **--no-source-maps**: Evita a geração de arquivos de debug que não são necessários em produção, acelerando a finalização do build.
 

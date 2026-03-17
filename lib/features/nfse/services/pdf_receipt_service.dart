@@ -94,7 +94,7 @@ class PdfReceiptService {
               pw.SizedBox(height: 8),
               pw.Center(
                 child: pw.Text(
-                  "Gerado por Meire App em $dateString.\nDocumento sem valor fiscal (Modo Simulação).",
+                  "Gerado por Meiri App em $dateString.\nDocumento sem valor fiscal (Modo Simulação).",
                   textAlign: pw.TextAlign.center,
                   style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
                 ),

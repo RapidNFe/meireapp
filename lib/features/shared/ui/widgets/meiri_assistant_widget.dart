@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/ui/theme.dart';
 
-class MeireAssistantWidget extends StatefulWidget {
+class MeiriAssistantWidget extends StatefulWidget {
   final String message;
   final bool showBubble;
 
-  const MeireAssistantWidget({
+  const MeiriAssistantWidget({
     super.key,
     required this.message,
     this.showBubble = true,
   });
 
   @override
-  State<MeireAssistantWidget> createState() => _MeireAssistantWidgetState();
+  State<MeiriAssistantWidget> createState() => _MeiriAssistantWidgetState();
 }
 
-class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with SingleTickerProviderStateMixin {
+class _MeiriAssistantWidgetState extends State<MeiriAssistantWidget> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -49,7 +49,7 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: MeireTheme.primaryColor,
+                color: MeiriTheme.primaryColor,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -82,12 +82,12 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: MeireTheme.iceGray,
+              color: MeiriTheme.iceGray,
               shape: BoxShape.circle,
-              border: Border.all(color: MeireTheme.primaryColor, width: 2),
+              border: Border.all(color: MeiriTheme.primaryColor, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: MeireTheme.primaryColor.withValues(alpha: 0.2),
+                  color: MeiriTheme.primaryColor.withValues(alpha: 0.2),
                   blurRadius: 12,
                   spreadRadius: 2,
                 )
@@ -96,10 +96,10 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
             child: const Center(
               child: Icon(
                 Icons.support_agent_rounded,
-                color: MeireTheme.primaryColor,
+                color: MeiriTheme.primaryColor,
                 size: 28,
               ),
-              // Future: Lottie.asset('assets/meire_idle.json')
+              // Future: Lottie.asset('assets/meiri_idle.json')
             ),
           ),
         ),

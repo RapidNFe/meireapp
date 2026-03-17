@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/core/provider/app_provider.dart';
-import 'package:meire/features/auth/provider/auth_provider.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/core/provider/app_provider.dart';
+import 'package:meiri/features/auth/provider/auth_provider.dart';
 
 class SuccessPage extends ConsumerWidget {
   const SuccessPage({super.key});
@@ -19,7 +19,7 @@ class SuccessPage extends ConsumerWidget {
               const Icon(
                 Icons.check_circle_outline,
                 size: 100,
-                color: MeireTheme.accentColor,
+                color: MeiriTheme.accentColor,
               ),
               const SizedBox(height: 24),
               const Text(
@@ -27,7 +27,7 @@ class SuccessPage extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: MeireTheme.primaryColor,
+                  color: MeiriTheme.primaryColor,
                 ),
                 textAlign: TextAlign.center,
               ),

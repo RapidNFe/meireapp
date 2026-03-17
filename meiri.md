@@ -1,4 +1,4 @@
-1. Visão Geral do ProdutoO Assistente MEI (Meire) é uma plataforma integrada para simplificar a vida do microempreendedor brasileiro, eliminando burocracias, prazos confusos e riscos fiscais. O foco da V1.0 é a centralização de obrigações, emissão de notas e controle rigoroso de faturamento.
+1. Visão Geral do ProdutoO Assistente MEI (Meiri) é uma plataforma integrada para simplificar a vida do microempreendedor brasileiro, eliminando burocracias, prazos confusos e riscos fiscais. O foco da V1.0 é a centralização de obrigações, emissão de notas e controle rigoroso de faturamento.
 2. Stack Tecnológica (Sovereign Stack)
 Frontend (Foco Inicial): Flutter (WebApp e Mobile via Antigravity).
 

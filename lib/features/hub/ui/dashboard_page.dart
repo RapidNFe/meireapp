@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/core/ui/notifications_modal.dart';
-import 'package:meire/features/history/ui/invoice_history_page.dart';
-import 'package:meire/features/profile/ui/profile_page.dart';
-import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
-import 'package:meire/features/auth/services/auth_service.dart';
-import 'package:meire/core/provider/settings_provider.dart';
-import 'package:meire/features/clients/ui/customer_central_page.dart';
-import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/core/ui/widgets/tax_thermometer.dart';
+
+import 'package:meiri/core/ui/notifications_modal.dart';
+import 'package:meiri/features/history/ui/invoice_history_page.dart';
+import 'package:meiri/features/profile/ui/profile_page.dart';
+import 'package:meiri/features/hub/provider/notas_fiscais_provider.dart';
+import 'package:meiri/features/auth/services/auth_service.dart';
+import 'package:meiri/core/provider/settings_provider.dart';
+import 'package:meiri/features/clients/ui/customer_central_page.dart';
+import 'package:meiri/core/services/pocketbase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
@@ -90,14 +94,17 @@ class _HubPageState extends ConsumerState<HubPage> {
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: MeireTheme.primaryColor,
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.account_balance_wallet_outlined,
-                color: Colors.white, size: 20),
+            child: SvgPicture.asset(
+              'assets/images/logo.svg',
+              height: 24,
+            ),
           ),
+
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,7 +113,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : MeireTheme.primaryColor)),
+                      color: isDark ? Colors.white : MeiriTheme.primaryColor)),
               const Text("MEI ATIVO",
                   style: TextStyle(
                       fontSize: 10,
@@ -126,10 +133,11 @@ class _HubPageState extends ConsumerState<HubPage> {
               settings.isCompact
                   ? Icons.unfold_more_outlined
                   : Icons.unfold_less_outlined,
-              color: isDark ? Colors.white : MeireTheme.primaryColor),
+              color: isDark ? Colors.white : MeiriTheme.primaryColor),
           style: IconButton.styleFrom(
               backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
+                  isDark ? MeiriTheme.turquoiseColor : MeiriTheme.iceGray,
+
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12))),
         ),
@@ -141,10 +149,11 @@ class _HubPageState extends ConsumerState<HubPage> {
           tooltip: 'Alternar Tema',
           icon: Icon(
               isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-              color: isDark ? Colors.white : MeireTheme.primaryColor),
+              color: isDark ? Colors.white : MeiriTheme.primaryColor),
           style: IconButton.styleFrom(
               backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
+                  isDark ? MeiriTheme.turquoiseColor : MeiriTheme.iceGray,
+
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12))),
         ),
@@ -154,10 +163,11 @@ class _HubPageState extends ConsumerState<HubPage> {
             NotificationsModal.show(context);
           },
           icon: Icon(Icons.notifications_none,
-              color: isDark ? Colors.white : MeireTheme.primaryColor),
+              color: isDark ? Colors.white : MeiriTheme.primaryColor),
           style: IconButton.styleFrom(
               backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
+                  isDark ? MeiriTheme.turquoiseColor : MeiriTheme.iceGray,
+
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12))),
         ),
@@ -168,10 +178,11 @@ class _HubPageState extends ConsumerState<HubPage> {
           },
           tooltip: 'Sair da Conta',
           icon: Icon(Icons.logout,
-              color: isDark ? Colors.white : MeireTheme.primaryColor),
+              color: isDark ? Colors.white : MeiriTheme.primaryColor),
           style: IconButton.styleFrom(
               backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
+                  isDark ? MeiriTheme.turquoiseColor : MeiriTheme.iceGray,
+
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12))),
         ),
@@ -232,7 +243,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
-                                  color: MeireTheme.accentColor,
+                                  color: MeiriTheme.accentColor,
                                   letterSpacing: 1.2,
                                 ),
                               ),
@@ -268,7 +279,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: MeireTheme.accentColor,
+                        color: MeiriTheme.accentColor,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -294,10 +305,12 @@ class _HubPageState extends ConsumerState<HubPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark ? [const Color(0xFF1E293B), const Color(0xFF0F172A)] : [const Color(0xFF1E3A8A), const Color(0xFF172554)],
+          colors: isDark ? [MeiriTheme.turquoiseColor, const Color(0xFF001A12)] : [MeiriTheme.primaryColor, MeiriTheme.turquoiseColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+
+
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -373,14 +386,14 @@ class _HubPageState extends ConsumerState<HubPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+        border: Border.all(color: isDark ? Colors.white10 : MeiriTheme.iceGray),
       ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Limite MEI (Anual)",
+              const Text("Limite MEI (Janeiro a Dezembro)",
                   style: TextStyle(fontWeight: FontWeight.bold)),
               Text(annualLimitPercentageString,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -389,15 +402,8 @@ class _HubPageState extends ConsumerState<HubPage> {
             ],
           ),
           const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: annualLimitPercentage,
-            backgroundColor: isDark ? Colors.white10 : MeireTheme.iceGray,
-            color: annualLimitPercentage > 0.8
-                ? Colors.amber
-                : MeireTheme.accentColor,
-            borderRadius: BorderRadius.circular(10),
-            minHeight: 10,
-          ),
+          TaxThermometer(fillPercentage: annualLimitPercentage),
+
           const SizedBox(height: 12),
           if (annualLimitPercentage > 0.8)
             Container(
@@ -461,14 +467,15 @@ class _HubPageState extends ConsumerState<HubPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [MeireTheme.primaryColor, Color(0xFF1E3A8A)],
+          colors: [MeiriTheme.primaryColor, MeiriTheme.turquoiseColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: MeireTheme.primaryColor.withValues(alpha: 0.3),
+              color: MeiriTheme.primaryColor.withValues(alpha: 0.3),
               blurRadius: 20,
               offset: const Offset(0, 10))
         ],
@@ -554,7 +561,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("✨ CNPJ $cnpj copiado para o pagamento!"),
-                            backgroundColor: MeireTheme.primaryColor,
+                            backgroundColor: MeiriTheme.primaryColor,
                             behavior: SnackBarBehavior.floating,
                             duration: const Duration(seconds: 4),
                           ),
@@ -568,10 +575,10 @@ class _HubPageState extends ConsumerState<HubPage> {
                     }
                   },
                   icon: const Icon(Icons.qr_code_scanner,
-                      color: MeireTheme.primaryColor, size: 20),
+                      color: MeiriTheme.primaryColor, size: 20),
                   label: const Text("Pagar Agora (PIX)",
                       style: TextStyle(
-                          color: MeireTheme.primaryColor,
+                          color: MeiriTheme.primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 15)),
                   style: ElevatedButton.styleFrom(
@@ -633,7 +640,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
-            color: MeireTheme.accentColor,
+            color: MeiriTheme.accentColor,
             letterSpacing: 1.2,
           ),
         ),
@@ -647,7 +654,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : MeireTheme.iceGray),
+                  border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : MeiriTheme.iceGray),
                 ),
                 child: Column(
                   children: [
@@ -666,7 +673,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : MeireTheme.iceGray),
+                border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : MeiriTheme.iceGray),
               ),
               child: ListView.separated(
                 physics: const NeverScrollableScrollPhysics(),
@@ -752,20 +759,20 @@ class _HubPageState extends ConsumerState<HubPage> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border:
-              Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+              Border.all(color: isDark ? Colors.white10 : MeiriTheme.iceGray),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : MeireTheme.iceGray,
+                color: isDark ? Colors.white10 : MeiriTheme.iceGray,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon,
                   color: isDark
-                      ? (isLocked ? Colors.grey : MeireTheme.accentColor)
-                      : (isLocked ? Colors.grey : MeireTheme.primaryColor)),
+                      ? (isLocked ? Colors.grey : MeiriTheme.accentColor)
+                      : (isLocked ? Colors.grey : MeiriTheme.primaryColor)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -780,7 +787,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               ),
             ),
             Icon(showLockIcon ? Icons.lock_outline : (isLocked ? Icons.arrow_forward : Icons.chevron_right),
-                color: (showLockIcon || isLocked) ? MeireTheme.accentColor : Colors.grey),
+                color: (showLockIcon || isLocked) ? MeiriTheme.accentColor : Colors.grey),
           ],
         ),
       ),
@@ -795,7 +802,7 @@ class _HubPageState extends ConsumerState<HubPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+        border: Border.all(color: isDark ? Colors.white10 : MeiriTheme.iceGray),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -825,7 +832,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               top: BorderSide(
                   color: Theme.of(context).brightness == Brightness.dark
                       ? Colors.white10
-                      : MeireTheme.iceGray))),
+                      : MeiriTheme.iceGray))),
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
@@ -850,7 +857,8 @@ class _HubPageState extends ConsumerState<HubPage> {
       padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blueAccent.shade100, size: 16),
+          Icon(icon, color: MeiriTheme.accentColor, size: 16),
+
           const SizedBox(width: 8),
           Text(
             texto,

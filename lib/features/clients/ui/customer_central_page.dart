@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/clients/provider/client_provider.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/clients/provider/client_provider.dart';
 
 class CustomerCentralPage extends ConsumerWidget {
   const CustomerCentralPage({super.key});
@@ -10,7 +10,7 @@ class CustomerCentralPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: MeireTheme.primaryColor,
+        backgroundColor: MeiriTheme.primaryColor,
         foregroundColor: Colors.white,
         onPressed: () => Navigator.pushNamed(context, '/add_client'),
         icon: const Icon(Icons.add),
@@ -34,7 +34,7 @@ class CustomerCentralPage extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: MeireTheme.iceGray)),
+        border: Border(bottom: BorderSide(color: MeiriTheme.iceGray)),
       ),
       child: TextField(
         onChanged: (val) => ref.read(clienteSearchProvider.notifier).state = val,
@@ -46,7 +46,7 @@ class CustomerCentralPage extends ConsumerWidget {
             borderSide: BorderSide.none,
           ),
           filled: true,
-          fillColor: MeireTheme.iceGray,
+          fillColor: MeiriTheme.iceGray,
           contentPadding: EdgeInsets.zero,
         ),
       ),
@@ -91,7 +91,7 @@ class CustomerCentralPage extends ConsumerWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: MeireTheme.iceGray),
+            side: const BorderSide(color: MeiriTheme.iceGray),
           ),
           color: Colors.white,
           child: Padding(
@@ -99,10 +99,10 @@ class CustomerCentralPage extends ConsumerWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: MeireTheme.accentColor.withValues(alpha: 0.1),
+                  backgroundColor: MeiriTheme.accentColor.withValues(alpha: 0.1),
                   child: Text(
                     client.apelido.isNotEmpty ? client.apelido.substring(0, 1).toUpperCase() : 'C',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: MeireTheme.accentColor),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: MeiriTheme.accentColor),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -137,7 +137,7 @@ class CustomerCentralPage extends ConsumerWidget {
                         Navigator.pushNamed(context, '/nfse_form', arguments: client);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: MeireTheme.primaryColor,
+                        backgroundColor: MeiriTheme.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

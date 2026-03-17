@@ -30,7 +30,7 @@ async function testEmissaoSoberana() {
             if (error.response.status === 403) {
                 console.log("\n💡 DICA DE OURO: Esse 403 é a prova da nossa segurança!");
                 console.log("A sua base de dados foi inteiramente isolada. Para que o teste de emissão rode agora, você (ou o Thiago) precisa:");
-                console.log("1. Abrir o Meire App no Flutter");
+                console.log("1. Abrir o meiri App no Flutter");
                 console.log("2. Ir na aba 'Perfil'");
                 console.log("3. Fazer SELECIONAR CERTIFICADO .PFX novamente e por a senha");
                 console.log("4. Apertar SALVAR.");

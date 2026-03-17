@@ -1,4 +1,4 @@
-# Arquitetura MEIRE v1.0 - Stack Contábil Soberana
+# Arquitetura MEIRI v1.0 - Stack Contábil Soberana
 
 **Camada 1 (App): Flutter (Riverpod + Realtime)**
 - UI Quiet Luxury focada em Fricção Zero (Haptic Feedback, Animações Suaves, Termômetro Tributário em tempo real).

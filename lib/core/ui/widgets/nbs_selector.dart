@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/nfse/provider/nbs_provider.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/nfse/provider/nbs_provider.dart';
 
 class NbsSelector extends ConsumerStatefulWidget {
   final Function(NbsModel) onNbsSelected;
@@ -48,7 +48,7 @@ class _NbsSelectorState extends ConsumerState<NbsSelector> {
       loading: () => const Padding(
         padding: EdgeInsets.all(16.0),
         child: Center(
-          child: CircularProgressIndicator(color: MeireTheme.primaryColor),
+          child: CircularProgressIndicator(color: MeiriTheme.primaryColor),
         ),
       ),
       error: (error, stack) => const Text('Erro ao carregar lista de NBS',
@@ -84,7 +84,7 @@ class _NbsSelectorState extends ConsumerState<NbsSelector> {
                 labelText: 'Buscar NBS do IBGE (Ex: "Publicidade")',
                 hintText: 'Digite para buscar um código NBS',
                 prefixIcon:
-                    const Icon(Icons.search, color: MeireTheme.primaryColor),
+                    const Icon(Icons.search, color: MeiriTheme.primaryColor),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/nfse/services/notas_fiscais_service.dart';
 import 'package:pdf/pdf.dart';
 import 'dart:typed_data';
 
@@ -66,7 +66,7 @@ class _PdfViewerPageState extends ConsumerState<PdfViewerPage> {
 
     await Share.shareXFiles(
       [xFile],
-      text: 'Olá! Segue em anexo a Nota Fiscal de Serviço (NFS-e) oficial emitida no Meire App.',
+      text: 'Olá! Segue em anexo a Nota Fiscal de Serviço (NFS-e) oficial emitida no Meiri App.',
     );
   }
 
@@ -76,7 +76,7 @@ class _PdfViewerPageState extends ConsumerState<PdfViewerPage> {
       appBar: AppBar(
         title: const Text('Nota Fiscal Oficial'),
         backgroundColor: Colors.white,
-        foregroundColor: MeireTheme.primaryColor,
+        foregroundColor: MeiriTheme.primaryColor,
         elevation: 1,
         actions: [
           if (_pdfData != null)
@@ -91,9 +91,9 @@ class _PdfViewerPageState extends ConsumerState<PdfViewerPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: MeireTheme.primaryColor),
+                  CircularProgressIndicator(color: MeiriTheme.primaryColor),
                   SizedBox(height: 16),
-                  Text("Buscando PDF oficial no Governo...", style: TextStyle(color: MeireTheme.primaryColor)),
+                  Text("Buscando PDF oficial no Governo...", style: TextStyle(color: MeiriTheme.primaryColor)),
                 ],
               ),
             )
@@ -129,7 +129,7 @@ class _PdfViewerPageState extends ConsumerState<PdfViewerPage> {
                   canChangeOrientation: false,
                   canChangePageFormat: false,
                   canDebug: false,
-                  pdfFileName: 'NFS-e_Meire.pdf',
+                  pdfFileName: 'NFS-e_meiri.pdf',
                   initialPageFormat: PdfPageFormat.a4,
                 ),
       floatingActionButton: _pdfData == null ? null : FloatingActionButton.extended(

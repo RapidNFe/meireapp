@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/main.dart';
+import 'package:meiri/main.dart';
 
 void main() {
   testWidgets('Full flow to register test', (WidgetTester tester) async {
@@ -9,7 +9,7 @@ void main() {
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;
     
-    await tester.pumpWidget(const ProviderScope(child: MeireApp()));
+    await tester.pumpWidget(const ProviderScope(child: MeiriApp()));
     await tester.pumpAndSettle();
 
     final finder = find.text('Criar conta MEI');

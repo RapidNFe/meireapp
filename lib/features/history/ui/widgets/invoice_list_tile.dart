@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/history/models/invoice_model.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/features/history/models/invoice_model.dart';
 
 class InvoiceListTile extends StatelessWidget {
   final InvoiceModel invoice;
@@ -27,18 +27,18 @@ class InvoiceListTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: MeireTheme.iceGray),
+          border: Border.all(color: MeiriTheme.iceGray),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: MeireTheme.iceGray,
+                color: MeiriTheme.iceGray,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.receipt_long,
-                  color: MeireTheme.primaryColor),
+                  color: MeiriTheme.primaryColor),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -49,7 +49,7 @@ class InvoiceListTile extends StatelessWidget {
                     invoice.clientName,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: MeireTheme.primaryColor),
+                        color: MeiriTheme.primaryColor),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -116,11 +116,11 @@ class InvoiceListTile extends StatelessWidget {
                   currencyFormat.format(invoice.amount),
                   style: const TextStyle(
                     fontWeight: FontWeight.w900,
-                    color: MeireTheme.primaryColor,
+                    color: MeiriTheme.primaryColor,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Icon(Icons.chevron_right, color: MeireTheme.iceGray),
+                const Icon(Icons.chevron_right, color: MeiriTheme.iceGray),
               ],
             ),
           ],

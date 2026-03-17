@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/nfse/ui/widgets/painel_processamento_pdf.dart';
+import 'package:meiri/core/ui/theme.dart';
+import 'package:meiri/core/ui/widgets/vortex_success_check.dart';
+import 'package:meiri/features/nfse/ui/widgets/painel_processamento_pdf.dart';
+
 
 class NfseSuccessPage extends StatefulWidget {
   const NfseSuccessPage({super.key});
@@ -33,7 +35,7 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
     final String idNota = _invoiceData!['idNota'] ?? 'N/A';
 
     return Scaffold(
-      backgroundColor: MeireTheme.primaryColor,
+      backgroundColor: MeiriTheme.primaryColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -42,11 +44,8 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.greenAccent,
-                  size: 100,
-                ),
+                const VortexSuccessCheck(),
+
                 const SizedBox(height: 24),
                 const Text(
                   'NFS-e Emitida com Sucesso!',
@@ -84,14 +83,14 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('ID da Nota (Meire)', idNota),
+                      _buildInfoRow('ID da Nota (Meiri)', idNota),
                       const SizedBox(height: 16),
-                      const Divider(color: MeireTheme.iceGray),
+                      const Divider(color: MeiriTheme.iceGray),
                       const SizedBox(height: 16),
                       _buildInfoRow('Chave de Acesso Nacional', chaveAcesso),
                       if (_invoiceData!['competencia'] != null) ...[
                         const SizedBox(height: 16),
-                        const Divider(color: MeireTheme.iceGray),
+                        const Divider(color: MeiriTheme.iceGray),
                         const SizedBox(height: 16),
                         _buildInfoRow('Mês de Referência (Competência)', _invoiceData!['competencia']),
                       ],
@@ -155,7 +154,7 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
         const SizedBox(height: 4),
         Text(
           value, 
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: MeiriTheme.primaryColor),
           textAlign: TextAlign.center,
         ),
       ],

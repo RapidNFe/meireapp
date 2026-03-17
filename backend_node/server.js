@@ -161,7 +161,7 @@ app.use((req, res, next) => {
 // Middleware para capturar 404 residuais (Caso o proxy falhe)
 const catch404 = (req, res) => {
     console.warn(`⚠️ [404] Rota não encontrada: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ error: "Recurso não encontrado no ecossistema Meire." });
+    res.status(404).json({ error: "Recurso não encontrado no ecossistema meiri." });
 };
 
 // 🟢 ROTA DE STATUS (SAÚDE DO SISTEMA)
@@ -169,7 +169,7 @@ app.get('/api/status', (req, res) => {
     res.json({ 
         sucesso: true,
         status: "OPERACIONAL",
-        motor: "Meire Engine v2.2.0",
+        motor: "meiri Engine v2.2.0",
         ambiente: config.isProducao ? "PRODUÇÃO" : "TESTES",
         vault: "Conectado",
         timestmap: new Date().toISOString()
@@ -466,7 +466,7 @@ app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
                 return res.json({
                     sucesso: true,
                     pdfBase64: pdfBuffer.toString('base64'),
-                    nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`,
+                    nomeArquivo: `meiri_NotaFiscal_${chaveAcesso}.pdf`,
                     origem: 'cache_local'
                 });
             }
@@ -479,7 +479,7 @@ app.get('/api/nacional/danfse/:userId/:chaveAcesso', async (req, res) => {
         res.json({
             sucesso: true,
             pdfBase64: pdfBuffer.toString('base64'),
-            nomeArquivo: `Meire_NotaFiscal_${chaveAcesso}.pdf`,
+            nomeArquivo: `meiri_NotaFiscal_${chaveAcesso}.pdf`,
             origem: 'governo_real'
         });
 
@@ -729,7 +729,7 @@ app.get('/api/meus-dados/:userId', async (req, res) => {
             status_lgpd: "Concluído",
             historico_faturamentos: notas,
             agenda_clientes: clientes,
-            mensagem: "Este arquivo contém todos os seus dados processados pela Meire App. Você tem o direito de portabilidade desses dados conforme a LGPD."
+            mensagem: "Este arquivo contém todos os seus dados processados pela meiri App. Você tem o direito de portabilidade desses dados conforme a LGPD."
         };
 
         res.json(pacoteDados);
@@ -848,7 +848,7 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
     }
 });
 
-// 🔄 GATEWAY INTELIGENTE (ESTRATÉGIA MEIRE) - REDIRECIONAMENTO PARA POCKETBASE
+// 🔄 GATEWAY INTELIGENTE (ESTRATÉGIA meiri) - REDIRECIONAMENTO PARA POCKETBASE
 app.use('/', proxy('http://127.0.0.1:8090', {
     proxyReqPathResolver: (req) => {
         console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
@@ -877,7 +877,7 @@ app.use('/', proxy('http://127.0.0.1:8090', {
             headers['x-accel-buffering'] = 'no'; // Importante se houver Nginx/Cloudflare
         }
 
-        // Força os headers de CORS da Meire para evitar bloqueios no Flutter
+        // Força os headers de CORS da meiri para evitar bloqueios no Flutter
         const allowedOrigins = [
             'https://meireapp.com.br', 
             'https://www.meireapp.com.br', 
@@ -902,7 +902,7 @@ app.use(catch404);
 // ==========================================
 const PORTA = config.servidor.port;
 app.listen(PORTA, () => {
-    console.log(`\n🛡️  MEIRE ONLINE: Ambiente de [${config.isProducao ? 'PRODUÇÃO' : 'TESTES'}]`);
-    console.log(`🟢 Servidor Meire App na porta ${PORTA}`);
+    console.log(`\n🛡️  meiri ONLINE: Ambiente de [${config.isProducao ? 'PRODUÇÃO' : 'TESTES'}]`);
+    console.log(`🟢 Servidor meiri App na porta ${PORTA}`);
     console.log(`⏳ Aguardando comandos do aplicativo...\n`);
 });

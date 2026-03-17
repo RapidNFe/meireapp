@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:meire/core/ui/theme.dart';
+import 'package:meiri/core/ui/theme.dart';
 
 class BuscadorTributarioAvancado extends StatefulWidget {
   // Lista que você vai carregar do seu JSON ou PocketBase
@@ -24,7 +24,7 @@ class _BuscadorTributarioAvancadoState extends State<BuscadorTributarioAvancado>
       children: [
         const Text(
           'Selecione a Classificação Tributária (CNAE) *',
-          style: TextStyle(fontWeight: FontWeight.bold, color: MeireTheme.primaryColor),
+          style: TextStyle(fontWeight: FontWeight.bold, color: MeiriTheme.primaryColor),
         ),
         const SizedBox(height: 8),
         
@@ -64,14 +64,14 @@ class _BuscadorTributarioAvancadoState extends State<BuscadorTributarioAvancado>
               onEditingComplete: onEditingComplete,
               decoration: InputDecoration(
                 hintText: 'Buscar Serviço (Ex: "Marketing", "Sistemas")',
-                prefixIcon: const Icon(Icons.search, color: MeireTheme.primaryColor),
+                prefixIcon: const Icon(Icons.search, color: MeiriTheme.primaryColor),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: MeireTheme.primaryColor, width: 2),
+                  borderSide: const BorderSide(color: MeiriTheme.primaryColor, width: 2),
                 ),
               ),
             );

@@ -5,7 +5,7 @@ const path = require('path');
 const DB_PATH = 'C:/Users/Fernando/Desktop/pocketbase/pb_data/data.db';
 
 async function limparBase() {
-    console.log("🧹 Iniciando faxina geral na Meire...");
+    console.log("🧹 Iniciando faxina geral na meiri...");
     
     const db = new sqlite3.Database(DB_PATH);
 
