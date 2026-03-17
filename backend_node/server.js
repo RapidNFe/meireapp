@@ -238,6 +238,7 @@ app.post('/api/onboarding/beauty', async (req, res) => {
 
 // ==========================================
 // 🚀 ROTA 1: EMISSÃO NACIONAL (ADN/SEFIN) - MOTOR VORTEX
+// 🛡️ ESCUDO MEIRI: Proibido alterar sem rodar sacred_guard.js
 // ==========================================
 app.post('/api/nacional/emitir', async (req, res) => {
     const { userId, payload } = req.body; 

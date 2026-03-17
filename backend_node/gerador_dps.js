@@ -1,3 +1,11 @@
+/**
+ * 🛡️ ESCUDO MEIRI - ARQUIVO SAGRADO
+ * ESTE ARQUIVO É O CORE DO GERADOR DE DPS NACIONAL.
+ * ⚠️ REGRAS INVIOLÁVEIS:
+ * 1. 100% CNPJ: Proibido reintroduzir qualquer lógica de CPF.
+ * 2. COMPETÊNCIA MANDATÓRIA: Nunca assumir data atual se o payload vier vazio.
+ * 3. INTEGRIDADE: Qualquer mudança aqui DEVE ser validada rodando 'node sacred_guard.js'.
+ */
 const { create } = require('xmlbuilder2');
 
 /**

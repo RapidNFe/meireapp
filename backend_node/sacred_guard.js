@@ -48,8 +48,8 @@ function runSacredTests() {
         if (!idDPS.startsWith("DPS")) errors.push("ERRO CRÍTICO: ID da DPS deve começar com 'DPS'");
         if (!idDPS.includes(mockPayload.prestador.cnpj)) errors.push("ERRO CRÍTICO: ID da DPS deve conter o CNPJ do prestador");
 
-        // TESTE 2: REBRANDING (Nao pode voltar para Meire)
-        if (!xmlAssinavel.includes("meiriApp1.0")) errors.push("REBRANDING QUEBRADO: verAplic deve ser 'meiriApp1.0'");
+        // TESTE 2: VERSÃO DO APLICATIVO
+        if (!xmlAssinavel.includes("MeireApp1.0")) errors.push("ERRO DE VERSÃO: verAplic deve ser 'MeireApp1.0'");
 
         // TESTE 3: ESTRUTURA XML
         if (!xmlAssinavel.includes("<dCompet>")) errors.push("CAMPO FALTANTE: dCompet é obrigatório");
@@ -58,12 +58,20 @@ function runSacredTests() {
         // TESTE 4: VALOR (Formato 2 casas decimais)
         if (!xmlAssinavel.includes("<vServ>10.00</vServ>")) errors.push("VALOR INVÁLIDO: O emissor deve garantir 2 casas decimais (10.00)");
 
-        // TESTE 5: SEGURANÇA (Data de Competência sempre presente)
-        const xmlSemCompetencia = gerarXmlDPS({ ...mockPayload, competencia: null });
-        if (!xmlSemCompetencia.xmlAssinavel.includes("<dCompet>")) {
-            errors.push("SEGURANÇA FALHOU: O XML foi gerado sem a tag dCompet!");
-        } else {
-            console.log("✅ Backup de Competência operando (Data de hoje assumida)");
+        // TESTE 5: EXCLUSIVIDADE CNPJ (Não pode existir tag CPF)
+        if (xmlAssinavel.includes("<CPF>")) errors.push("VIOLAÇÃO DE SEGURANÇA: Tag <CPF> encontrada no XML. O sistema deve ser 100% CNPJ.");
+        if (!xmlAssinavel.includes("<CNPJ>")) errors.push("ERRO ESTRUTURAL: Tag <CNPJ> não encontrada.");
+
+        // TESTE 6: BLINDAGEM DE COMPETÊNCIA (Deve explodir se for nula)
+        try {
+            gerarXmlDPS({ ...mockPayload, competencia: null });
+            errors.push("SEGURANÇA FALHOU: O gerador aceitou competência NULL sem reclamar!");
+        } catch (e) {
+            if (e.message.includes("obrigatória")) {
+                console.log("✅ Blindagem de Competência operando: Erro lançado corretamente para NULL.");
+            } else {
+                errors.push("ERRO DE BLINDAGEM: O erro lançado para competência NULL foi inesperado: " + e.message);
+            }
         }
 
     } catch (e) {

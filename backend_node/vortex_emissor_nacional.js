@@ -1,3 +1,10 @@
+/**
+ * 🛡️ ESCUDO MEIRI - MOTOR VORTEX
+ * ESTE ARQUIVO COORDENA A TRANSMISSÃO SOBERANA PARA O GOVERNO.
+ * ⚠️ REGRAS INVIOLÁVEIS:
+ * 1. mTLS RIGOROSO: Nunca desativar a validação de certificados.
+ * 2. VALIDAR ANTES DE SUBIR: Rode 'node sacred_guard.js' antes de qualquer deploy.
+ */
 const { gerarXmlDPS } = require('./gerador_dps');
 const { enviarParaADN } = require('./enviador_adn');
 const { assinarComNodeForge } = require('./assinador_soberano'); 

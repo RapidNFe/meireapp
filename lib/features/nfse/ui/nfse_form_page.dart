@@ -31,7 +31,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   final _descriptionController = TextEditingController();
 
   String? _selectedServiceId;
-  DateTime _mesCompetencia = DateTime.now();
+  DateTime? _mesCompetencia;
   bool _isLoading = false;
   bool _initialized = false;
 
@@ -170,6 +170,14 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
   void _submitNfse() async {
     if (_formKey.currentState?.validate() ?? false) {
+      if (_mesCompetencia == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Por favor, selecione a Data da Competência.')),
+        );
+        return;
+      }
+
       if (_selectedServiceId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -178,8 +186,6 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         return;
       }
       
-
-
       setState(() {
         _isLoading = true;
       });
@@ -202,7 +208,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
               clientCnpj: _documentController.text,
               amount: amount,
               description: _descriptionController.text,
-              competencia: _mesCompetencia.toIso8601String().split('T')[0],
+              competencia: _mesCompetencia!.toIso8601String().split('T')[0],
             );
 
         // Refresh dashboard data
@@ -221,7 +227,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             '/nfse_success', 
             arguments: {
               ...?responseData as Map<String, dynamic>?,
-              'competencia': DateFormat("dd 'de' MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
+              'competencia': DateFormat("dd 'de' MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia!).toUpperCase(),
             },
           );
         }
@@ -478,7 +484,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
         onTap: () async {
           final DateTime? picked = await showDatePicker(
             context: context,
-            initialDate: _mesCompetencia,
+            initialDate: _mesCompetencia ?? DateTime.now(),
             firstDate: DateTime(2024),
             lastDate: DateTime.now(),
             locale: const Locale("pt", "BR"),
@@ -504,8 +510,14 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  DateFormat("dd/MM/yyyy").format(_mesCompetencia),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  _mesCompetencia != null 
+                    ? DateFormat("dd/MM/yyyy").format(_mesCompetencia!)
+                    : "⚠️ Selecionar Data",
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.bold,
+                    color: _mesCompetencia == null ? Colors.redAccent : MeireTheme.primaryColor,
+                  ),
                 ),
               ],
             ),
