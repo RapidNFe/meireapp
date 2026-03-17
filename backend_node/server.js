@@ -913,7 +913,12 @@ app.use('/', proxy('http://127.0.0.1:8090', {
 
         // Força os headers de CORS da Meire para evitar bloqueios no Flutter
         const origin = userReq.headers.origin;
-        if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+        if (origin && (
+            origin.startsWith('http://localhost:') || 
+            origin.startsWith('http://127.0.0.1:') ||
+            origin.endsWith('meireapp.com.br') ||
+            origin.endsWith('meireapp.com.br/')
+        )) {
             headers['access-control-allow-origin'] = origin;
         } else {
             headers['access-control-allow-origin'] = 'https://meireapp.com.br';
