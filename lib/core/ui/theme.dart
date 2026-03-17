@@ -4,11 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 class MeireTheme {
   // Dark blue representing technical authority and trust
   // Otimização de Performance: Cores cacheadas e temas imutáveis
-  static const Color primaryColor = Color(0xFF001F3D);
-  static const Color accentColor = Color(0xFF3B82F6);
-  static const Color backgroundColor = Color(0xFFF5F7F8);
-  static const Color iceGray = Color(0xFFE6EDF4);
-  static const Color textBodyColor = Color(0xFF334155);
+  static const Color primaryColor = Color(0xFF004330); // Verde da Logo (Premium)
+  static const Color accentColor = Color(0xFFCC8B00);  // Ouro Meiri
+  static const Color secondaryColor = Color(0xFF1A5A38); // Verde Suave
+  static const Color backgroundColor = Color(0xFFF8FAF9);
+  static const Color iceGray = Color(0xFFECF2F0);
+  static const Color textBodyColor = Color(0xFF1E293B);
 
   static ThemeData getTheme(Brightness brightness, bool isCompact) {
     final isDark = brightness == Brightness.dark;
@@ -23,7 +24,7 @@ class MeireTheme {
       useMaterial3: true,
       brightness: brightness,
       scaffoldBackgroundColor:
-          isDark ? const Color(0xFF0F172A) : backgroundColor,
+          isDark ? const Color(0xFF00221A) : backgroundColor,
       colorScheme: ColorScheme.fromSeed(
         brightness: brightness,
         seedColor: isDark ? accentColor : primaryColor,
@@ -52,7 +53,7 @@ class MeireTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        fillColor: isDark ? const Color(0xFF003326) : Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(

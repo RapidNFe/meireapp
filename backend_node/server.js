@@ -63,15 +63,19 @@ const pb = new PocketBase(config.pocketbase.url);
 console.log(`🔗 Conectando ao PocketBase em: ${config.pocketbase.url} (Admin: ${config.pocketbase.adminEmail})`);
 
 // 🛡️ MOTOR DE SOBERANIA: Autentica como SUPERUSER globalmente para ignorar API Rules
-async function autenticarAdmin() {
+async function assegurarAutenticacao() {
+    if (pb.authStore.isValid) return;
     try {
         await pb.collection('_superusers').authWithPassword(config.pocketbase.adminEmail, config.pocketbase.adminPassword);
-        console.log("🚀 Backend autenticado como SUPERUSER. API Rules ignoradas.");
+        console.log("🚀 Backend re-autenticado como SUPERUSER.");
     } catch (e) {
-        console.error("❌ Falha ao autenticar admin no PocketBase", e.message);
+        console.error("❌ Falha crítica ao autenticar superusuário no PocketBase:", e.message);
+        throw e;
     }
 }
-autenticarAdmin();
+
+// Autentica na subida
+assegurarAutenticacao();
 
 /**
  * ZELADORIA ON-DEMAND: Busca no governo, salva no PocketBase e retorna o buffer.
@@ -79,6 +83,7 @@ autenticarAdmin();
 async function sincronizarESalvarPDF(userId, chaveAcesso, notaId) {
     try {
         // 1. O Backend já opera como SUPERUSER automaticamente via startup.
+        await assegurarAutenticacao();
 
 
         // 2. BUSCA O USUÁRIO (Para saber se é Produção ou Homologação)
@@ -227,6 +232,7 @@ app.get('/api/cnpj/:cnpj', async (req, res) => {
 // 🌸 ROTA 0: ONBOARDING NICHO BELEZA
 // ==========================================
 app.post('/api/onboarding/beauty', async (req, res) => {
+    await assegurarAutenticacao();
     const { userId } = req.body;
     try {
         const record = await setupBeautyNiche(userId);
@@ -240,7 +246,8 @@ app.post('/api/onboarding/beauty', async (req, res) => {
 // 🚀 ROTA 1: EMISSÃO NACIONAL (ADN/SEFIN) - MOTOR VORTEX
 // 🛡️ ESCUDO MEIRI: Proibido alterar sem rodar sacred_guard.js
 // ==========================================
-app.post('/api/nacional/emitir', async (req, res) => {
+app.post('/api/nacional/emit', async (req, res) => {
+    await assegurarAutenticacao();
     const { userId, payload } = req.body; 
 
     try {
@@ -801,7 +808,7 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
         }
 
         // 1. Autentica como Superusuário (Necessário para acessar coleções com regras restritas)
-        // O Backend já opera como SUPERUSER
+        await assegurarAutenticacao();
 
 
         // 2. Transfere arquivo RAM (Buffer) => File (Padrão PB SDK)

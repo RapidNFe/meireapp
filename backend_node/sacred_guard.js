@@ -49,7 +49,7 @@ function runSacredTests() {
         if (!idDPS.includes(mockPayload.prestador.cnpj)) errors.push("ERRO CRÍTICO: ID da DPS deve conter o CNPJ do prestador");
 
         // TESTE 2: VERSÃO DO APLICATIVO
-        if (!xmlAssinavel.includes("MeireApp1.0")) errors.push("ERRO DE VERSÃO: verAplic deve ser 'MeireApp1.0'");
+        if (!xmlAssinavel.includes("MeiriApp1.0")) errors.push("ERRO DE VERSÃO: verAplic deve ser 'MeiriApp1.0'");
 
         // TESTE 3: ESTRUTURA XML
         if (!xmlAssinavel.includes("<dCompet>")) errors.push("CAMPO FALTANTE: dCompet é obrigatório");

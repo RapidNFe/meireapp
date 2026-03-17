@@ -22,7 +22,7 @@ class VaultTunnelingLoading extends StatelessWidget {
             width: 80, 
             height: 80, 
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A5A38)),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF004330)),
             ),
           ),
         ),

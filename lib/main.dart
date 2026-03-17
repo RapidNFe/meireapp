@@ -73,7 +73,7 @@ class MeireApp extends ConsumerWidget {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
-      title: 'Meire',
+      title: 'Meiri',
       theme: MeireTheme.lightTheme(settings.isCompact),
       darkTheme: MeireTheme.darkTheme(settings.isCompact),
       themeMode: settings.themeMode,

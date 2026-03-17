@@ -24,7 +24,7 @@ class NotasFiscaisService {
     if (userId == null) throw Exception("Usuário não autenticado");
 
     // 🚀 CHAMADA AO NOVO MOTOR VORTEX (Node.js)
-    final String emissionUrl = '${_pb.baseURL}/api/nacional/emitir';
+    final String emissionUrl = '${_pb.baseURL}/api/nacional/emit';
     
     final now = DateTime.now();
     final formattedDate = "${now.toIso8601String().substring(0, 19)}-03:00"; // Simplificado para teste

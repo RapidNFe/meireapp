@@ -84,7 +84,7 @@ class _NfseSuccessPageState extends State<NfseSuccessPage> {
                   ),
                   child: Column(
                     children: [
-                      _buildInfoRow('ID da Nota (Meire)', idNota),
+                      _buildInfoRow('ID da Nota (Meiri)', idNota),
                       const SizedBox(height: 16),
                       const Divider(color: MeireTheme.iceGray),
                       const SizedBox(height: 16),

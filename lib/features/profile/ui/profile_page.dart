@@ -260,7 +260,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(value ? '🚀 Meire em Produção!' : '🛠️ Modo de Testes Ativado.'),
+                                    content: Text(value ? '🚀 Meiri em Produção!' : '🛠️ Modo de Testes Ativado.'),
                                     backgroundColor: value ? Colors.green : Colors.orange,
                                   ),
                                 );

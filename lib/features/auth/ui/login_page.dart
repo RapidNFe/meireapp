@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:meire/core/utils/validators.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
@@ -66,14 +67,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.business_center,
-                    size: 80,
-                    color: Theme.of(context).colorScheme.primary,
+                   Center(
+                    child: SvgPicture.asset(
+                      'assets/images/logo.svg',
+                      height: 80,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Meire',
+                    'Meiri',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 32,

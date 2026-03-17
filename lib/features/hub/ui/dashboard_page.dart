@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
@@ -89,14 +90,9 @@ class _HubPageState extends ConsumerState<HubPage> {
       centerTitle: false,
       title: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: MeireTheme.primaryColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.account_balance_wallet_outlined,
-                color: Colors.white, size: 20),
+          SvgPicture.asset(
+            'assets/images/logo.svg',
+            height: 32,
           ),
           const SizedBox(width: 12),
           Column(
