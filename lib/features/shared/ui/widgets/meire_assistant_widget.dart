@@ -99,7 +99,6 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
                 color: MeireTheme.primaryColor,
                 size: 28,
               ),
-              // Future: Lottie.asset('assets/meire_idle.json')
             ),
           ),
         ),

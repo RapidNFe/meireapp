@@ -133,13 +133,15 @@ const app = express();
 
 // CONFIGURAÇÃO DE SEGURANÇA CORS (PRODUÇÃO)
 app.use(cors({
-    origin: [
-        'https://meireapp.com.br', 
-        'https://www.meireapp.com.br', 
-        'http://localhost:3000', 
-        'http://127.0.0.1:3000',
-        'http://localhost:55660' // Porta comum do Flutter Web debug
-    ], 
+    origin: (origin, callback) => {
+        // Permite qualquer localhost (comum no Flutter Web debug) ou os domínios oficiais
+        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || 
+            origin === 'https://meireapp.com.br' || origin === 'https://www.meireapp.com.br') {
+            callback(null, true);
+        } else {
+            callback(new Error('Bloqueado pelo CORS do Meire'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true
@@ -878,20 +880,24 @@ app.use('/', proxy('http://127.0.0.1:8090', {
         }
 
         // Força os headers de CORS da Meire para evitar bloqueios no Flutter
-        const allowedOrigins = [
-            'https://meireapp.com.br', 
-            'https://www.meireapp.com.br', 
-            'http://localhost:3000', 
-            'http://127.0.0.1:3000',
-            'http://localhost:55660'
-        ];
         const origin = userReq.headers.origin;
-        headers['access-control-allow-origin'] = allowedOrigins.includes(origin) ? origin : 'https://meireapp.com.br';
+        if (origin && (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+            headers['access-control-allow-origin'] = origin;
+        } else {
+            headers['access-control-allow-origin'] = 'https://meireapp.com.br';
+        }
         headers['access-control-allow-credentials'] = 'true';
         headers['access-control-allow-methods'] = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
         headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With, Accept';
         
         return headers;
+    },
+    userResDecorator: function(proxyRes, proxyResData, userReq, userRes) {
+        if (proxyRes.statusCode >= 400) {
+            console.error(`❌ [PROXY-ERROR] ${userReq.method} ${userReq.url} -> Status ${proxyRes.statusCode}`);
+            console.error(`📦 [PROXY-ERROR-BODY] ${proxyResData.toString()}`);
+        }
+        return proxyResData;
     }
 }));
 
