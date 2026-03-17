@@ -221,7 +221,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             '/nfse_success', 
             arguments: {
               ...?responseData as Map<String, dynamic>?,
-              'competencia': DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
+              'competencia': DateFormat("dd 'de' MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
             },
           );
         }
@@ -482,13 +482,13 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             firstDate: DateTime(2024),
             lastDate: DateTime.now(),
             locale: const Locale("pt", "BR"),
-            initialDatePickerMode: DatePickerMode.year,
-            helpText: "SELECIONE O MÊS DO SERVIÇO",
+            initialDatePickerMode: DatePickerMode.day,
+            helpText: "SELECIONE A DATA DA COMPETÊNCIA",
           );
 
           if (picked != null) {
             setState(() {
-              _mesCompetencia = DateTime(picked.year, picked.month, 1);
+              _mesCompetencia = picked;
             });
           }
         },
@@ -504,7 +504,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 Text(
-                  DateFormat("MMMM 'de' yyyy", "pt_BR").format(_mesCompetencia).toUpperCase(),
+                  DateFormat("dd/MM/yyyy").format(_mesCompetencia),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
