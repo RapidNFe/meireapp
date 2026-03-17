@@ -199,26 +199,24 @@ class HeroSection extends StatelessWidget {
           Expanded(
             flex: isMobile ? 0 : 1,
             child: AnimatedHoverCard(
-              child: Container(
-                height: isMobile ? 250 : 400,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [verdeCard, verdeSecundario],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  constraints: BoxConstraints(maxHeight: isMobile ? 300 : 500),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: verdeCard,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15))
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10))
-                  ],
-                ),
-                child: const Center(
-                  child: Text('Dashboard App\n(Insira sua imagem aqui)',
-                      textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)),
+                  child: Image.asset(
+                    'assets/images/dashboard.png',
+                    fit: BoxFit.contain, // Garante que a imagem não seja cortada
+                  ),
                 ),
               ),
             ),
