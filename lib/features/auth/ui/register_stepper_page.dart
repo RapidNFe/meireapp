@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/services/brasil_api_service.dart';
+import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/utils/validators.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+
+// Paleta Esmeralda
+const Color esmeraldaFundo = Color(0xFF022C22);
+const Color verdeSecundario = Color(0xFF064E3B);
+const Color verdeCard = Color(0xFF065F46);
+const Color amareloDestaque = Color(0xFFFFB800);
 
 class RegisterStepperPage extends ConsumerStatefulWidget {
   const RegisterStepperPage({super.key});
@@ -58,12 +63,13 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       SnackBar(
         content: const Text('⚠️ Não conseguimos validar o CNPJ automaticamente.'),
         duration: const Duration(seconds: 8),
+        backgroundColor: verdeSecundario,
         action: SnackBarAction(
           label: 'Preencher Manual',
-          textColor: Colors.amber,
+          textColor: amareloDestaque,
           onPressed: () {
             setState(() {
-              _razaoSocial = 'Preenchimento Manual';
+              _razaoSocial = '';
               _currentStep = 1;
             });
           },
@@ -98,7 +104,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception:', '').trim()),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -108,50 +114,53 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: esmeraldaFundo,
       appBar: AppBar(
         title: Text(
           _currentStep == 0 ? 'Conectar Empresa' : 'Seus Dados',
-          style: const TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: MeireTheme.primaryColor),
+        iconTheme: const IconThemeData(color: amareloDestaque),
         centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Progress Bar
               Row(
                 children: [
-                   Expanded(
+                  Expanded(
                     child: Container(
-                      height: 4,
+                      height: 6,
                       decoration: BoxDecoration(
-                        color: MeireTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(2),
+                        color: amareloDestaque,
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      height: 4,
+                      height: 6,
                       decoration: BoxDecoration(
-                        color: _currentStep == 1 ? MeireTheme.primaryColor : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(2),
+                        color: _currentStep == 1 ? amareloDestaque : Colors.white24,
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
               
-              if (_currentStep == 0) _buildStep1() else _buildStep2(),
-              
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _currentStep == 0 ? _buildStep1() : _buildStep2(),
+              ),
             ],
           ),
         ),
@@ -163,44 +172,40 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     return Form(
       key: _formKeyStep1,
       child: Column(
+        key: const ValueKey(0),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.business_center_outlined, size: 64, color: MeireTheme.primaryColor),
-          const SizedBox(height: 24),
+          const Icon(Icons.business_center_rounded, size: 80, color: amareloDestaque),
+          const SizedBox(height: 32),
           const Text(
             'Qual o CNPJ da sua MEI?',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: MeireTheme.primaryColor,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'Vamos buscar as informações públicas da sua empresa para agilizar o cadastro.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
+              fontSize: 16,
+              color: Colors.white70,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 56),
           TextFormField(
             inputFormatters: [_cnpjMask],
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2),
             textAlign: TextAlign.center,
-            decoration: InputDecoration(
+            decoration: _inputDecoration('CNPJ', Icons.search).copyWith(
               hintText: '00.000.000/0000-00',
-              filled: true,
-              fillColor: MeireTheme.iceGray,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
+              hintStyle: const TextStyle(color: Colors.white24, fontSize: 20),
               contentPadding: const EdgeInsets.symmetric(vertical: 24),
             ),
             validator: Validators.validateCnpj,
@@ -221,24 +226,21 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     }
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: MeireTheme.primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              backgroundColor: amareloDestaque,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
+              elevation: 4,
             ),
             child: _isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
                   )
                 : const Text(
-                    'Avançar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    'Validar Empresa',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
           ),
         ],
@@ -250,35 +252,36 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     return Form(
       key: _formKeyStep2,
       child: Column(
+        key: const ValueKey(1),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: MeireTheme.accentColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: MeireTheme.accentColor.withValues(alpha: 0.2)),
+              color: verdeCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: amareloDestaque.withValues(alpha: 0.2)),
             ),
             child: Column(
               children: [
-                const Icon(Icons.verified, color: MeireTheme.accentColor, size: 32),
-                const SizedBox(height: 12),
-                if (_razaoSocial != 'Preenchimento Manual')
+                const Icon(Icons.verified_rounded, color: amareloDestaque, size: 40),
+                const SizedBox(height: 16),
+                if (_razaoSocial.isNotEmpty)
                   Text(
                     _razaoSocial,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: MeireTheme.primaryColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
                     ),
                   )
                 else
                   TextFormField(
                     initialValue: '',
-                    decoration: const InputDecoration(
-                      labelText: 'Razão Social da sua MEI',
-                      hintText: 'Digite o nome exatamente como na Receita',
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration('Razão Social da sua MEI', Icons.business).copyWith(
+                      hintText: 'Digite o nome oficial',
                     ),
                     onChanged: (val) => _razaoSocial = val,
                     validator: (val) => (val == null || val.isEmpty) ? 'Campo obrigatório' : null,
@@ -286,19 +289,19 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
               ],
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 40),
           const Text(
-            'Credenciais de Acesso',
+            'Seus dados pessoais',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: MeireTheme.primaryColor,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 24),
           _buildTextField(
-            label: 'Seu Nome Completo',
-            icon: Icons.person_outline,
+            label: 'Nome Completo',
+            icon: Icons.person_outline_rounded,
             textCapitalization: TextCapitalization.words,
             validator: (val) {
               if (val == null || val.trim().split(' ').length < 2) return 'Digite seu nome completo';
@@ -317,7 +320,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           const SizedBox(height: 16),
           _buildTextField(
             label: 'Crie sua Senha',
-            icon: Icons.lock_outline,
+            icon: Icons.lock_outline_rounded,
             obscureText: true,
             validator: (val) {
               if (val == null || val.length < 8) return 'Mínimo de 8 caracteres';
@@ -326,79 +329,81 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             onSaved: (val) => _password = val ?? '',
           ),
           const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: 24,
-                width: 24,
-                child: Checkbox(
+          // Terms of Use
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Checkbox(
                   value: _aceitouTermos,
-                  activeColor: MeireTheme.accentColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  activeColor: amareloDestaque,
+                  checkColor: Colors.black,
+                  side: const BorderSide(color: Colors.white30),
                   onChanged: (bool? value) {
                     setState(() {
                       _aceitouTermos = value ?? false;
                     });
                   },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/privacy_policy');
-                  },
-                  child: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
-                      children: [
-                        TextSpan(text: 'Declaro que li e concordo com os '),
-                        TextSpan(
-                          text: 'Termos de Uso e Política de Privacidade.',
-                          style: TextStyle(
-                            color: MeireTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/privacy_policy');
+                    },
+                    child: RichText(
+                      text: const TextSpan(
+                        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                        children: [
+                          TextSpan(text: 'Li e concordo com os '),
+                          TextSpan(
+                            text: 'Termos e Privacidade.',
+                            style: TextStyle(
+                              color: amareloDestaque,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 40),
           ElevatedButton(
             onPressed: (_isLoading || !_aceitouTermos) ? null : _performRegistration,
             style: ElevatedButton.styleFrom(
-              backgroundColor: MeireTheme.primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              backgroundColor: amareloDestaque,
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              elevation: 0,
+              disabledBackgroundColor: Colors.white12,
+              elevation: 4,
             ),
             child: _isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
                   )
                 : const Text(
-                    'Finalizar e Entrar',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    'Concluir Cadastro',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           TextButton(
             onPressed: () {
               setState(() => _currentStep = 0);
             },
-            child: const Text('Voltar e editar CNPJ', style: TextStyle(color: Colors.grey)),
+            child: const Text('Voltar e editar CNPJ', style: TextStyle(color: Colors.white54)),
           ),
         ],
       ),
@@ -422,15 +427,33 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       inputFormatters: inputFormatters,
       validator: validator,
       onSaved: onSaved,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        filled: true,
-        fillColor: MeireTheme.iceGray,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
+      style: const TextStyle(color: Colors.white),
+      decoration: _inputDecoration(label, icon),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white60),
+      prefixIcon: Icon(icon, color: amareloDestaque),
+      filled: true,
+      fillColor: verdeCard.withValues(alpha: 0.3),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: amareloDestaque, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
     );
   }

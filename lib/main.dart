@@ -87,7 +87,7 @@ class MeireApp extends ConsumerWidget {
         Locale('pt', 'BR'),
       ],
       locale: const Locale('pt', 'BR'),
-      home: isAuthenticated ? (isAdmin ? const AdminDashboardPage() : const HubPage()) : const LoginPage(),
+      home: isAuthenticated ? (isAdmin ? const AdminDashboardPage() : const HubPage()) : const LandingPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterStepperPage(),

@@ -5,6 +5,12 @@ import 'package:meire/core/utils/validators.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// Paleta Esmeralda (Consistente com a Landing Page)
+const Color esmeraldaFundo = Color(0xFF022C22);
+const Color verdeSecundario = Color(0xFF064E3B);
+const Color verdeCard = Color(0xFF065F46);
+const Color amareloDestaque = Color(0xFFFFB800);
+
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
@@ -56,87 +62,154 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: esmeraldaFundo,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 450),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
+            decoration: BoxDecoration(
+              color: verdeCard,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  blurRadius: 40,
+                  offset: const Offset(0, 20),
+                )
+              ],
+            ),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   Center(
+                  Center(
                     child: SvgPicture.asset(
                       'assets/images/logo.svg',
                       height: 80,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 20),
+                  const Text(
                     'Meiri',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 40,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'A sua assistente inteligente MEI',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      color: Colors.white70,
+                      fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 48),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration('E-mail', Icons.email_outlined),
                     validator: Validators.validateEmail,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Senha',
-                      prefixIcon: Icon(Icons.lock_outline),
-                    ),
-                    validator: (val) =>
-                        Validators.validateRequired(val, 'Senha'),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDecoration('Senha', Icons.lock_outline),
+                    validator: (val) => Validators.validateRequired(val, 'Senha'),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: amareloDestaque,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.all(20),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: Colors.black,
                             ),
                           )
-                        : const Text('Entrar'),
+                        : const Text(
+                            'Entrar na Plataforma',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text('Criar conta MEI'),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Ainda não tem conta?',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: const Text(
+                          'Criar conta MEI',
+                          style: TextStyle(
+                            color: amareloDestaque,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white60),
+      prefixIcon: Icon(icon, color: amareloDestaque),
+      filled: true,
+      fillColor: esmeraldaFundo.withValues(alpha: 0.5),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: amareloDestaque, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 2),
       ),
     );
   }
