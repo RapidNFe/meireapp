@@ -38,7 +38,7 @@ class NotasFiscaisService {
             "numeroDPS": (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(), // Número único baseado em tempo
             "numeroSerie": "900",
             "dataHoraEmissao": formattedDate,
-            "competencia": competencia ?? "${now.year}-${now.month.toString().padLeft(2, '0')}-01",
+            "competencia": competencia, // Sem fallback para data atual aqui!
             "codigoMunicipioEmissor": _auth.currentUser?.getStringValue('codigo_municipio') ?? "5208707",
             "tomador": {
               "cnpj": clientCnpj.replaceAll(RegExp(r'[^0-9]'), ''),

@@ -244,7 +244,14 @@ app.post('/api/nacional/emitir', async (req, res) => {
 
     try {
         console.log(`📡 [Nacional] Requisição recebida do usuário: ${userId}`);
-        console.log(`📌 [Competência] Mês de Referência recebido: ${payload?.competencia || 'Não informado (usará hoje)'}`);
+        
+        // 🔒 BLINDAGEM DA COMPETÊNCIA: Nunca assumir o dia atual.
+        if (!payload?.competencia) {
+            console.error("❌ [Erro] Tentativa de emissão sem competência definida.");
+            return res.status(400).json({ sucesso: false, erro: "A data de competência é obrigatória e não foi informada pelo aplicativo." });
+        }
+
+        console.log(`📌 [Competência] Mês de Referência: ${payload.competencia}`);
 
         // 1. Busca dados do Prestador
         const results = await query(`SELECT cnpj, razao_social, producao, inscricao_municipal FROM users WHERE id = ?`, [userId]);
@@ -296,7 +303,7 @@ app.post('/api/nacional/emitir', async (req, res) => {
                 "status": resultado.sucesso ? 'CONCLUIDA' : 'ERRO',
                 "chave_acesso": resultado.dados?.chaveAcesso || '',
                 "xml_nota": resultado.dados?.xmlDecodificado || '',
-                "competencia": payload.competencia || new Date().toISOString().split('T')[0],
+                "competencia": payload.competencia,
                 "motivo_rejeicao": resultado.sucesso ? '' : (resultado.dados?.erros?.[0]?.Descricao || 'Rejeição desconhecida pelo Governo')
             };
 
