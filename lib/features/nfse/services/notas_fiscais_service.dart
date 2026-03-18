@@ -55,13 +55,16 @@ class NotasFiscaisService {
             },
             "servico": {
               "municipioPrestacao": "5208707",
-              // Limpa o código para enviar apenas números (ex: 01.01 -> 0101)
+              // Blindagem Serpro: Limpa pontos e garante 6 dígitos (ex: 01.01 -> 010100)
               "codigoTribNacional": (codigoTributacao ?? "060101")
                   .split(' ')[0]
-                  .replaceAll('.', ''),
+                  .replaceAll('.', '')
+                  .padRight(6, '0'),
+              // Blindagem NBS: Garante 9 dígitos (padrão NBS)
               "itemNbs": (itemNbs ?? "126021000")
                   .split(' ')[0]
-                  .replaceAll('.', ''),
+                  .replaceAll('.', '')
+                  .padRight(9, '0'),
               "descricao": description,
               "valor": amount.toStringAsFixed(2),
             }
