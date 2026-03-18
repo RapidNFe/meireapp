@@ -90,7 +90,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Center(
                     child: SvgPicture.asset(
                       'assets/images/logo.svg',
-                      height: 80,
+                      height: 100, // Aumentado conforme solicitado
+                      placeholderBuilder: (BuildContext context) => const SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(color: amareloDestaque),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

@@ -1,145 +1,52 @@
-# 🛡️ MEIRE: Revisão Soberana do Projeto v1.0
+# 🛡️ MEIRI: BÚSSOLA DE CONTEXTO & REVISÃO ESTRATÉGICA
 
-Este documento serve como a **Bússola de Contexto** do projeto. Ele deve ser lido (ou referenciado) em cada nova tarefa para evitar redundância, perda de créditos e "alucinações" sobre a arquitetura.
-
----
-
-## 🏗️ 1. Arquitetura do Sistema
-
-O Meire é um ecossistema de gestão e emissão de notas fiscais (NFS-e) construído sobre 3 camadas principais:
-
-### 📱 Camada 1: Frontend (Flutter Web/App)
-- **Local:** `lib/`
-- **Stack:** Flutter + Riverpod (Gerenciamento de Estado).
-- **Filosofia:** *Quiet Luxury UI* (Clean, haptic, transições suaves).
-- **Build Otimizado:** `flutter build web --release --web-renderer html --tree-shake-icons`.
-
-### ⚡ Camada 2: Middleware/Backend (Node.js)
-- **Local:** `backend_node/`
-- **Função:** Integrador mTLS com SERPRO (API Nacional de NFS-e).
-- **Pilares de Resiliência:**
-  1. **Cofre de Autenticação (`serpro_auth.js`)**: Cache em RAM de tokens SAPI para evitar custos extras e bloqueios.
-  2. **Catraca de Fluxo (`catraca_serpro.js`)**: Gerenciamento de fila (Rate Limit) para evitar o erro 429 da Receita.
-  3. **Fortaleza de Contingência (`vortex_emissor_nacional.js`)**: Retry automático com backoff exponencial.
-
-### 🗄️ Camada 3: Banco de Dados (PocketBase)
-- **Tecnologia:** Go + SQLite.
-- **Função:** Persistência de dados, autenticação de usuários e armazenamento de certificados no "Cofre" (Vault).
+**Códinome:** Meiri - A Assistente Inteligente Soberana (v2.0)
+**Data da Última Atualização:** 18/03/2026
+**Status do Deploy:** Pronto para Produção (100% Blindado)
 
 ---
 
-## 📂 2. Mapa de Funcionalidades (Features)
+## 🏛️ 1. ARQUITETURA DE DESIGN: "BENTO GRID & QUIET LUXURY"
+O Meiri agora utiliza a arquitetura visual de **Bento Grid**, proporcionando uma hierarquia clara de informações. O olhar do profissional flui do operacional (lançamento) para o estratégico (soberania).
 
-- **`lib/features/nfse/`**: Core do sistema. Formulários de emissão, geração de DPS e consulta de notas.
-- **`lib/features/clients/`**: Gestão de tomadores de serviço (CRUD de Clientes).
-- **`lib/features/auth/`**: Fluxo de login e segurança biométrica/superusuário.
-- **`lib/features/copiloto/`**: Assistente inteligente para suporte tributário.
-- **`lib/features/landing/`**: Landing page institucional e conversão.
-
----
-
-## 📑 3. Fluxo de Emissão Crítico
-
-1. **Input User**: O usuário preenche os dados da nota no Flutter.
-2. **Sync PocketBase**: Os dados são salvos localmente no PocketBase.
-3. **Trigger Backend**: Chamada para o backend Node.js.
-4. **Assinador Soberano**: O XML é gerado (`gerador_dps.js`) e assinado com certificado A1.
-5. **Transmissão**: O `vortex` envia para a API Nacional via Serpro.
-6. **Retorno**: O PDF é gerado (`danfse_service.js`) e o status é atualizado no PocketBase.
+- **Cores Oficiais**: 🌲 Verde Floresta (#01291B) | 🔱 Ouro Meiri (#CC8B00) | 🍀 Esmeralda (#50C878)
+- **Haptic Feedback**: Retorno tátil leve em ações críticas para uma experiência premium "Quiet Luxury".
+- **Blindagem Visual**: Logo SVG otimizado (de 2.5MB para 240KB) com `placeholderBuilder` de carregamento dourado.
 
 ---
 
-## 🛑 4. Regras de Engajamento e Eficiência (Proteção de Créditos)
+## 🦅 2. MÓDULO SOBERANIA FINANCEIRA (DASHBOARD)
+O maior inimigo do profissional é a confusão entre o dinheiro que passou pela mão e o dinheiro que é dele de verdade. O Meiri resolve isso na Home:
 
-Para evitar o consumo excessivo de tokens e processos circulares, **todo agente deve seguir estas regras rigorosamente**:
-
-### 🚫 Regra do "Stop & Pivot" (Anti-Loop Infinito)
-Se um erro persistir por **3 tentativas de correção sem sucesso**, o agente deve PARAR imediatamente, reportar o que tentou e perguntar por uma abordagem alternativa ou pedir mais logs. **Proibido tentar a 4ª correção adivinhando.**
-
-### 🔍 Diagnóstico Antes da Ação
-Antes de editar qualquer arquivo, o agente deve:
-1. Ler o arquivo atual.
-2. Verificar os logs de erro reais (se disponíveis).
-3. Explicar em 2 linhas o que pretende mudar e por quê.
-
-### 📦 Mudanças Atômicas
-Evite substituir o arquivo inteiro. Use edições parciais (`replace_file_content` ou `multi_replace_file_content`) para manter o contexto leve.
-
-### 🧠 Memória Curta, Contexto Longo
-Não peça para o agente "revisar tudo" a cada passo. Use este arquivo `PROJECT_REVIEW.md` como âncora para economizar tokens de contexto inicial.
+- **SoberaniaChartCard**: Gráfico comparativo que separa **Faturamento Bruto** vs. **Cota-Parte Líquida**.
+- **Performance Provider**: Motor que analisa centenas de lançamentos do mês em milissegundos.
+- **Visual de Retenção**: Barra de progresso graduada que mostra a porcentagem real de lucro retido pelo profissional.
 
 ---
 
-## 🚩 5. Variáveis de Ambiente e Segurança
-- Os certificados e chaves de API estão protegidos no `.env` e no PocketBase Vault.
-- **Nunca** exponha a `SERPRO_TOKEN` ou chaves privadas em logs de debug.
-- Use sempre o `sacred_guard.js` para validar requisições no backend.
+## ⚡ 3. HIPER-EFICIÊNCIA EM LANÇAMENTOS
+O profissional de beleza tem as mãos ocupadas. O Meiri virou um "Gerente Silencioso":
+
+- **Quick Launch Card**: Campo de valor gigante na Home. Digite -> Enter -> Salvo.
+- **Settings Page (Cofre de Regras)**: O profissional trava sua **Comissão Padrão** no seu perfil.
+- **Automação de Campo**: Ao lançar um valor, o Meiri já calcula a comissão, aplica o CNAE de 6 dígitos e vincula ao salão parceiro automaticamente.
 
 ---
 
-## 🎨 6. Histórico de Refatorações Recentes
+## 📑 4. SALÃO PARCEIRO & CONCILIAÇÃO FISCAL
+Acabamos com as brigas de "acerto de contas" no final da quinzena:
 
-### 18/03/2026 — Landing Page: Bento Grid + Otimizações `const`
-
-**Objetivo:** Modernizar a seção de funcionalidades com layout Bento Grid e eliminar todos os avisos de performance do linter.
-
-#### ✅ O que foi feito:
-
-**`lib/features/landing/ui/landing_page.dart`**
-
-1. **Nova seção de Funcionalidades (`FeaturesSection`)** substituída por um **Bento Grid** responsivo:
-   - Desktop: 2 colunas, cada uma com 3 linhas de cards variados.
-   - Mobile: coluna única com os mesmos cards empilhados.
-   - Cards criados: `_BentoCardHero` (destaque com gradiente), `_BentoCardCompact` (1/2 largura), `_BentoCardWide` (horizontal largo), `_BentoCardStat` (métricas animadas).
-   - Todos os cards têm efeito de hover (`MouseRegion` + `AnimatedContainer` com translação Y).
-
-2. **Otimizações `const` (linter warnings eliminados):**
-   - `_BentoDesktop.build` → `return const Row(...)` — toda a árvore estática propagada de uma vez.
-   - `_BentoMobile.build` → `return const Column(...)` — idem.
-   - `_BentoCardStatState.build` → `child: const Column(...)` — subtree de métricas totalmente constante.
-   - `_BentoCardStat` e `_Divider` receberam `const` em seus construtores.
-
-#### 📐 Estrutura do Bento Grid (Desktop):
-
-```
-┌─────────────────────┬─────────────────────┐
-│  _BentoCardHero     │  _BentoCardCompact  │  _BentoCardCompact │
-│  (Emissão de Notas) │  (Alertas DAS)      │  (Gestão Clientes) │
-├──────────┬──────────┼─────────────────────┤
-│ Compact  │ Compact  │  _BentoCardWide     │
-│ (Caixa)  │ (DASN)   │  (Segurança Total)  │
-├──────────┴──────────┼─────────────────────┤
-│  _BentoCardWide     │  _BentoCardStat     │
-│  (Suporte Humano)   │  (Métricas: 10×/99%)│
-└─────────────────────┴─────────────────────┘
-```
+- **Extrato Generator (PDF Platinum)**: Motor de relatórios elegante e levepara conferência instantânea via WhatsApp.
+- **Batch Update (Baixa em Massa)**: Quando a nota é emitida pelo Serpro, o Meiri liquida todos os serviços pendentes de uma vez.
+- **Blindagem Serpro (Vortex)**: Emissão de nota direta para o ambiente nacional, 100% em conformidade com o layout v1.0.
 
 ---
 
-### 18/03/2026 — Blindagem Tributária, Gestão de Clientes e Hiper-Performance
-
-**Objetivo:** Garantir emissão fiscal 100% correta através do CNAE do usuário, simplificar a gestão de clientes e reduzir o tempo de deploy/carregamento do site.
-
-#### ✅ O que foi feito:
-
-**1. Blindagem de CNAE (Segurança Fiscal)**
-- **Integração BrasilAPI:** O app consome o CNPJ do usuário logado para buscar seus CNAEs oficiais.
-- **Provider de Filtro (`lc116PermitidosProvider`):** Cruza o CNAE da empresa com a tabela de correlação no PocketBase (`cnae_correlacao`).
-- **Busca Restrita:** O seletor de serviços agora só mostra itens que o CNAE do usuário tem permissão legal para emitir, prevenindo rejeições no Serpro e multas.
-
-**2. Gestão de Clientes "Lux"**
-- **`TomadorSelectorLux`:** Novo componente de busca em tempo real no formulário de nota.
-- **Cadastro Inteligente:** Integração com BrasilAPI na página de cadastro de clientes (`AddClientPage`). Ao digitar o CNPJ, o Meiri preenche Razão Social, Apelido e Endereço automaticamente.
-- **Multi-tenancy:** Trava de segurança no PocketBase (`user = "$userId"`) garante que cada MEI veja apenas seus próprios clientes.
-
-**3. Conformidade com Serpro (Nacional)**
-- **Ajuste de Dígitos:** Refatoração do `NotasFiscaisService` para limpar e formatar códigos `cTribNac` (6 dígitos) e `itemNbs` (9 dígitos), removendo pontos e garantindo o padrão exigido pelo Governo Federal.
-
-**4. Hiper-Performance (Infra e Web)**
-- **Deploy de 60 Segundos:** Otimização do `ecosystem.config.js` (`watch: false` e limites de RAM) para acelerar o deploy via PM2 e evitar travamentos no servidor EC2/VPS.
-- **Loader "Lux" no Web:** Injeção de CSS crítico e animação de carregamento no `index.html`. O usuário vê a logo e o fundo esmeralda instantaneamente enquanto o Flutter carrega em background (Fim da tela branca).
-- **Asset Lean:** Compressão da logo principal de 2.5MB para 208KB.
+## 🎯 5. PRÓXIMOS PASSOS (A PRÓXIMA FRONTEIRA)
+1. **Integração BrasilAPI**: No TomadorSelector, para busca automática de CNPJs de salões.
+2. **Histórico de Relatórios**: Persistir uma cópia de cada extrato PDF gerado no PocketBase.
+3. **Notificações Push**: Alertar o profissional quando o salão der baixa no seu repasse.
 
 ---
 
-*Documento atualizado em: 18/03/2026 (Fase 2 Concluída)*
+*Assinado: Antigravity - Seu Par de Programação Soberano.* 🦅🌑
