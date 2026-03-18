@@ -161,12 +161,13 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
     }
 
     for (var n in notas) {
-      final status = n['status']?.toString().toLowerCase() ?? 'processando';
+      final status = n['status']?.toString().toUpperCase() ?? 'PROCESSANDO';
+      
       // Filtro de Segurança: Só contamos o que é real ou está em processamento
-      if (status != 'emitida' && status != 'processando') continue;
+      // Aceitamos EMITIDA, AUTORIZADA ou PROCESSANDO
+      if (status != 'EMITIDA' && status != 'AUTORIZADA' && status != 'PROCESSANDO') continue;
 
-      final date =
-          parseDate(n['competencia'] ?? n['created'] ?? n['emissao']);
+      final date = parseDate(n['competencia'] ?? n['created'] ?? n['emissao']);
       final valStr = n['valor_servico'] ?? n['valor'] ?? '0';
       final val = parseValor(valStr.toString().replaceAll(',', '.'));
 

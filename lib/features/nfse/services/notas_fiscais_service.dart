@@ -18,6 +18,8 @@ class NotasFiscaisService {
     required String clientCnpj,
     required double amount,
     required String description,
+    String? codigoTributacao,
+    String? itemNbs,
     String? competencia,
   }) async {
     final userId = _auth.currentUser?.id;
@@ -53,7 +55,13 @@ class NotasFiscaisService {
             },
             "servico": {
               "municipioPrestacao": "5208707",
-              "codigoTribNacional": "060101", // Código fixo para evitar erros
+              // Limpa o código para enviar apenas números (ex: 01.01 -> 0101)
+              "codigoTribNacional": (codigoTributacao ?? "060101")
+                  .split(' ')[0]
+                  .replaceAll('.', ''),
+              "itemNbs": (itemNbs ?? "126021000")
+                  .split(' ')[0]
+                  .replaceAll('.', ''),
               "descricao": description,
               "valor": amount.toStringAsFixed(2),
             }

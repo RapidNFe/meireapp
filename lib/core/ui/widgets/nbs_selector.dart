@@ -3,180 +3,144 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/nfse/provider/nbs_provider.dart';
 
+/// Seletor de serviço inteligente com busca no PocketBase (CNAE ou NBS).
+/// 
+/// Agora busca em 2.700 registros mapppeados de Goiânia.
 class NbsSelector extends ConsumerStatefulWidget {
-  final Function(NbsModel) onNbsSelected;
+  final Function(ServicoTributario servico) onNbsSelected;
 
-  const NbsSelector({
-    super.key,
-    required this.onNbsSelected,
-  });
+  const NbsSelector({super.key, required this.onNbsSelected});
 
   @override
   ConsumerState<NbsSelector> createState() => _NbsSelectorState();
 }
 
 class _NbsSelectorState extends ConsumerState<NbsSelector> {
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _focusNode = FocusNode();
+  final _controller = TextEditingController();
+  String _query = '';
+  ServicoTributario? _selecionado;
 
   @override
   void dispose() {
-    _searchController.dispose();
-    _focusNode.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  // Filter based on 'nome' against cached data
-  List<NbsModel> _getFilteredOptions(String query, List<NbsModel> cachedData) {
-    if (query.isEmpty) {
-      // Retorna todos os itens para se comportar como Dropdown quando vazio
-      return cachedData;
-    }
-    return cachedData.where((nbs) {
-      final lowercaseQuery = query.toLowerCase();
-      final description = nbs.nome.toLowerCase();
-      return description.contains(lowercaseQuery);
-    }).toList();
+  void _selecionar(ServicoTributario servico) {
+    setState(() {
+      _selecionado = servico;
+      _query = '';
+      _controller.clear();
+    });
+    widget.onNbsSelected(servico);
+    FocusScope.of(context).unfocus();
+  }
+
+  void _limpar() {
+    setState(() {
+      _selecionado = null;
+      _query = '';
+      _controller.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the FutureProvider for the cached data
-    final nbsDataAsync = ref.watch(nbsProvider);
+    // Se selecionou, mostra card de confirmação Quiet Luxury
+    if (_selecionado != null) {
+      return _buildSelecionado(_selecionado!);
+    }
 
-    return nbsDataAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(
-          child: CircularProgressIndicator(color: MeireTheme.primaryColor),
+    final resultadosAsync = ref.watch(buscarServicosProvider(_query));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Input de Busca ──────────────────────────────────────────
+        TextFormField(
+          controller: _controller,
+          decoration: InputDecoration(
+            labelText: 'Qual atividade você realizou?',
+            hintText: 'Ex: manutenção, consultoria, software...',
+            prefixIcon: const Icon(Icons.search, color: MeireTheme.primaryColor),
+            suffixIcon: _query.isNotEmpty
+                ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: _limpar)
+                : null,
+          ),
+          onChanged: (value) => setState(() => _query = value),
         ),
-      ),
-      error: (error, stack) => const Text('Erro ao carregar lista de NBS',
-          style: TextStyle(color: Colors.red)),
-      data: (cachedData) {
-        if (cachedData.isEmpty) {
-          return const Text('Nenhum dado IBS disponível.');
-        }
 
-        return RawAutocomplete<NbsModel>(
-          textEditingController: _searchController,
-          focusNode: _focusNode,
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            return _getFilteredOptions(textEditingValue.text, cachedData);
-          },
-          displayStringForOption: (NbsModel option) => option.nome,
-          onSelected: (NbsModel selection) {
-            widget.onNbsSelected(selection);
-          },
-          fieldViewBuilder: (
-            BuildContext context,
-            TextEditingController textEditingController,
-            FocusNode focusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            return TextFormField(
-              controller: textEditingController,
-              focusNode: focusNode,
-              onFieldSubmitted: (String value) {
-                onFieldSubmitted();
-              },
-              decoration: InputDecoration(
-                labelText: 'Buscar NBS do IBGE (Ex: "Publicidade")',
-                hintText: 'Digite para buscar um código NBS',
-                prefixIcon:
-                    const Icon(Icons.search, color: MeireTheme.primaryColor),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      )
-                    : null,
-              ),
-              onChanged: (text) {
-                setState(() {});
-              },
-              onTap: () {
-                // Ao clicar no campo (ganhar foco), força o RawAutocomplete a
-                // exibir as opções mesmo sem texto recriando uma busca manual
-                if (textEditingController.text.isEmpty) {
-                  // Um pequeno truque para forçar a renderização das opções (hack padrão do Flutter para esse widget)
-                  textEditingController.value = const TextEditingValue(
-                      text: '', selection: TextSelection.collapsed(offset: 0));
-                }
-              },
-            );
-          },
-          optionsViewBuilder: (
-            BuildContext context,
-            AutocompleteOnSelected<NbsModel> onSelected,
-            Iterable<NbsModel> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.white,
-                child: ConstrainedBox(
-                  constraints:
-                      const BoxConstraints(maxHeight: 250, maxWidth: 800),
-                  child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    separatorBuilder: (context, index) =>
-                        const Divider(height: 1),
-                    itemBuilder: (BuildContext context, int index) {
-                      final option = options.elementAt(index);
-                      return InkWell(
-                        onTap: () {
-                          onSelected(option);
-                        },
-                        borderRadius: BorderRadius.vertical(
-                          top: index == 0
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                          bottom: index == options.length - 1
-                              ? const Radius.circular(12)
-                              : Radius.zero,
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0, vertical: 12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                option.nome,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Código NBS: ${option.id}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF757575), // Colors.grey[600]
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+        // ── Resultados da Busca ─────────────────────────────────────
+        if (_query.length >= 3) ...[
+          const SizedBox(height: 8),
+          resultadosAsync.when(
+            loading: () => const LinearProgressIndicator(color: MeireTheme.primaryColor),
+            error: (_, __) => const Text('Erro ao buscar atividades.', style: TextStyle(color: Colors.red, fontSize: 13)),
+            data: (resultados) {
+              if (resultados.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text('Nada encontrado. tente outros termos (Ex: atividade econômica).', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                );
+              }
+
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 250),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: MeireTheme.iceGray),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 5))],
                 ),
-              ),
-            );
-          },
-        );
-      },
+                child: ListView.separated(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: resultados.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (context, index) {
+                    final item = resultados[index];
+                    return ListTile(
+                      dense: true,
+                      title: Text(item.descricaoBusca, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87)),
+                      subtitle: Text('Cód. Goiânia: ${item.codigoLc116}', style: const TextStyle(color: MeireTheme.primaryColor, fontSize: 11)),
+                      trailing: const Icon(Icons.add_circle_outline, size: 20, color: MeireTheme.primaryColor),
+                      onTap: () => _selecionar(item),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSelecionado(ServicoTributario servico) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: MeireTheme.primaryColor.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: MeireTheme.primaryColor.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, color: MeireTheme.primaryColor, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(servico.descricaoBusca, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 2),
+                Text('Atividade: ${servico.codigoLc116}', style: const TextStyle(color: MeireTheme.primaryColor, fontSize: 12)),
+              ],
+            ),
+          ),
+          IconButton(icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey), onPressed: _limpar),
+        ],
+      ),
     );
   }
 }

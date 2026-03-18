@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/utils/validators.dart';
-import 'package:meire/core/ui/widgets/service_selector.dart';
 import 'package:meire/core/ui/widgets/nbs_selector.dart';
 import 'package:meire/core/utils/currency_input_formatter.dart';
 import 'package:meire/features/nfse/data/catalogo_beleza.dart';
@@ -132,30 +131,17 @@ class _FavoriteServiceFormPageState
                               fontWeight: FontWeight.bold,
                               color: Colors.grey)),
                       const SizedBox(height: 12),
-                      const Text(
-                          'Selecione a Classificação Tributária (CNAE) *',
+                      const Text('Serviço e Classificação Tributária *',
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: MeireTheme.primaryColor)),
                       const SizedBox(height: 8),
-                      ServiceSelector(
-                        onServiceSelected: (selection) {
-                          setState(() {
-                            _codigoTributacaoController.text =
-                                "${selection['tributacao_codigo']} - ${selection['tributacao_descricao']}";
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('Selecione a Classificação NBS (IBGE) *',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: MeireTheme.primaryColor)),
-                      const SizedBox(height: 8),
-                      NbsSelector(onNbsSelected: (nbsSelection) {
+                      NbsSelector(onNbsSelected: (servico) {
                         setState(() {
+                          _codigoTributacaoController.text =
+                              servico.codigoTributacaoFormatado;
                           _itemNbsController.text =
-                              "${nbsSelection.id} - ${nbsSelection.nome}";
+                              servico.itemNbsFormatado;
                         });
                       }),
                     ],
