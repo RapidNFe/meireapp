@@ -1,13 +1,41 @@
-# Node.js dependencies
+# 🛡️ DEPURAÇÃO E DEPENDÊNCIAS (PESADO)
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+*.log
+.npm/
 
-# Environment variables
+# 🛡️ VARIÁVEIS DE AMBIENTE E SEGURANÇA (CONFIDENCIAL)
 .env
-
-# Certificates
+.env.*
+!.env.example
 certs/
 *.pfx
 *.p12
+*.pem
+*.key
+ssh-key-*.key
+
+# 🛡️ CACHES E TEMPORÁRIOS
+tmp/
+temp/
+.cache/
+.DS_Store
+Thumbs.db
+
+# 🛡️ IDE E CONFIGURAÇÕES LOCAIS
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+
+# 🛡️ ARQUIVOS DE TESTE E SCRIPTS LOCAIS
+test_emissao_final.js
+test_emissao_fake.js
+debug_*.js
+check_*.js
+tmp_*.js

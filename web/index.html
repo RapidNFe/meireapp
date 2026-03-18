@@ -30,8 +30,61 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
   <title>Meiri - Inteligência Fiscal</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      background-color: #00221A;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100vw;
+    }
+    .logo {
+      width: 120px;
+      margin-bottom: 24px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    .loader {
+      width: 48px;
+      height: 4px;
+      background: rgba(204, 139, 0, 0.2);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    .loader::after {
+      content: '';
+      width: 24px;
+      height: 4px;
+      background: #CC8B00;
+      border-radius: 2px;
+      position: absolute;
+      left: -24px;
+      animation: loading 1.5s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.6; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.6; transform: scale(0.95); }
+    }
+    @keyframes loading {
+      0% { left: -24px; }
+      100% { left: 48px; }
+    }
+  </style>
 </head>
 <body>
+  <div class="loading-container" id="loading-indicator">
+    <img src="assets/images/logo.svg" class="logo" alt="Meiri Logo">
+    <div class="loader"></div>
+  </div>
+
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
