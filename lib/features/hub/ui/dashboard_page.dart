@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
+import 'package:meire/features/dashboard/ui/bento_home_page.dart';
 
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
@@ -60,15 +61,7 @@ class _HubPageState extends ConsumerState<HubPage> {
     final remainingString = currencyFormatter.format(stats.remaining);
 
     final List<Widget> pages = [
-      _buildInicioTab(
-          context,
-          stats.percentage,
-          annualLimitPercentageString,
-          annualRevenueString,
-          meiLimitString,
-          remainingString,
-          userRecord?.getStringValue('status_registro') ?? 'conta_criada',
-          userRecord),
+      const BentoHomePage(),
       const InvoiceHistoryPage(),
       const CustomerCentralPage(),
       const ProfilePage(),
