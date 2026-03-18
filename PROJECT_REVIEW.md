@@ -116,4 +116,30 @@ Não peça para o agente "revisar tudo" a cada passo. Use este arquivo `PROJECT_
 
 ---
 
-*Documento atualizado em: 18/03/2026*
+### 18/03/2026 — Blindagem Tributária, Gestão de Clientes e Hiper-Performance
+
+**Objetivo:** Garantir emissão fiscal 100% correta através do CNAE do usuário, simplificar a gestão de clientes e reduzir o tempo de deploy/carregamento do site.
+
+#### ✅ O que foi feito:
+
+**1. Blindagem de CNAE (Segurança Fiscal)**
+- **Integração BrasilAPI:** O app consome o CNPJ do usuário logado para buscar seus CNAEs oficiais.
+- **Provider de Filtro (`lc116PermitidosProvider`):** Cruza o CNAE da empresa com a tabela de correlação no PocketBase (`cnae_correlacao`).
+- **Busca Restrita:** O seletor de serviços agora só mostra itens que o CNAE do usuário tem permissão legal para emitir, prevenindo rejeições no Serpro e multas.
+
+**2. Gestão de Clientes "Lux"**
+- **`TomadorSelectorLux`:** Novo componente de busca em tempo real no formulário de nota.
+- **Cadastro Inteligente:** Integração com BrasilAPI na página de cadastro de clientes (`AddClientPage`). Ao digitar o CNPJ, o Meiri preenche Razão Social, Apelido e Endereço automaticamente.
+- **Multi-tenancy:** Trava de segurança no PocketBase (`user = "$userId"`) garante que cada MEI veja apenas seus próprios clientes.
+
+**3. Conformidade com Serpro (Nacional)**
+- **Ajuste de Dígitos:** Refatoração do `NotasFiscaisService` para limpar e formatar códigos `cTribNac` (6 dígitos) e `itemNbs` (9 dígitos), removendo pontos e garantindo o padrão exigido pelo Governo Federal.
+
+**4. Hiper-Performance (Infra e Web)**
+- **Deploy de 60 Segundos:** Otimização do `ecosystem.config.js` (`watch: false` e limites de RAM) para acelerar o deploy via PM2 e evitar travamentos no servidor EC2/VPS.
+- **Loader "Lux" no Web:** Injeção de CSS crítico e animação de carregamento no `index.html`. O usuário vê a logo e o fundo esmeralda instantaneamente enquanto o Flutter carrega em background (Fim da tela branca).
+- **Asset Lean:** Compressão da logo principal de 2.5MB para 208KB.
+
+---
+
+*Documento atualizado em: 18/03/2026 (Fase 2 Concluída)*

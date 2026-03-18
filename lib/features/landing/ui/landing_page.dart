@@ -1918,10 +1918,10 @@ class _PlanDetails extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           const _BenefitItemSexy(icon: Icons.check_circle_outline, text: "Emissões Ilimitadas no Padrão Nacional"),
-          const _BenefitItemSexy(icon: Icons.auto_awesome_outlined, text: "Copiloto Tributário Inteligente"),
-          const _BenefitItemSexy(icon: Icons.shield_outlined, text: "Cofre Criptografado de Certificado A1"),
-          const _BenefitItemSexy(icon: Icons.restore_page_outlined, text: "Sistema Anti-Queda da Receita (Vortex)"),
-          const _BenefitItemSexy(icon: Icons.palette_outlined, text: "Design Quiet Luxury em todos os DANFSE"),
+          const _BenefitItemSexy(icon: Icons.auto_awesome_outlined, text: "Seu Assistente Pessoal Meiri"),
+          const _BenefitItemSexy(icon: Icons.shield_outlined, text: "Proteção Total do seu Certificado"),
+          const _BenefitItemSexy(icon: Icons.restore_page_outlined, text: "Sua nota emitida na hora, sem falhas"),
+          const _BenefitItemSexy(icon: Icons.palette_outlined, text: "Notas Fiscais Elegantes e Profissionais"),
         ],
       ),
     );
@@ -1998,7 +1998,7 @@ class _PriceAndCallToAction extends StatelessWidget {
           Opacity(
             opacity: 0.7,
             child: Text(
-              "O no-brainer fiscal:",
+              "A escolha ideal para você:",
               style: TextStyle(color: kIvoryLuxury, fontSize: 14),
             ),
           ),
