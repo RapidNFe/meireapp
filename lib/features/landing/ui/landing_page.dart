@@ -1,56 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:meire/features/auth/ui/login_page.dart';
 
-// ================= PALETA DE CORES =================
-const Color esmeraldaFundo = Color(0xFF022C22);
-const Color verdeSecundario = Color(0xFF064E3B);
-const Color verdeCard = Color(0xFF065F46);
-const Color amareloDestaque = Color(0xFFFFB800);
+// ================= PALETA DE CORES (QUIET LUXURY) =================
+const Color kEmeraldDeep = Color(0xFF013220); // Verde Esmeralda Profundo
+const Color kEmeraldMain = Color(0xFF005A3A); // Verde Esmeralda Base
+const Color kEmeraldAccent = Color(0xFF50C878); // Verde Esmeralda Brilhante
+const Color kIvoryLuxury = Color(0xFFFFFDD0); // Marfim Suave para texto
+
+// Mapeamento das cores para manter compatibilidade com componentes existentes
+const Color esmeraldaFundo = kEmeraldDeep;
+const Color verdeSecundario = kEmeraldMain;
+const Color verdeCard = Color(0xFF003D2A); // Tom luxuoso para os cards
+const Color amareloDestaque = kEmeraldAccent;
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: esmeraldaFundo,
+    return const Scaffold(
+      backgroundColor: kEmeraldDeep, // Fundo escuro luxuoso
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const NavBar(),
-            const HeroSection(),
-            Container(
-              color: verdeSecundario,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const CustoInvisivelSection(),
-            ),
-            Container(
-              color: esmeraldaFundo,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const FeaturesSection(),
-            ),
-            Container(
-              color: verdeSecundario,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const TestimonialsSection(),
-            ),
-            Container(
-              color: esmeraldaFundo,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const PricingSection(),
-            ),
-            Container(
-              color: verdeSecundario,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const FAQSection(),
-            ),
-            Container(
-              color: esmeraldaFundo,
-              padding: const EdgeInsets.symmetric(vertical: 80),
-              child: const BottomCTASection(),
-            ),
-            const Footer(),
-            const SizedBox(height: 40),
+            HeaderSection(),
+            DividerSection(),
+            CustoInvisivelSection(), // A Âncora (Avareza/Ira)
+            DividerSection(),
+            FeaturesSection(), // Bento Grid (Preguiça/Luxúria)
+            DividerSection(), // Separador elegante
+            _NoBrainerPricingSection(), // NOVA SEÇÃO DE PREÇO ÚNICO
+            FooterSection(),
           ],
         ),
       ),
@@ -304,74 +284,619 @@ class FeaturesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 800;
+    final w = MediaQuery.of(context).size.width;
+    final bool isMobile = w < 800;
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 80),
       child: Column(
         children: [
+          // ── Cabeçalho ──────────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: verdeCard.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: amareloDestaque.withValues(alpha: 0.3)),
+            ),
+            child: const Text('✦ FUNCIONALIDADES',
+                style: TextStyle(
+                    color: amareloDestaque,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5)),
+          ),
+          const SizedBox(height: 20),
           Text(
             'Por que escolher a Meiri?',
             style: TextStyle(
                 color: Colors.white,
-                fontSize: isMobile ? 32 : 40,
-                fontWeight: FontWeight.bold),
+                fontSize: isMobile ? 32 : 44,
+                fontWeight: FontWeight.w800,
+                height: 1.1),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           const Text(
             'Gestão completa, moderna e integrada na palma da sua mão.',
-            style: TextStyle(color: Colors.white70, fontSize: 18),
+            style: TextStyle(color: Colors.white60, fontSize: 17, height: 1.5),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 60),
-          const Wrap(
-            spacing: 24,
-            runSpacing: 24,
-            alignment: WrapAlignment.center,
-            children: [
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.receipt_long,
-                    title: 'Emissão de Notas',
-                    desc: 'Emita notas fiscais de serviço em segundos, direto para a prefeitura.'),
-              ),
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.notifications_active,
-                    title: 'Alertas de DAS',
-                    desc:
-                        'Lembretes inteligentes via WhatsApp para você nunca mais esquecer de pagar.'),
-              ),
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.bar_chart,
-                    title: 'Fluxo de Caixa',
-                    desc: 'Visão clara de entradas e saídas com relatórios de performance financeira.'),
-              ),
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.description,
-                    title: 'Declaração Anual',
-                    desc: 'DASN pronta com um clique. Nós organizamos os seus dados fiscais.'),
-              ),
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.headset_mic,
-                    title: 'Suporte Humano',
-                    desc: 'Tire suas dúvidas diretamente com contadores especialistas em MEI.'),
-              ),
-              AnimatedHoverCard(
-                child: FeatureCard(
-                    icon: Icons.people,
-                    title: 'Gestão de Clientes',
-                    desc: 'Cadastre seus clientes e tenha o histórico completo de serviços faturados.'),
-              ),
-            ],
-          )
+          const SizedBox(height: 64),
+
+          // ── Bento Grid ─────────────────────────────────────────
+          isMobile
+              ? const _BentoMobile()
+              : const _BentoDesktop(),
         ],
       ),
     );
+  }
+}
+
+// ── Desktop Bento (2 colunas, 3 linhas cada) ──────────────────────────────
+class _BentoDesktop extends StatelessWidget {
+  const _BentoDesktop();
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 20.0;
+
+    return const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Coluna Esquerda ──────────────────────────────────────
+        Expanded(
+          child: Column(
+            children: [
+              // Linha 1 – card grande destaque (Emissão de Notas)
+              _BentoCardHero(
+                icon: Icons.receipt_long_rounded,
+                badge: 'Mais usado',
+                title: 'Emissão de Notas',
+                desc: 'Emita notas fiscais de serviço em segundos, direto do portal oficial da Receita Federal.',
+                accent: amareloDestaque,
+              ),
+              SizedBox(height: gap),
+              // Linha 2 – dois cards lado a lado
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _BentoCardCompact(
+                        icon: Icons.bar_chart_rounded,
+                        title: 'Fluxo de Caixa',
+                        desc: 'Entradas e saídas com relatórios automáticos.',
+                        accent: Color(0xFF34D399),
+                      ),
+                    ),
+                    SizedBox(width: gap),
+                    Expanded(
+                      child: _BentoCardCompact(
+                        icon: Icons.description_rounded,
+                        title: 'Declaração Anual',
+                        desc: 'DASN pronta com um clique.',
+                        accent: Color(0xFF60A5FA),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: gap),
+              // Linha 3 – card médio horizontal (Suporte)
+              _BentoCardWide(
+                icon: Icons.headset_mic_rounded,
+                title: 'Suporte Humano',
+                desc: 'Tire suas dúvidas diretamente com contadores especialistas em MEI. Atendimento real, sem chatbots.',
+                accent: Color(0xFFF472B6),
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(width: gap),
+
+        // ── Coluna Direita ───────────────────────────────────────
+        Expanded(
+          child: Column(
+            children: [
+              // Linha 1 – dois cards lado a lado
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: _BentoCardCompact(
+                        icon: Icons.notifications_active_rounded,
+                        title: 'Alertas de DAS',
+                        desc: 'Lembretes via WhatsApp antes do vencimento.',
+                        accent: Color(0xFFFBBF24),
+                      ),
+                    ),
+                    SizedBox(width: gap),
+                    Expanded(
+                      child: _BentoCardCompact(
+                        icon: Icons.people_rounded,
+                        title: 'Gestão de Clientes',
+                        desc: 'Histórico completo de serviços faturados.',
+                        accent: Color(0xFFA78BFA),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: gap),
+              // Linha 2 – card médio
+              _BentoCardWide(
+                icon: Icons.lock_rounded,
+                title: 'Segurança Total',
+                desc: 'Seus dados protegidos com criptografia de ponta a ponta. Acesse de qualquer lugar com total tranquilidade.',
+                accent: Color(0xFF34D399),
+              ),
+              SizedBox(height: gap),
+              // Linha 3 – card de métricas / estatísticas
+              _BentoCardStat(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Mobile Bento (coluna única) ───────────────────────────────────────────
+class _BentoMobile extends StatelessWidget {
+  const _BentoMobile();
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 16.0;
+    return const Column(
+      children: [
+        _BentoCardHero(
+          icon: Icons.receipt_long_rounded,
+          badge: 'Mais usado',
+          title: 'Emissão de Notas',
+          desc: 'Emita notas fiscais de serviço em segundos, direto do portal oficial da Receita Federal.',
+          accent: amareloDestaque,
+        ),
+        SizedBox(height: gap),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoCardCompact(
+                icon: Icons.notifications_active_rounded,
+                title: 'DAS Alertas',
+                desc: 'Lembretes via WhatsApp.',
+                accent: Color(0xFFFBBF24),
+              ),
+            ),
+            SizedBox(width: gap),
+            Expanded(
+              child: _BentoCardCompact(
+                icon: Icons.bar_chart_rounded,
+                title: 'Caixa',
+                desc: 'Relatórios automáticos.',
+                accent: Color(0xFF34D399),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: gap),
+        _BentoCardWide(
+          icon: Icons.headset_mic_rounded,
+          title: 'Suporte Humano',
+          desc: 'Contadores especialistas prontos para te ajudar.',
+          accent: Color(0xFFF472B6),
+        ),
+        SizedBox(height: gap),
+        Row(
+          children: [
+            Expanded(
+              child: _BentoCardCompact(
+                icon: Icons.description_rounded,
+                title: 'DASN',
+                desc: '1 clique para declarar.',
+                accent: Color(0xFF60A5FA),
+              ),
+            ),
+            SizedBox(width: gap),
+            Expanded(
+              child: _BentoCardCompact(
+                icon: Icons.people_rounded,
+                title: 'Clientes',
+                desc: 'Histórico de serviços.',
+                accent: Color(0xFFA78BFA),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: gap),
+        _BentoCardStat(),
+      ],
+    );
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  BENTO CARD WIDGETS
+// ══════════════════════════════════════════════════════════════════
+
+/// Card grande com gradiente, badge e ícone grande
+class _BentoCardHero extends StatefulWidget {
+  final IconData icon;
+  final String badge;
+  final String title;
+  final String desc;
+  final Color accent;
+
+  const _BentoCardHero({
+    required this.icon,
+    required this.badge,
+    required this.title,
+    required this.desc,
+    required this.accent,
+  });
+
+  @override
+  State<_BentoCardHero> createState() => _BentoCardHeroState();
+}
+
+class _BentoCardHeroState extends State<_BentoCardHero> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _hovered ? -6 : 0, 0),
+        width: double.infinity,
+        padding: const EdgeInsets.all(36),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              verdeCard,
+              widget.accent.withValues(alpha: _hovered ? 0.20 : 0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: _hovered
+                ? widget.accent.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.07),
+            width: 1.5,
+          ),
+          boxShadow: _hovered
+              ? [
+                  BoxShadow(
+                      color: widget.accent.withValues(alpha: 0.18),
+                      blurRadius: 30,
+                      offset: const Offset(0, 12)),
+                ]
+              : [],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                        color: widget.accent.withValues(alpha: 0.3), width: 1),
+                  ),
+                  child: Icon(widget.icon, color: widget.accent, size: 32),
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: widget.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: widget.accent.withValues(alpha: 0.4), width: 1),
+                  ),
+                  child: Text(widget.badge,
+                      style: TextStyle(
+                          color: widget.accent,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Text(widget.title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            Text(widget.desc,
+                style: const TextStyle(
+                    color: Colors.white60, fontSize: 15, height: 1.6)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Card compacto (1/2 largura)
+class _BentoCardCompact extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String desc;
+  final Color accent;
+
+  const _BentoCardCompact({
+    required this.icon,
+    required this.title,
+    required this.desc,
+    required this.accent,
+  });
+
+  @override
+  State<_BentoCardCompact> createState() => _BentoCardCompactState();
+}
+
+class _BentoCardCompactState extends State<_BentoCardCompact> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _hovered ? -5 : 0, 0),
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: verdeCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _hovered
+                ? widget.accent.withValues(alpha: 0.45)
+                : Colors.white.withValues(alpha: 0.06),
+            width: 1.5,
+          ),
+          boxShadow: _hovered
+              ? [
+                  BoxShadow(
+                      color: widget.accent.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8)),
+                ]
+              : [],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: widget.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(widget.icon, color: widget.accent, size: 24),
+            ),
+            const SizedBox(height: 20),
+            Text(widget.title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text(widget.desc,
+                style: const TextStyle(
+                    color: Colors.white54, fontSize: 13, height: 1.5)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Card horizontal largo
+class _BentoCardWide extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String desc;
+  final Color accent;
+
+  const _BentoCardWide({
+    required this.icon,
+    required this.title,
+    required this.desc,
+    required this.accent,
+  });
+
+  @override
+  State<_BentoCardWide> createState() => _BentoCardWideState();
+}
+
+class _BentoCardWideState extends State<_BentoCardWide> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _hovered ? -4 : 0, 0),
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: verdeCard,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _hovered
+                ? widget.accent.withValues(alpha: 0.45)
+                : Colors.white.withValues(alpha: 0.06),
+            width: 1.5,
+          ),
+          boxShadow: _hovered
+              ? [
+                  BoxShadow(
+                      color: widget.accent.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8)),
+                ]
+              : [],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: widget.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Icon(widget.icon, color: widget.accent, size: 28),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.title,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(widget.desc,
+                      style: const TextStyle(
+                          color: Colors.white54, fontSize: 14, height: 1.5)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Card de estatísticas animadas
+class _BentoCardStat extends StatefulWidget {
+  const _BentoCardStat();
+
+  @override
+  State<_BentoCardStat> createState() => _BentoCardStatState();
+}
+
+class _BentoCardStatState extends State<_BentoCardStat> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.translationValues(0, _hovered ? -4 : 0, 0),
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              verdeCard,
+              amareloDestaque.withValues(alpha: _hovered ? 0.18 : 0.07),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _hovered
+                ? amareloDestaque.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.06),
+            width: 1.5,
+          ),
+          boxShadow: _hovered
+              ? [
+                  BoxShadow(
+                      color: amareloDestaque.withValues(alpha: 0.15),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8)),
+                ]
+              : [],
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Números que impressionam',
+                style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5)),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _StatItem(value: '10×', label: 'mais rápido'),
+                _Divider(),
+                _StatItem(value: '99%', label: 'satisfação'),
+                _Divider(),
+                _StatItem(value: '0 multas', label: 'garantido'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatItem({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(value,
+            style: const TextStyle(
+                color: amareloDestaque,
+                fontSize: 28,
+                fontWeight: FontWeight.w900)),
+        const SizedBox(height: 4),
+        Text(label,
+            style: const TextStyle(color: Colors.white54, fontSize: 13)),
+      ],
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  const _Divider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        height: 40, width: 1, color: Colors.white.withValues(alpha: 0.1));
   }
 }
 
@@ -1208,6 +1733,365 @@ class FaqTile extends StatelessWidget {
             ),
           )
         ],
+      ),
+    );
+  }
+}
+// ==============================================================================
+// NOVAS SEÇÕES E COMPONENTES (QUIET LUXURY & SEXY CANVAS)
+// ==============================================================================
+
+class HeaderSection extends StatelessWidget {
+  const HeaderSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        NavBar(),
+        HeroSection(),
+      ],
+    );
+  }
+}
+
+class DividerSection extends StatelessWidget {
+  const DividerSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 20),
+      child: Center(
+        child: Container(
+          width: 200,
+          height: 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                kEmeraldAccent.withValues(alpha: 0.3),
+                Colors.transparent,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class FooterSection extends StatelessWidget {
+  const FooterSection({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      children: [
+        Footer(),
+        SizedBox(height: 40),
+      ],
+    );
+  }
+}
+
+// ------------------------------------------------------------------------------
+// NOVA SEÇÃO DE PREÇO (SEXY CANVAS + QUIET LUXURY)
+// ------------------------------------------------------------------------------
+
+class _NoBrainerPricingSection extends StatelessWidget {
+  const _NoBrainerPricingSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 900;
+
+        return Container(
+          padding: EdgeInsets.all(isDesktop ? 100 : 20),
+          decoration: const BoxDecoration(
+            color: kEmeraldDeep,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [kEmeraldDeep, Color(0xFF01291B)],
+            ),
+          ),
+          child: Column(
+            children: [
+              // Título (Ira/Avareza - Resolvendo a dor por pouco)
+              Text(
+                "O Fim da Burocracia tem Preço Único e Justo.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: kIvoryLuxury,
+                  fontSize: isDesktop ? 48 : 32,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.5,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Subtítulo (Gula - Ter tudo sem travas)
+              const Opacity(
+                opacity: 0.8,
+                child: Text(
+                  "Acesso VIP e irrestrito à elite de emissores fiscais. Sem letras miúdas.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: kIvoryLuxury,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 80),
+
+              // O CARD LUXUOSO (Bento Style isolado)
+              isDesktop ? _buildDesktopCard() : _buildMobileCard(),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopCard() {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: const IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 3, child: _PlanDetails()),
+              Expanded(flex: 2, child: _PriceAndCallToAction()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileCard() {
+    return const Column(
+      children: [
+        _PlanDetails(isMobile: true),
+        _PriceAndCallToAction(isMobile: true),
+      ],
+    );
+  }
+}
+
+class _PlanDetails extends StatelessWidget {
+  final bool isMobile;
+  const _PlanDetails({this.isMobile = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: const Color(0xFF003D2A), // Fundo interno ligeiramente mais claro
+        borderRadius: isMobile
+            ? const BorderRadius.vertical(top: Radius.circular(24))
+            : const BorderRadius.horizontal(left: Radius.circular(24)),
+        border: isMobile
+            ? const Border(bottom: BorderSide(color: Color(0xFF013B2A), width: 1))
+            : const Border(right: BorderSide(color: Color(0xFF013B2A), width: 1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPill("PLANO COMPLETO DESTRAVADO"),
+          const SizedBox(height: 16),
+          const Text(
+            "Você Foca no Dinheiro,\nA Gente no Governo.",
+            style: TextStyle(
+              color: kIvoryLuxury,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 32),
+          const _BenefitItemSexy(icon: Icons.check_circle_outline, text: "Emissões Ilimitadas no Padrão Nacional"),
+          const _BenefitItemSexy(icon: Icons.auto_awesome_outlined, text: "Copiloto Tributário Inteligente"),
+          const _BenefitItemSexy(icon: Icons.shield_outlined, text: "Cofre Criptografado de Certificado A1"),
+          const _BenefitItemSexy(icon: Icons.restore_page_outlined, text: "Sistema Anti-Queda da Receita (Vortex)"),
+          const _BenefitItemSexy(icon: Icons.palette_outlined, text: "Design Quiet Luxury em todos os DANFSE"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPill(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: kEmeraldAccent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: kEmeraldAccent.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: kEmeraldAccent,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+}
+
+class _BenefitItemSexy extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _BenefitItemSexy({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: kEmeraldAccent, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: kIvoryLuxury,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.2,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PriceAndCallToAction extends StatelessWidget {
+  final bool isMobile;
+  const _PriceAndCallToAction({this.isMobile = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: const Color(0xFF003827), // Fundo ligeiramente diferente para o CTA
+        borderRadius: isMobile
+            ? const BorderRadius.vertical(bottom: Radius.circular(24))
+            : const BorderRadius.horizontal(right: Radius.circular(24)),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Opacity(
+            opacity: 0.7,
+            child: Text(
+              "O no-brainer fiscal:",
+              style: TextStyle(color: kIvoryLuxury, fontSize: 14),
+            ),
+          ),
+          SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                "R\$",
+                style: TextStyle(color: kEmeraldAccent, fontSize: 24, fontWeight: FontWeight.w800),
+              ),
+              SizedBox(width: 4),
+              Text(
+                "27,90",
+                style: TextStyle(
+                  color: kEmeraldAccent,
+                  fontSize: 64,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -2,
+                ),
+              ),
+            ],
+          ),
+          Opacity(
+            opacity: 0.7,
+            child: Text(
+              "por mês / plano único",
+              style: TextStyle(color: kIvoryLuxury, fontSize: 14),
+            ),
+          ),
+          SizedBox(height: 48),
+
+          _LuxActionButton(),
+
+          SizedBox(height: 16),
+          Opacity(
+            opacity: 0.6,
+            child: Text(
+              "Cancele quando quiser.",
+              style: TextStyle(color: kIvoryLuxury, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LuxActionButton extends StatefulWidget {
+  const _LuxActionButton();
+
+  @override
+  State<_LuxActionButton> createState() => _LuxActionButtonState();
+}
+
+class _LuxActionButtonState extends State<_LuxActionButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        transform: Matrix4.identity()..translateByDouble(0, _isHovered ? -4.0 : 0.0, 0.0, 1.0),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+        decoration: BoxDecoration(
+          color: _isHovered ? kIvoryLuxury : kEmeraldAccent,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: kEmeraldAccent.withValues(alpha: _isHovered ? 0.6 : 0.3),
+              blurRadius: _isHovered ? 30 : 10,
+              offset: const Offset(0, 5),
+            )
+          ],
+        ),
+        child: const Center(
+          child: Text(
+            "ASSINAR AGORA",
+            style: TextStyle(
+              color: kEmeraldDeep,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
       ),
     );
   }
