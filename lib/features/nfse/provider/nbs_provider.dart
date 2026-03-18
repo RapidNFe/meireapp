@@ -53,10 +53,10 @@ final buscarServicosProvider =
   final queryEscaped = query.replaceAll('"', '\\"');
 
   try {
-    // 1. Tenta buscar primeiro na NBS (Nomenclatura Brasileira de Serviços)
+    // 1. Tenta buscar na NBS
     final nbsResult = await pb.collection('nbs_correlacao').getList(
       page: 1,
-      perPage: 10,
+      perPage: 15,
       filter: 'descricao_nbs ~ "$queryEscaped" || codigo_nbs ~ "$queryEscaped"',
     );
 
@@ -64,22 +64,20 @@ final buscarServicosProvider =
         .map((e) => ServicoTributario.fromNbsRecord(e.toJson()))
         .toList();
 
-    // 2. Se trouxer poucos resultados, busca também na CNAE (Classificação de Atividades)
-    if (servicos.length < 5) {
-      final cnaeResult = await pb.collection('cnae_correlacao').getList(
-        page: 1,
-        perPage: 10,
-        filter: 'descricao_cnae ~ "$queryEscaped" || codigo_cnae ~ "$queryEscaped"',
-      );
-      
-      final deCnae = cnaeResult.items
-          .map((e) => ServicoTributario.fromCnaeRecord(e.toJson()));
-      
-      servicos.addAll(deCnae);
-    }
-
+    // 2. Busca também na CNAE
+    final cnaeResult = await pb.collection('cnae_correlacao').getList(
+      page: 1,
+      perPage: 15,
+      filter: 'descricao_cnae ~ "$queryEscaped" || codigo_cnae ~ "$queryEscaped"',
+    );
+    
+    final deCnae = cnaeResult.items
+        .map((e) => ServicoTributario.fromCnaeRecord(e.toJson()));
+    
+    servicos.addAll(deCnae);
     return servicos;
   } catch (e) {
+    print("❌ Erro na busca PocketBase: $e");
     return [];
   }
 });

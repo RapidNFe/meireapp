@@ -676,6 +676,10 @@ class _HubPageState extends ConsumerState<HubPage> {
                   IconData statusIcon;
                   switch (nota.status.toLowerCase()) {
                     case 'emitida':
+                    case 'autorizada':
+                    case 'concluida':
+                    case 'autorizado':
+                    case 'emissao_concluida':
                       statusColor = Colors.green;
                       statusIcon = Icons.check;
                       break;

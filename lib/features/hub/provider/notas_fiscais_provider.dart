@@ -131,10 +131,10 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
   }
 
   try {
-    // Busca apenas as notas do ano atual para otimizar velocidade
+    // Busca todas as notas do usuário para garantir que não perdemos nenhum dado por falha no filtro do banco
     final records = await pb.collection('notas_fiscais').getFullList(
           sort: '-created',
-          filter: 'user = "${user.id}" && created >= "${DateTime.now().year}-01-01 00:00:00"',
+          filter: 'user = "${user.id}"',
         );
 
     final notas = records.map((e) => e.toJson()).toList();
@@ -143,6 +143,11 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
     double currentMonthTotal = 0.0;
     final now = DateTime.now();
     const annualLimit = 81000.0;
+
+    DateTime parseDate(dynamic dateStr) {
+      if (dateStr == null) return now;
+      return DateTime.tryParse(dateStr.toString())?.toLocal() ?? now;
+    }
 
     double parseValor(dynamic val) {
       if (val == null) return 0.0;
@@ -154,23 +159,25 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
       return 0.0;
     }
 
-    DateTime parseDate(dynamic dateStr) {
-      if (dateStr == null) return DateTime.now();
-      // Converte ISO UTC para local antes de comparar mês/ano para evitar erro de virada de mês/fuso
-      return DateTime.tryParse(dateStr.toString())?.toLocal() ?? DateTime.now();
-    }
-
     for (var n in notas) {
-      final status = n['status']?.toString().toUpperCase() ?? 'PROCESSANDO';
+      final status = n['status']?.toString().toUpperCase() ?? '';
       
-      // Filtro de Segurança: Só contamos o que é real ou está em processamento
-      // Aceitamos EMITIDA, AUTORIZADA ou PROCESSANDO
-      if (status != 'EMITIDA' && status != 'AUTORIZADA' && status != 'PROCESSANDO') continue;
+      // SUCESSO: Incluímos todas as variações de "CONCLUÍDO" ou "EMITIDO"
+      final isSucesso = 
+          status == 'EMITIDA' || 
+          status == 'AUTORIZADA' || 
+          status == 'CONCLUIDA' || 
+          status == 'AUTORIZADO' ||
+          status == 'EMISSAO_CONCLUIDA';
+          
+      // Também contamos se estiver "PROCESSANDO", mas o ideal é só sucessos reais
+      if (!isSucesso && status != 'PROCESSANDO') continue;
 
-      final date = parseDate(n['competencia'] ?? n['created'] ?? n['emissao']);
+      final date = parseDate(n['competencia'] ?? n['created']);
       final valStr = n['valor_servico'] ?? n['valor'] ?? '0';
       final val = parseValor(valStr.toString().replaceAll(',', '.'));
 
+      // Filtramos o ano atual e o mês atual
       if (date.year == now.year) {
         annualTotal += val;
         if (date.month == now.month) {
