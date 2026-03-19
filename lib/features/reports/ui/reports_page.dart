@@ -104,10 +104,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
     try {
       final generator = ReportGeneratorService(pb);
       
-      // Convertemos allNotas de List<dynamic> para List<NotaFiscal> se necessário
-      final List<NotaFiscal> notasList = revenueStats.allNotas.map((json) {
-         return NotaFiscal.fromRecord(RecordModel.fromJson(json)); 
-      }).toList();
+      // Utilizamos a lista de notas já tipada do provider
+      final List<NotaFiscal> notasList = revenueStats.allNotas;
 
       final result = await generator.generateAndUploadReport(
         userId: user.id,

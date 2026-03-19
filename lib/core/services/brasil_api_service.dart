@@ -23,8 +23,9 @@ class BrasilApiService {
             'razao_social': data['razao_social'],
             'nome_fantasia': data['nome_fantasia'],
             'situacao': data['situacao'],
+            'cep': data['cep'] ?? '',
             'cnae_fiscal': data['cnae_fiscal'].toString(),
-            'cnae_fiscal_descricao': data['cnae_fiscal_descricao'],
+            'cnae_fiscal_descricao': data['cnae_fiscal_descricao'] ?? '',
           };
         }
       }
@@ -41,8 +42,9 @@ class BrasilApiService {
           'razao_social': data['razao_social'],
           'nome_fantasia': data['nome_fantasia'],
           'situacao': data['descricao_situacao_cadastral'],
+          'cep': data['cep'] ?? '',
           'cnae_fiscal': data['cnae_fiscal'].toString(),
-          'cnae_fiscal_descricao': data['cnae_fiscal_descricao'],
+          'cnae_fiscal_descricao': data['cnae_fiscal_descricao'] ?? '',
         };
       }
       throw Exception('Status ${directResponse.statusCode}');

@@ -35,6 +35,9 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   String _razaoSocial = '';
   bool _isBeleza = false;
   String _cnae = '';
+  String _cep = '';
+  String _cnaeFull = '';
+  String _inscricaoMunicipal = '';
   
   // State Step 2
   String _nomeCompleto = '';
@@ -48,7 +51,10 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
 
       setState(() {
         _razaoSocial = data['razao_social'] ?? 'Não informada';
-        _cnae = data['cnae_fiscal']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+        final rawCnae = data['cnae_fiscal']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+        _cnae = rawCnae;
+        _cep = data['cep'] ?? '';
+        _cnaeFull = "$rawCnae - ${data['cnae_fiscal_descricao']}";
         
         // Elite Filter: 9602-5/01 ou 9602-5/02
         _isBeleza = _cnae == '9602501' || _cnae == '9602502';
@@ -99,6 +105,9 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             nomeCompleto: _nomeCompleto,
             razaoSocial: _razaoSocial,
             cnpj: cleanCnpj,
+            cep: _cep,
+            cnaePrincipal: _cnaeFull,
+            inscricaoMunicipal: _inscricaoMunicipal,
             isBeleza: _isBeleza,
           );
 
@@ -320,6 +329,42 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          // 💎 DADOS FISCAIS AUTOMATIZADOS (Vêm da BrasilAPI)
+          TextFormField(
+            initialValue: _inscricaoMunicipal,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+            decoration: _inputDecoration('Inscrição Municipal (Obrigatório)', Icons.account_balance_rounded),
+            validator: (val) {
+              if (val == null || val.isEmpty) return 'Informe sua Inscrição Municipal';
+              return null;
+            },
+            onSaved: (val) => _inscricaoMunicipal = val?.trim() ?? '',
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: _cep,
+                  style: const TextStyle(color: Colors.white70),
+                  decoration: _inputDecoration('CEP', Icons.location_on_outlined),
+                  onSaved: (val) => _cep = val?.trim() ?? '',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  initialValue: _cnae,
+                  style: const TextStyle(color: Colors.white70),
+                  decoration: _inputDecoration('CNAE Principal', Icons.work_history_outlined),
+                  onSaved: (val) => _cnaeFull = val?.trim() ?? '',
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 40),
           const Text(

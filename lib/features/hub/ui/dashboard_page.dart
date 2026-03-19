@@ -19,6 +19,8 @@ import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:meire/core/services/das_reminder_service.dart';
+
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
 
@@ -30,6 +32,13 @@ class _HubPageState extends ConsumerState<HubPage> {
   @override
   void initState() {
     super.initState();
+    // 💡 Automatização Soberana: Verifica lembrete de DAS no carregamento
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = ref.read(userProvider);
+      if (user != null) {
+        ref.read(dasReminderServiceProvider).checkAndNotify(user.id);
+      }
+    });
   }
 
   int _currentIndex = 0;
@@ -176,7 +185,7 @@ class _HubPageState extends ConsumerState<HubPage> {
             onPressed: () {
               NotificationsModal.show(context);
             },
-            icon: const Icon(Icons.notifications_none_rounded,
+            icon: const Icon(Icons.notifications_none,
                 color: Color(0xFFCC8B00), // Ouro Meiri
                 size: 26),
             style: IconButton.styleFrom(
@@ -892,7 +901,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_rounded), label: "Relatórios"),
+              icon: Icon(Icons.menu_book), label: "Relatórios"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],

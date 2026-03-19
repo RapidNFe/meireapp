@@ -27,6 +27,9 @@ class AuthService {
     required String nomeCompleto,
     required String razaoSocial,
     required String cnpj,
+    String cep = '',
+    String cnaePrincipal = '',
+    String inscricaoMunicipal = '',
     bool isBeleza = false,
   }) async {
     try {
@@ -58,6 +61,9 @@ class AuthService {
         "name": nomeCompleto,
         "razao_social": razaoSocial,
         "cnpj": cleanCnpj,
+        "cep": cep,
+        "cnae_principal": cnaePrincipal,
+        "inscricao_municipal": inscricaoMunicipal,
         "is_beleza": isBeleza,
         "status_registro": "conta_criada",
         "mei_ativo": true,

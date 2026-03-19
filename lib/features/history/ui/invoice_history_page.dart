@@ -48,30 +48,14 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
     final stats = revenueAsync.valueOrNull;
 
     final allInvoices = stats?.allNotas.map((n) {
-          double parseValor(dynamic val) {
-            if (val == null) return 0.0;
-            if (val is num) return val.toDouble();
-            if (val is String) {
-              final s = val.replaceAll(RegExp(r'[^0-9.]'), '');
-              return double.tryParse(s) ?? 0.0;
-            }
-            return 0.0;
-          }
-
-          DateTime parseDate(dynamic dateStr) {
-            if (dateStr == null) return DateTime.now();
-            return DateTime.tryParse(dateStr.toString()) ?? DateTime.now();
-          }
-
           return InvoiceModel(
-            id: n['id'] ?? 'NF-0000', // pocketbase id
-            clientName:
-                n['tomador_nome'] ?? n['cliente_nome'] ?? 'Desconhecido',
-            clientCnpj: n['tomador_documento'] ?? n['cliente_cnpj'] ?? '',
-            amount: parseValor(n['valor_servico'] ?? n['valor'] ?? '0'),
-            issueDate: parseDate(n['created'] ?? n['emissao']),
-            status: n['status'] ?? 'Emitida',
-            chaveAcesso: n['chave_acesso'],
+            id: n.id, // pocketbase id
+            clientName: n.tomadorNome,
+            clientCnpj: '', // Não temos esse campo na model básica de NotaFiscal no momento
+            amount: n.valor,
+            issueDate: n.created,
+            status: n.status,
+            chaveAcesso: null, // Campo não disponível na NotaFiscal simplificada
           );
         }).toList() ??
         [];

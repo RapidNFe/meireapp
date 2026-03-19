@@ -96,7 +96,7 @@ class RevenueStats {
   final double annualLimit;
   final double percentage;
   final double remaining;
-  final List<Map<String, dynamic>> allNotas;
+  final List<NotaFiscal> allNotas;
 
   RevenueStats({
     required this.annualTotal,
@@ -137,30 +137,15 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
           filter: 'user = "${user.id}"',
         );
 
-    final notas = records.map((e) => e.toJson()).toList();
+    final List<NotaFiscal> notas = records.map((e) => NotaFiscal.fromRecord(e)).toList();
 
     double annualTotal = 0.0;
     double currentMonthTotal = 0.0;
     final now = DateTime.now();
     const annualLimit = 81000.0;
 
-    DateTime parseDate(dynamic dateStr) {
-      if (dateStr == null) return now;
-      return DateTime.tryParse(dateStr.toString())?.toLocal() ?? now;
-    }
-
-    double parseValor(dynamic val) {
-      if (val == null) return 0.0;
-      if (val is num) return val.toDouble();
-      if (val is String) {
-        final s = val.replaceAll(RegExp(r'[^0-9.]'), '');
-        return double.tryParse(s) ?? 0.0;
-      }
-      return 0.0;
-    }
-
     for (var n in notas) {
-      final status = n['status']?.toString().toUpperCase() ?? '';
+      final status = n.status.toUpperCase();
       
       // SUCESSO: Incluímos todas as variações de "CONCLUÍDO" ou "EMITIDO"
       final isSucesso = 
@@ -173,9 +158,8 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
       // Também contamos se estiver "PROCESSANDO", mas o ideal é só sucessos reais
       if (!isSucesso && status != 'PROCESSANDO') continue;
 
-      final date = parseDate(n['competencia'] ?? n['created']);
-      final valStr = n['valor_servico'] ?? n['valor'] ?? '0';
-      final val = parseValor(valStr.toString().replaceAll(',', '.'));
+      final date = n.created;
+      final val = n.valor;
 
       // Filtramos o ano atual e o mês atual
       if (date.year == now.year) {
