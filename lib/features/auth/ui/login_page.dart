@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Paleta Esmeralda (Consistente com a Landing Page)
 const Color esmeraldaFundo = Color(0xFF022C22);
 const Color verdeSecundario = Color(0xFF064E3B);
-const Color verdeCard = Color(0xFF065F46);
+const Color verdeCard = Color(0xFF059669); // Emerald 600 (Lighter and more vibrant)
 const Color amareloDestaque = Color(0xFFFFB800);
 
 class LoginPage extends ConsumerStatefulWidget {

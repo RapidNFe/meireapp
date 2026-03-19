@@ -102,17 +102,23 @@ class _HubPageState extends ConsumerState<HubPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
+    final isDesktop = MediaQuery.of(context).size.width >= 1024;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
       title: Row(
         children: [
-          SvgPicture.asset(
-            'assets/images/logo.svg',
-            height: 40,
-          ),
-          const SizedBox(width: 12),
+          // Logo: Aumentada no Web (60), Padrão no Tablet (40), Oculta no Mobile na Página Inicial
+          if (!(isMobile && _currentIndex == 0)) ...[
+            SvgPicture.asset(
+              'assets/images/logo.svg',
+              height: isDesktop ? 60 : 40,
+            ),
+            const SizedBox(width: 16),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -901,7 +907,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book), label: "Relatórios"),
+              icon: Icon(Icons.assignment_rounded), label: "Relatórios"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
