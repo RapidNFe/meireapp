@@ -151,24 +151,33 @@ class ReportGeneratorService {
         filename: 'report_${DateFormat('yyyyMMdd').format(start)}.pdf',
       );
 
-      // 📦 Blindagem do Body para Multipart
-      final Map<String, dynamic> body = {
-        'user_id': userId.toString(),
-        'periodo': periodoStr.toString(),
-        'valor_total': total.toString(), // PocketBase Multipart prefere strings
-      };
-
-      debugPrint('🚀 [Relatório] Enviando Payload Blindado: $body');
-
+      debugPrint('🚀 [Relatório] Iniciando criação com arquivo...');
+      
+      // PASSO 1: Cria o registro apenas com o PDF (PocketBase Multipart puro)
       final record = await _pb.collection('relatorios_faturamento').create(
-        body: body,
         files: [file],
       );
 
-      return record;
+      debugPrint('✅ [Relatório] Registro criado. ID: ${record.id}');
+      debugPrint('💉 [Relatório] Injetando metadados no ID correspondente...');
+
+      // PASSO 2: Injeta os metadados via Update (Garante o preenchimento)
+      final bodyWithCorrectTypes = {
+        'user_id': userId,
+        'periodo': periodoStr,
+        'valor_total': total,
+      };
+
+      final updatedRecord = await _pb.collection('relatorios_faturamento').update(
+        record.id,
+        body: bodyWithCorrectTypes,
+      );
+
+      debugPrint('🏁 [Relatório] Concluído com Sucesso e Dados Blindados!');
+      return updatedRecord;
     } catch (e) {
-      debugPrint('❌ Erro ao salvar relatório no PB: $e');
-      return null;
+      debugPrint('❌ [Relatório] Falha Crítica: $e');
+      rethrow; // Repassa o erro para o UI mostrar o SnackBar
     }
   }
 
