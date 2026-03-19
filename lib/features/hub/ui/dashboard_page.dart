@@ -899,16 +899,18 @@ class _HubPageState extends ConsumerState<HubPage> {
         onTap: (index) => setState(() => _currentIndex = index),
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
+        selectedItemColor: MeireTheme.primaryColor,
+        unselectedItemColor: Colors.grey,
+        items: [
+          const BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded), label: "Início"),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
               icon: Icon(Icons.history_edu), label: "Notas"),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.assignment), label: "Relatórios"),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
+              icon: Icon(Icons.bar_chart), label: "Relatórios"),
+          const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
       ),

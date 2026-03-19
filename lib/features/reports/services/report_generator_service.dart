@@ -151,11 +151,14 @@ class ReportGeneratorService {
         filename: 'report_${DateFormat('yyyyMMdd').format(start)}.pdf',
       );
 
-      final body = {
-        'user_id': userId,
-        'periodo': periodoStr,
-        'valor_total': total,
+      // 📦 Blindagem do Body para Multipart
+      final Map<String, dynamic> body = {
+        'user_id': userId.toString(),
+        'periodo': periodoStr.toString(),
+        'valor_total': total.toString(), // PocketBase Multipart prefere strings
       };
+
+      debugPrint('🚀 [Relatório] Enviando Payload Blindado: $body');
 
       final record = await _pb.collection('relatorios_faturamento').create(
         body: body,
