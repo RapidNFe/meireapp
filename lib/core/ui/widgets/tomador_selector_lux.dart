@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/clients/models/tomador_model.dart';
 import 'package:meire/features/clients/services/tomador_service.dart';
-import 'package:meire/core/ui/widgets/cnae_validator_dialog.dart';
-import 'package:flutter/services.dart';
 
 /// Seletor de Tomadores (Clientes) com estilo Premium "Lux".
 /// 
@@ -35,29 +33,7 @@ class _TomadorSelectorLuxState extends ConsumerState<TomadorSelectorLux> {
   }
 
   void _selecionar(TomadorModel tomador) {
-    _validarSelecao(tomador);
-  }
-
-  void _validarSelecao(TomadorModel tomador) {
-    final service = ref.read(tomadorServiceProvider);
-    
-    // Se for um parceiro já salvo como salão ou tiver CNAE de beleza
-    if (tomador.isSalaoParceiro || service.isCnaeBeleza(tomador.cnae)) {
-      _confirmarSelecao(tomador);
-    } else {
-      // 🛡️ ALERTA DE SOBERANIA (CNAE Divergente)
-      HapticFeedback.vibrate();
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => CnaeValidatorDialog(
-          razaoSocial: tomador.razaoSocial,
-          atividadePrincipal: tomador.cnaeDescricao ?? "Atividade não identificada",
-          onConfirmarDireto: () => _confirmarSelecao(tomador.copyWith(isSalaoParceiro: false)),
-          onForcarSalao: () => _confirmarSelecao(tomador.copyWith(isSalaoParceiro: true)),
-        ),
-      );
-    }
+    _confirmarSelecao(tomador);
   }
 
   void _confirmarSelecao(TomadorModel tomador) {

@@ -5,66 +5,61 @@ import 'package:uuid/uuid.dart';
 
 class FavoriteService {
   final String id;
-  final String municipio;
+  final String idMunicipio;
   final String apelido;
-  final String codigoTributacao;
-  final String itemNbs;
+  final String codigoNational;
   final String descricaoBase;
   final double? valorBase;
   final String? idClientePadrao;
-  final bool? isNichoBeleza; // Para marcar se é o template de Salão Parceiro
-  final String categoria;
+  final bool issRetido;
+  final String userId;
 
   FavoriteService({
     String? id,
-    required this.municipio,
+    required this.idMunicipio,
     required this.apelido,
-    required this.codigoTributacao,
-    required this.itemNbs,
+    required this.codigoNational,
     required this.descricaoBase,
     this.valorBase,
     this.idClientePadrao,
-    this.isNichoBeleza = false,
-    this.categoria = '',
+    this.issRetido = false,
+    required this.userId,
   }) : id = id ?? const Uuid().v4();
 
   FavoriteService copyWith({
-    String? municipio,
+    String? idMunicipio,
     String? apelido,
-    String? codigoTributacao,
-    String? itemNbs,
+    String? codigoNational,
     String? descricaoBase,
     double? valorBase,
     String? idClientePadrao,
-    bool? isNichoBeleza,
-    String? categoria,
+    bool? issRetido,
+    String? userId,
   }) {
     return FavoriteService(
       id: id,
-      municipio: municipio ?? this.municipio,
+      idMunicipio: idMunicipio ?? this.idMunicipio,
       apelido: apelido ?? this.apelido,
-      codigoTributacao: codigoTributacao ?? this.codigoTributacao,
-      itemNbs: itemNbs ?? this.itemNbs,
+      codigoNational: codigoNational ?? this.codigoNational,
       descricaoBase: descricaoBase ?? this.descricaoBase,
       valorBase: valorBase ?? this.valorBase,
       idClientePadrao: idClientePadrao ?? this.idClientePadrao,
-      isNichoBeleza: isNichoBeleza ?? this.isNichoBeleza,
-      categoria: categoria ?? this.categoria,
+      issRetido: issRetido ?? this.issRetido,
+      userId: userId ?? this.userId,
     );
   }
 
   factory FavoriteService.fromRecord(RecordModel record) {
     return FavoriteService(
       id: record.id,
-      municipio: record.getStringValue('municipio'),
+      idMunicipio: record.getStringValue('id_municipio'),
       apelido: record.getStringValue('apelido'),
-      codigoTributacao: record.getStringValue('codigo_tributacao'),
-      itemNbs: record.getStringValue('item_nbs'),
+      codigoNational: record.getStringValue('codigo_national'),
       descricaoBase: record.getStringValue('descricao_padrao'),
       valorBase: record.getDoubleValue('valor_base'),
       idClientePadrao: record.getStringValue('id_cliente_padrao'),
-      isNichoBeleza: record.getBoolValue('is_nicho_beleza'),
-      categoria: record.getStringValue('categoria'),
+      issRetido: record.getBoolValue('iss_retido'),
+      userId: record.getStringValue('user_id'),
     );
   }
 }
@@ -101,19 +96,11 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
   void _loadInitialMocks() {
     state = [
       FavoriteService(
-        municipio: 'Goiânia/GO',
-        apelido: 'COMISSÃO SALÃO (QUINZENA)',
-        codigoTributacao: '06.01.01 - Barbearia, cabeleireiros, manicuros, pedicuros e congêneres.',
-        itemNbs: '126021000 - Serviços de cabeleireiros e barbeiros',
-        descricaoBase: 'Nota fiscal referente a serviços de estética e beleza (Salão Parceiro) prestados no período de {QUINZENA_PASSADA}.',
-        isNichoBeleza: true,
-      ),
-      FavoriteService(
-        municipio: 'São Paulo/SP',
-        apelido: 'MANUTENÇÃO DE COMPUTADORES',
-        codigoTributacao: '14.01 - Lubrificação, limpeza e manutenção de máquinas.',
-        itemNbs: '126021000 - Serviços de manutenção de T.I',
-        descricaoBase: 'MANUTENÇÃO PREVENTIVA E CORRETIVA DE EQUIPAMENTOS DE INFORMÁTICA;',
+        idMunicipio: 'Goiânia/GO',
+        apelido: 'SERVIÇOS GERAIS MEI',
+        codigoNational: '06.01.01',
+        descricaoBase: 'Nota fiscal referente a serviços prestados no período de {QUINZENA_PASSADA}.',
+        userId: _userId ?? 'mock',
       ),
     ];
   }
@@ -123,23 +110,20 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
 
     try {
       final body = {
-        "user": _userId,
-        "municipio": service.municipio,
+        "user_id": _userId,
+        "id_municipio": service.idMunicipio,
         "apelido": service.apelido,
-        "codigo_tributacao": service.codigoTributacao,
-        "item_nbs": service.itemNbs,
+        "codigo_national": service.codigoNational,
         "descricao_padrao": service.descricaoBase,
         "valor_base": service.valorBase,
-        "idClientePadrao": service.idClientePadrao,
-        "is_nicho_beleza": service.isNichoBeleza,
-        "categoria": service.categoria,
+        "id_cliente_padrao": service.idClientePadrao,
+        "iss_retido": service.issRetido,
       };
 
       final record = await _pb.collection('servicos_favoritos').create(body: body);
       final newService = FavoriteService.fromRecord(record);
       state = [...state, newService];
     } catch (e) {
-      // Em caso de erro, adicionamos apenas ao estado local para feedback imediato
       state = [...state, service];
     }
   }

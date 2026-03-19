@@ -11,6 +11,7 @@ import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
 import 'package:meire/features/clients/ui/customer_central_page.dart';
+import 'package:meire/features/reports/ui/reports_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -73,6 +74,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           userRecord),
       const InvoiceHistoryPage(),
       const CustomerCentralPage(),
+      const ReportsPage(),
       const ProfilePage(),
     ];
 
@@ -614,7 +616,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               final cnpj = user?.getStringValue('cnpj').replaceAll(RegExp(r'\D'), '') ?? '';
               if (cnpj.isNotEmpty) {
                 await Clipboard.setData(ClipboardData(text: cnpj));
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('CNPJ copiado para transferência!'),
@@ -877,6 +879,8 @@ class _HubPageState extends ConsumerState<HubPage> {
               icon: Icon(Icons.history_edu), label: "Notas"),
           BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.analytics_outlined), label: "Relatórios"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],

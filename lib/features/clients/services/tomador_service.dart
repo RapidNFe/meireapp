@@ -20,13 +20,13 @@ class TomadorService {
     // ── 1. TENTATIVA LOCAL (CACHE NO POCKETBASE) ───────────────────────────
     try {
       final queryEscaped = query.replaceAll('"', '\\"');
-      // Procura em 'salao_parceiro' E 'clientes_tomadores'
-      final localSalons = await pb.collection('salao_parceiro').getList(
-            filter: 'cnpj ~ "$queryEscaped" || razao_social ~ "$queryEscaped"',
+      // Procura em 'clientes_tomadores' (Coleção unificada)
+      final localClients = await pb.collection('clientes_tomadores').getList(
+            filter: '(cnpj ~ "$queryEscaped" || razao_social ~ "$queryEscaped") && user = "$userId"',
             perPage: 3,
           );
       
-      list.addAll(localSalons.items.map((e) => TomadorModel.fromRecord(e)));
+      list.addAll(localClients.items.map((e) => TomadorModel.fromRecord(e)));
 
       // Se temos muitos resultados locais, retornamos logo para velocidade
       if (list.length >= 3) return list;

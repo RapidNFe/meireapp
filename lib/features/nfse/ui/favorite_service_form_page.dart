@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/utils/validators.dart';
-import 'package:meire/core/ui/widgets/nbs_selector.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:meire/core/utils/currency_input_formatter.dart';
-import 'package:meire/features/nfse/data/catalogo_beleza.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
 
 class FavoriteServiceFormPage extends ConsumerStatefulWidget {
@@ -19,30 +18,28 @@ class _FavoriteServiceFormPageState
     extends ConsumerState<FavoriteServiceFormPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final _municipioController = TextEditingController();
+  final _idMunicipioController = TextEditingController();
   final _apelidoController = TextEditingController();
-  final _codigoTributacaoController = TextEditingController();
-  final _itemNbsController = TextEditingController();
+  final _codigoNationalController = TextEditingController();
   final _descricaoBaseController = TextEditingController();
   final _valorBaseController = TextEditingController();
-  final _outraCategoriaController = TextEditingController();
-  String? _selectedCategoria;
-  bool _isNichoBeleza = true; // Inicia true para o foco atual
+  bool _issRetido = false;
 
   @override
   void dispose() {
-    _municipioController.dispose();
+    _idMunicipioController.dispose();
     _apelidoController.dispose();
-    _codigoTributacaoController.dispose();
-    _itemNbsController.dispose();
+    _codigoNationalController.dispose();
     _descricaoBaseController.dispose();
     _valorBaseController.dispose();
-    _outraCategoriaController.dispose();
     super.dispose();
   }
 
   void _saveFavorite() {
     if (_formKey.currentState?.validate() ?? false) {
+      final user = ref.read(userProvider);
+      if (user == null) return;
+
       final cleanValue = _valorBaseController.text
           .replaceAll('R\$', '')
           .replaceAll('.', '')
@@ -51,16 +48,13 @@ class _FavoriteServiceFormPageState
       final double? valorBase = double.tryParse(cleanValue);
 
       final newService = FavoriteService(
-        municipio: _municipioController.text,
+        idMunicipio: _idMunicipioController.text,
         apelido: _apelidoController.text.toUpperCase(),
-        codigoTributacao: _codigoTributacaoController.text,
-        itemNbs: _itemNbsController.text,
+        codigoNational: _codigoNationalController.text,
         descricaoBase: _descricaoBaseController.text,
         valorBase: valorBase,
-        isNichoBeleza: _isNichoBeleza,
-        categoria: _selectedCategoria == 'Outros' 
-            ? _outraCategoriaController.text 
-            : (_selectedCategoria ?? ''),
+        issRetido: _issRetido,
+        userId: user.id,
       );
 
       ref.read(favoriteServicesProvider.notifier).addService(newService);
@@ -110,9 +104,9 @@ class _FavoriteServiceFormPageState
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextFormField(
-                      controller: _municipioController,
+                      controller: _idMunicipioController,
                       decoration:
-                          const InputDecoration(labelText: 'Município *'),
+                          const InputDecoration(labelText: 'Município (Nome ou Código IBGE) *'),
                       validator: (val) =>
                           Validators.validateRequired(val, 'Município'),
                     ),
@@ -120,100 +114,21 @@ class _FavoriteServiceFormPageState
                     TextFormField(
                       controller: _apelidoController,
                       decoration: const InputDecoration(
-                        labelText: 'Apelido *',
-                        helperText: 'Ex: PRESTAÇÃO DE SERVIÇO',
-                        helperMaxLines: 2,
+                        labelText: 'Apelido do Serviço *',
+                        helperText: 'Ex: MANUTENÇÃO DE COMPUTADORES',
                       ),
                       validator: (val) =>
                           Validators.validateRequired(val, 'Apelido'),
                     ),
                     const SizedBox(height: 16),
-                    _buildNichoBelezaSection(),
-                    if (!_isNichoBeleza) ...[
-                      const SizedBox(height: 24),
-                      const Text('Configuração Tributária Avançada',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey)),
-                      const SizedBox(height: 12),
-                      const Text('Serviço e Classificação Tributária *',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: MeireTheme.primaryColor)),
-                      const SizedBox(height: 8),
-                      NbsSelector(onNbsSelected: (servico) {
-                        setState(() {
-                          _codigoTributacaoController.text =
-                              servico.codigoTributacaoFormatado;
-                          _itemNbsController.text =
-                              servico.itemNbsFormatado;
-                        });
-                      }),
-                    ],
-                    // 💎 NOVO CAMPO: CATEGORIA (Para filtros da Vendas/Soberania)
-                    const SizedBox(height: 24),
-                    const Text('Categoria do Serviço',
-                        style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey)),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCategoria,
-                      items: [
-                        'Consultoria',
-                        'Estética',
-                        'Educação',
-                        'Manutenção',
-                        'Tecnologia',
-                        'Outros'
-                      ].map((cat) {
-                        return DropdownMenuItem(value: cat, child: Text(cat));
-                      }).toList(),
+                    TextFormField(
+                      controller: _codigoNationalController,
                       decoration: const InputDecoration(
-                        labelText: 'Selecione uma Categoria',
-                        hintText: 'Escolha o grupo deste serviço',
-                        prefixIcon: Icon(Icons.category_outlined),
+                        labelText: 'Código Nacional (NFS-e) *',
+                        helperText: 'Ex: 06.01.01',
                       ),
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedCategoria = val;
-                        });
-                      },
-                    ),
-                    if (_selectedCategoria == 'Outros') ...[
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _outraCategoriaController,
-                        decoration: const InputDecoration(
-                          labelText: 'Qual a sua Categoria? *',
-                          hintText: 'Digite o nome da categoria',
-                        ),
-                        validator: (val) => _selectedCategoria == 'Outros' 
-                            ? Validators.validateRequired(val, 'Categoria') 
-                            : null,
-                      ),
-                    ],
-
-                    const SizedBox(height: 16),
-                    // Campos ocultos mas obrigatórios para submissão validada
-                    Offstage(
-                      offstage: true,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _codigoTributacaoController,
-                            validator: (val) => Validators.validateRequired(
-                                val, 'Código de Tributação'),
-                          ),
-                          TextFormField(
-                            controller: _itemNbsController,
-                            validator: (val) =>
-                                Validators.validateRequired(val, 'Item NBS'),
-                          ),
-                        ],
-                      ),
+                      validator: (val) =>
+                          Validators.validateRequired(val, 'Código Nacional'),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -221,12 +136,12 @@ class _FavoriteServiceFormPageState
                       maxLines: 4,
                       maxLength: 2000,
                       decoration: const InputDecoration(
-                          labelText: 'Descrição do Serviço base *',
+                          labelText: 'Descrição Padrão da Nota *',
                           alignLabelWithHint: true,
                           helperText:
                               'Este texto será importado automaticamente na hora da emissão'),
                       validator: (val) =>
-                          Validators.validateRequired(val, 'Descrição Base'),
+                          Validators.validateRequired(val, 'Descrição Padrão'),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -234,9 +149,17 @@ class _FavoriteServiceFormPageState
                       inputFormatters: [CurrencyInputFormatter()],
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Valor Base (Opcional)',
+                        labelText: 'Valor Base Sugerido (Opcional)',
                         hintText: 'R\$ 0,00',
                       ),
+                    ),
+                    const SizedBox(height: 24),
+                    SwitchListTile(
+                      title: const Text('ISS Retido pelo Tomador?', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Marque apenas se o imposto for pago pelo cliente'),
+                      value: _issRetido,
+                      activeThumbColor: MeireTheme.accentColor,
+                      onChanged: (val) => setState(() => _issRetido = val),
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(
@@ -254,74 +177,6 @@ class _FavoriteServiceFormPageState
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildNichoBelezaSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Nicho de Beleza / Salão Parceiro',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: MeireTheme.primaryColor)),
-                Text('Habilita automação de quinzena', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
-            ),
-            Switch(
-              value: _isNichoBeleza,
-              activeThumbColor: MeireTheme.accentColor,
-              onChanged: (val) => setState(() => _isNichoBeleza = val),
-            ),
-          ],
-        ),
-        if (_isNichoBeleza) ...[
-          const SizedBox(height: 16),
-          Autocomplete<Map<String, dynamic>>(
-            displayStringForOption: (Map<String, dynamic> option) => option['titulo_amigavel'],
-            optionsBuilder: (TextEditingValue textEditingValue) {
-              if (textEditingValue.text.isEmpty) {
-                return const Iterable<Map<String, dynamic>>.empty();
-              }
-              String busca = textEditingValue.text.toLowerCase();
-              return catalogoBeleza.where((servico) {
-                bool bateuTitulo = servico['titulo_amigavel'].toString().toLowerCase().contains(busca);
-                List<String> tags = List<String>.from(servico['palavras_chave']);
-                bool bateuTag = tags.any((tag) => tag.contains(busca));
-                return bateuTitulo || bateuTag;
-              });
-            },
-            onSelected: (Map<String, dynamic> selection) {
-              setState(() {
-                _codigoTributacaoController.text = "${selection['codigo_nacional']} - ${selection['titulo_amigavel']}";
-                // Fixamos NBS para beleza se for o nicho
-                _itemNbsController.text = "126021000 - Serviços de cabeleireiros e barbeiros";
-                
-                if (_descricaoBaseController.text.isEmpty) {
-                  _descricaoBaseController.text = "Nota fiscal referente a serviços de estética e beleza (Salão Parceiro) prestados no período de {QUINZENA_PASSADA}.";
-                }
-              });
-            },
-            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-              return TextFormField(
-                controller: controller,
-                focusNode: focusNode,
-                onEditingComplete: onEditingComplete,
-                decoration: InputDecoration(
-                  labelText: 'O que você faz? (Ex: unha, cabelo, cílios)',
-                  prefixIcon: const Icon(Icons.search, color: MeireTheme.accentColor),
-                  filled: true,
-                  fillColor: MeireTheme.accentColor.withValues(alpha: 0.05),
-                ),
-              );
-            },
-          ),
-        ],
-      ],
     );
   }
 }
