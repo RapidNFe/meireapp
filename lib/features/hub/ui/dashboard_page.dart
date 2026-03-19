@@ -909,7 +909,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.bar_chart), label: "Relatórios"),
+              icon: Icon(Icons.analytics), label: "Relatórios"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
