@@ -13,6 +13,7 @@ class NotaFiscal {
   final String status;
   final String numeroNota;
   final DateTime created;
+  final DateTime competencia;
 
   NotaFiscal({
     required this.id,
@@ -21,6 +22,7 @@ class NotaFiscal {
     required this.status,
     required this.numeroNota,
     required this.created,
+    required this.competencia,
   });
 
   factory NotaFiscal.fromRecord(RecordModel record) {
@@ -41,6 +43,9 @@ class NotaFiscal {
       status: record.getStringValue('status').isEmpty ? 'processando' : record.getStringValue('status'),
       numeroNota: record.getStringValue('numero_nota'),
       created: (DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now()).toLocal(),
+      competencia: (DateTime.tryParse(record.getStringValue('competencia')) ?? 
+                   DateTime.tryParse(record.getStringValue('created')) ?? 
+                   DateTime.now()).toLocal(),
     );
   }
 }

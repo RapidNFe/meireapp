@@ -21,10 +21,10 @@ class ReportGeneratorService {
   }) async {
     final pdf = pw.Document();
 
-    // Filtra as notas pelo período selecionado
+    // Filtra as notas pelo período de COMPETÊNCIA real
     final filteredNotas = allNotas.where((n) {
-      return n.created.isAfter(start.subtract(const Duration(minutes: 1))) &&
-             n.created.isBefore(end.add(const Duration(days: 1)));
+      return n.competencia.isAfter(start.subtract(const Duration(minutes: 1))) &&
+             n.competencia.isBefore(end.add(const Duration(days: 1)));
     }).toList();
 
     // TRAVA DE SEGURANÇA: Se não houver notas, não gera arquivo vazio
@@ -121,7 +121,7 @@ class ReportGeneratorService {
                 // Linhas
                 ...filteredNotas.map((n) => pw.TableRow(
                   children: [
-                    _buildCell(DateFormat('dd/MM/yyyy').format(n.created)),
+                    _buildCell(DateFormat('dd/MM/yyyy').format(n.competencia)),
                     _buildCell(n.tomadorNome),
                     _buildCell(n.numeroNota),
                     _buildCell(NumberFormat("#,##0.00", "pt_BR").format(n.valor)),
