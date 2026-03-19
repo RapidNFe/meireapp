@@ -27,6 +27,11 @@ class ReportGeneratorService {
              n.created.isBefore(end.add(const Duration(days: 1)));
     }).toList();
 
+    // TRAVA DE SEGURANÇA: Se não houver notas, não gera arquivo vazio
+    if (filteredNotas.isEmpty) {
+      throw Exception("Não existem notas fiscais emitidas neste período. Tente outro intervalo.");
+    }
+
     double total = filteredNotas.fold(0, (sum, n) => sum + n.valor);
 
     final String periodoStr = 

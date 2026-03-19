@@ -30,7 +30,7 @@ class NotificationModel {
       isRead: record.getBoolValue('lida'), // 'lida' conforme novo padrão
       routeAction: record.getStringValue('acao_rota'),
       userId: record.getStringValue('user_id'),
-      created: DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now(),
+      created: (DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now()).toLocal(),
     );
   }
 }

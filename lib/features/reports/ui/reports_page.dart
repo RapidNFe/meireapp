@@ -30,7 +30,7 @@ class ReportItem {
       periodo: record.getStringValue('periodo'),
       valorTotal: record.getDoubleValue('valor_total'),
       pdfUrl: "$baseUrl/api/files/${record.collectionId}/${record.id}/${record.getStringValue('arquivo_pdf')}",
-      created: DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now(),
+      created: (DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now()).toLocal(),
     );
   }
 }
@@ -230,7 +230,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               color: MeireTheme.primaryColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.description_rounded, color: MeireTheme.primaryColor, size: 28),
+            child: const Icon(Icons.description, color: MeireTheme.primaryColor),
           ),
           const SizedBox(width: 16),
           Expanded(

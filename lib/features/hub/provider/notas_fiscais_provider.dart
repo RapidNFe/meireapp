@@ -40,7 +40,7 @@ class NotaFiscal {
       valor: parseValor(record.getStringValue('valor')),
       status: record.getStringValue('status').isEmpty ? 'processando' : record.getStringValue('status'),
       numeroNota: record.getStringValue('numero_nota'),
-      created: DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now(),
+      created: (DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now()).toLocal(),
     );
   }
 }
