@@ -13,6 +13,7 @@ import 'package:meire/core/provider/settings_provider.dart';
 import 'package:meire/features/clients/ui/customer_central_page.dart';
 import 'package:meire/features/reports/ui/reports_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:meire/core/provider/notifications_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
@@ -90,6 +91,7 @@ class _HubPageState extends ConsumerState<HubPage> {
 
   PreferredSizeWidget _buildAppBar(String userName, SettingsState settings) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unreadCount = ref.watch(unreadNotificationsCountProvider);
 
     return AppBar(
       elevation: 0,
@@ -162,17 +164,23 @@ class _HubPageState extends ConsumerState<HubPage> {
                   borderRadius: BorderRadius.circular(12))),
         ),
         const SizedBox(width: 8),
-        IconButton(
-          onPressed: () {
-            NotificationsModal.show(context);
-          },
-          icon: Icon(Icons.notifications_none,
-              color: isDark ? Colors.white : MeireTheme.primaryColor),
-          style: IconButton.styleFrom(
-              backgroundColor:
-                  isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12))),
+        Badge(
+          isLabelVisible: unreadCount > 0,
+          label: Text(unreadCount.toString()),
+          backgroundColor: MeireTheme.accentColor,
+          offset: const Offset(-4, 4),
+          child: IconButton(
+            onPressed: () {
+              NotificationsModal.show(context);
+            },
+            icon: Icon(Icons.notifications_none,
+                color: isDark ? Colors.white : MeireTheme.primaryColor),
+            style: IconButton.styleFrom(
+                backgroundColor:
+                    isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
+          ),
         ),
         const SizedBox(width: 8),
         IconButton(

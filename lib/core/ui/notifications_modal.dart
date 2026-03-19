@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
+import 'package:meire/core/provider/notifications_provider.dart';
+import 'package:meire/core/models/notification_model.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
+import 'package:intl/intl.dart';
 
-class NotificationsModal extends StatelessWidget {
+class NotificationsModal extends ConsumerWidget {
   const NotificationsModal({super.key});
 
   static void show(BuildContext context) {
@@ -13,8 +18,24 @@ class NotificationsModal extends StatelessWidget {
     );
   }
 
+  void _markAsRead(WidgetRef ref, NotificationModel notification) async {
+    if (notification.isRead) return;
+    
+    final pbInstance = ref.read(pbProvider);
+    try {
+      await pbInstance.collection('notificacoes').update(
+        notification.id,
+        body: {'lido': true},
+      );
+    } catch (e) {
+      debugPrint('Erro ao marcar como lida: $e');
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notificationsAsync = ref.watch(notificationsProvider);
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: const BoxDecoration(
@@ -33,7 +54,7 @@ class NotificationsModal extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Notificações",
+                  "Central de Notificações",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -48,98 +69,94 @@ class NotificationsModal extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                // The original instruction for this section seemed to be trying to
-                // replace the entire list with a "no notifications" message,
-                // but within the context of a single _buildNotificationItem.
-                // To maintain syntactical correctness and the existing structure,
-                // I'm interpreting this as adding a "no notifications" state
-                // if there are no actual notifications, or replacing the content
-                // of the first item with this message.
-                // Given the existing list of items, I will add a placeholder
-                // for a "no notifications" message at the beginning of the list,
-                // assuming it would be conditionally rendered in a real app.
-                // For this edit, I'll just add it as a new item.
-                // If the intent was to replace the entire list, the instruction
-                // should have targeted the ListView's children directly.
-                // For now, I'll add a new item that looks like the "no notifications"
-                // message, but it will be a separate widget, not part of _buildNotificationItem.
-                // If the user intended to replace the _buildNotificationItem's content,
-                // that would require a different approach.
-                // Based on the provided snippet, it seems to be a new block of text.
-                // I will add it as a new item in the list, assuming it's a new type of message.
-                // However, the instruction snippet is malformed and seems to be
-                // trying to insert this new text block *inside* the _buildNotificationItem's
-                // Row/Column structure, which is incorrect.
-                // I will interpret the instruction as adding a new "no notifications"
-                // widget to the list, separate from the _buildNotificationItem calls.
-
-                // Original items remain, and I'll add the new "no notifications" message
-                // as a separate widget if the list were empty, or as a new item for now.
-                // Given the instruction's placement, it's trying to modify the _buildNotificationItem
-                // which is not suitable for a general "no notifications" message.
-                // I will add a placeholder for the "no notifications" message
-                // as a separate widget at the top of the list, as it seems to be a
-                // general state rather than a specific notification item.
-                // The instruction snippet for this part is highly fragmented and
-                // syntactically incorrect within the context of _buildNotificationItem.
-                // I will add a new widget block for "Tudo em dia!" as a separate list item.
-                const Text(
-                  "Tudo em dia!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: MeireTheme.primaryColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  "Você não tem pendências no momento. A Meire te avisará se algo precisar de atenção.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF757575)), // Colors.grey
-                ),
-                const SizedBox(height: 24),
-                _buildNotificationItem(
-                  context,
-                  title: 'Vencimento de DAS Próximo',
-                  message:
-                      'Seu DAS de Abril (R\$ 75,60) vence em 8 dias. Toque para pagar e evitar juros.',
-                  icon: Icons.warning_amber_rounded,
-                  color: Colors.orange.shade600,
-                  time: 'Hoje, 09:00',
-                  isUnread: true,
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationItem(
-                  context,
-                  title: 'NFS-e Confirmada',
-                  message:
-                      'Sua Nota Fiscal nº 2024001 no valor de R\$ 1.200,00 foi autorizada pela prefeitura.',
-                  icon: Icons.check_circle_outline,
-                  color: Colors.green.shade600,
-                  time: 'Ontem',
-                  isUnread: false,
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationItem(
-                  context,
-                  title: 'Bem-vindo ao Meire!',
-                  message:
-                      'Sua conta MEI está configurada e fiscalmente ativa. Explore seu Business Hub.',
-                  icon: Icons.celebration_outlined,
-                  color: MeireTheme.accentColor,
-                  time: 'Ontem',
-                  isUnread: false,
-                ),
-              ],
+            child: notificationsAsync.when(
+              data: (notifications) {
+                if (notifications.isEmpty) {
+                  return _buildEmptyState();
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(24),
+                  itemCount: notifications.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final n = notifications[index];
+                    return InkWell(
+                      onTap: () => _markAsRead(ref, n),
+                      borderRadius: BorderRadius.circular(12),
+                      child: _buildNotificationItem(
+                        context,
+                        title: n.title,
+                        message: n.message,
+                        icon: _getIconForType(n.type),
+                        color: _getColorForType(n.type),
+                        time: _formatCreated(n.created),
+                        isUnread: !n.isRead,
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, __) => Center(child: Text("Erro ao carregar avisos: $e")),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildEmptyState() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.check_circle_outline_rounded, size: 64, color: MeireTheme.primaryColor.withValues(alpha: 0.1)),
+        const SizedBox(height: 24),
+        const Text(
+          "Tudo em dia!",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: MeireTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+            "Você não tem pendências no momento. A Meire te avisará se algo precisar de atenção.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF757575)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getIconForType(String type) {
+    switch (type) {
+      case 'warning': return Icons.warning_amber_rounded;
+      case 'success': return Icons.check_circle_outline_rounded;
+      case 'error': return Icons.error_outline_rounded;
+      default: return Icons.info_outline_rounded;
+    }
+  }
+
+  Color _getColorForType(String type) {
+    switch (type) {
+      case 'warning': return Colors.orange.shade700;
+      case 'success': return Colors.green.shade700;
+      case 'error': return Colors.red.shade700;
+      default: return MeireTheme.primaryColor;
+    }
+  }
+
+  String _formatCreated(DateTime dt) {
+    final now = DateTime.now();
+    if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
+      return "Hoje, ${DateFormat('HH:mm').format(dt)}";
+    }
+    return DateFormat('dd/MM, HH:mm').format(dt);
   }
 
   Widget _buildNotificationItem(
@@ -157,8 +174,7 @@ class NotificationsModal extends StatelessWidget {
         color: isUnread ? color.withValues(alpha: 0.05) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color:
-                isUnread ? color.withValues(alpha: 0.3) : Colors.grey.shade200),
+            color: isUnread ? color.withValues(alpha: 0.3) : Colors.grey.shade200),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,8 +199,7 @@ class NotificationsModal extends StatelessWidget {
                       child: Text(
                         title,
                         style: TextStyle(
-                          fontWeight:
-                              isUnread ? FontWeight.bold : FontWeight.w600,
+                          fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
                           color: MeireTheme.primaryColor,
                         ),
                       ),
@@ -194,8 +209,7 @@ class NotificationsModal extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade500,
-                        fontWeight:
-                            isUnread ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ],
