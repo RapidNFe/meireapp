@@ -467,7 +467,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             controller: _imController,
                             decoration: const InputDecoration(labelText: 'Inscrição Municipal'),
                           ),
-                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _cepController,
                             keyboardType: TextInputType.number,
@@ -480,23 +479,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             decoration: const InputDecoration(
                               labelText: 'CNAE Principal',
                               hintText: 'Ex: 9602501',
-                              helperText: '9602501 para Barbeiro/Cabelereiro',
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Módulo Salão Parceiro', style: TextStyle(fontSize: 14)),
-                            subtitle: const Text('Ativa a aba de Vendas na navegação inferior', style: TextStyle(fontSize: 12)),
-                            value: user.getBoolValue('modulo_salao_ativo'),
-                            activeColor: MeireTheme.accentColor,
-                            onChanged: (bool value) async {
-                              await ref.read(pbProvider).collection('users').update(user.id, body: {
-                                'modulo_salao_ativo': value,
-                              });
-                              await ref.read(pbProvider).collection('users').authRefresh();
-                              if (mounted) setState(() {});
-                            },
                           ),
                         ],
                       )
@@ -520,24 +503,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             value: user.getStringValue('cnae').isEmpty ? '⚠️ Pendente' : user.getStringValue('cnae'),
                             isPending: user.getStringValue('cnae').isEmpty,
                           ),
-                          const Divider(height: 24),
-                          _InfoRow(
-                            label: 'Módulo Salão', 
-                            value: user.getBoolValue('modulo_salao_ativo') ? 'Ativado' : 'Desativado',
-                          ),
                         ],
                       ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 24),
-
-              // 💈 4. CONFIGURAÇÕES SALÃO PARCEIRO (Elite Move)
-              if (user.getBoolValue('modulo_salao_ativo'))
-                _SalaoConfigCard(),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
 
               

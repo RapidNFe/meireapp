@@ -16,7 +16,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
-import 'package:meire/features/dashboard/ui/bento_home_page.dart';
 
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
@@ -63,8 +62,6 @@ class _HubPageState extends ConsumerState<HubPage> {
 
     // Seletiva Soberana: Define se o usuário vê a Home Bento (Foco Beleza) ou Clássica (Geral)
 
-    final bool moduloSalaoAtivo = userRecord?.getBoolValue('modulo_salao_ativo') ?? false;
-
     final List<Widget> pages = [
       _buildInicioTab(
           context,
@@ -77,7 +74,6 @@ class _HubPageState extends ConsumerState<HubPage> {
           userRecord),
       const InvoiceHistoryPage(),
       const CustomerCentralPage(),
-      if (moduloSalaoAtivo) const BentoHomePage(),
       const ProfilePage(),
     ];
 
@@ -850,17 +846,14 @@ class _HubPageState extends ConsumerState<HubPage> {
         onTap: (index) => setState(() => _currentIndex = index),
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        items: [
-          const BottomNavigationBarItem(
+        items: const [
+          BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded), label: "Início"),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
               icon: Icon(Icons.history_edu), label: "Notas"),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
-          if (userRecord?.getBoolValue('modulo_salao_ativo') ?? false)
-            const BottomNavigationBarItem(
-                icon: Icon(Icons.auto_awesome_mosaic_rounded), label: "Vendas"),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
       ),
