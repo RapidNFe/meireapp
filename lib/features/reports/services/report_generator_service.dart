@@ -141,43 +141,38 @@ class ReportGeneratorService {
     );
 
     try {
-      // 🚀 Salva no PocketBase
+      // 🚀 Salva o PDF na memória
       final bytes = await pdf.save();
       
-      // Criar o MultipartFile
+      // Empacota o arquivo
       final file = http.MultipartFile.fromBytes(
         'arquivo_pdf',
         bytes,
         filename: 'report_${DateFormat('yyyyMMdd').format(start)}.pdf',
       );
 
-      debugPrint('🚀 [Relatório] Iniciando criação com arquivo...');
+      debugPrint('🚀 [Relatório] Iniciando Upload Soberano (Tiro Único)...');
       
-      // PASSO 1: Cria o registro apenas com o PDF (PocketBase Multipart puro)
+      // 📦 Prepara o Body (Tudo precisa ser String no formato Multipart!)
+      final Map<String, String> bodyBlindado = {
+        'user_id': userId,
+        'periodo': periodoStr,
+        'valor_total': total.toString(), // Transformando o double em String para o Multipart
+      };
+
+      // 🎯 PASSO ÚNICO: Cria o registro com os dados E o arquivo juntos
+      // Isso garante que o registro já nasça com dono, evitando erros de segurança.
       final record = await _pb.collection('relatorios_faturamento').create(
+        body: bodyBlindado,
         files: [file],
       );
 
-      debugPrint('✅ [Relatório] Registro criado. ID: ${record.id}');
-      debugPrint('💉 [Relatório] Injetando metadados no ID correspondente...');
+      debugPrint('✅ [Relatório] Salvo e Blindado! ID: ${record.id}');
+      return record;
 
-      // PASSO 2: Injeta os metadados via Update (Garante o preenchimento)
-      final bodyWithCorrectTypes = {
-        'user_id': userId,
-        'periodo': periodoStr,
-        'valor_total': total,
-      };
-
-      final updatedRecord = await _pb.collection('relatorios_faturamento').update(
-        record.id,
-        body: bodyWithCorrectTypes,
-      );
-
-      debugPrint('🏁 [Relatório] Concluído com Sucesso e Dados Blindados!');
-      return updatedRecord;
     } catch (e) {
       debugPrint('❌ [Relatório] Falha Crítica: $e');
-      rethrow; // Repassa o erro para o UI mostrar o SnackBar
+      rethrow; 
     }
   }
 
