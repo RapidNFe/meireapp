@@ -10,7 +10,7 @@ class PrivacyPolicyPage extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Privacidade e Soberania',
+          'Privacidade e Segurança',
           style: TextStyle(color: MeireTheme.primaryColor, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.white,
@@ -29,7 +29,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                '🛡️ Política de Privacidade e Soberania de Dados (Meiri App)',
+                '🛡️ Política de Privacidade e Proteção de Dados (Meiri App)',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -63,7 +63,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
               _buildSection(
                 '4. O Seu Poder de Comando (Seus Direitos LGPD)',
-                'Você é o soberano da sua operação. Através do aplicativo Meiri, você tem o direito imediato de:\n\n'
+                'Você tem o total controle da sua operação. Através do aplicativo Meiri, você tem o direito imediato de:\n\n'
                 '• Acessar: Visualizar todo o seu histórico financeiro e cadastral em tempo real.\n'
                 '• Retificar: Alterar dados incorretos de clientes ou do seu próprio perfil.\n'
                 '• O Direito ao Esquecimento: Você pode, a qualquer momento, acessar a aba "Perfil" e acionar o botão "Excluir Minha Conta e Dados". Nossa arquitetura executará uma exclusão em cascata, pulverizando imediatamente seu usuário, suas notas processadas e sua agenda de clientes de nossos servidores. Esta ação é irreversível.',
@@ -75,7 +75,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               const SizedBox(height: 48),
               Center(
                 child: Text(
-                  'Soberania. Privacidade. Meiri.',
+                  'Privacidade. Transparência. Segurança. Meiri.',
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
                     color: Colors.grey.shade400,

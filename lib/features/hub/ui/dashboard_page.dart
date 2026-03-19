@@ -60,7 +60,6 @@ class _HubPageState extends ConsumerState<HubPage> {
     final meiLimitString = currencyFormatter.format(stats.annualLimit);
     final remainingString = currencyFormatter.format(stats.remaining);
 
-    // Seletiva Soberana: Define se o usuário vê a Home Bento (Foco Beleza) ou Clássica (Geral)
 
     final List<Widget> pages = [
       _buildInicioTab(
@@ -98,23 +97,33 @@ class _HubPageState extends ConsumerState<HubPage> {
         children: [
           SvgPicture.asset(
             'assets/images/logo.svg',
-            height: 56,
+            height: 40,
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(_getGreeting(userName),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _getGreeting(userName),
                   style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : MeireTheme.primaryColor)),
-              const Text("MEI ATIVO",
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : MeireTheme.primaryColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Text(
+                  "MEI ATIVO",
                   style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.grey)),
-            ],
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

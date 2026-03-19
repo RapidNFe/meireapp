@@ -40,7 +40,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user != null) {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
-      _cnaeController.text = user.getStringValue('cnae');
+      _cnaeController.text = user.getStringValue('cnae_principal');
       _senhaPfxController.text = user.getBoolValue('possui_certificado') ? '********' : '';
     }
   }
@@ -65,7 +65,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final Map<String, dynamic> body = {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        'cnae': _cnaeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'cnae_principal': _cnaeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
       };
 
       // 1. Atualiza dados Cadastrais no PocketBase (Dados Seguros/Públicos)
@@ -500,8 +500,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           const Divider(height: 24),
                           _InfoRow(
                             label: 'CNAE', 
-                            value: user.getStringValue('cnae').isEmpty ? '⚠️ Pendente' : user.getStringValue('cnae'),
-                            isPending: user.getStringValue('cnae').isEmpty,
+                            value: user.getStringValue('cnae_principal').isEmpty ? '⚠️ Pendente' : user.getStringValue('cnae_principal'),
+                            isPending: user.getStringValue('cnae_principal').isEmpty,
                           ),
                         ],
                       ),

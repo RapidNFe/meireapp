@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:meire/features/auth/ui/login_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-// ================= PALETA DE CORES (QUIET LUXURY) =================
+// ================= PALETA DE CORES =================
 const Color kEmeraldDeep = Color(0xFF013220); // Verde Esmeralda Profundo
 const Color kEmeraldMain = Color(0xFF005A3A); // Verde Esmeralda Base
 const Color kEmeraldAccent = Color(0xFF50C878); // Verde Esmeralda Brilhante
@@ -1735,7 +1735,7 @@ class FaqTile extends StatelessWidget {
   }
 }
 // ==============================================================================
-// NOVAS SEÇÕES E COMPONENTES (QUIET LUXURY & SEXY CANVAS)
+// NOVAS SEÇÕES E COMPONENTES
 // ==============================================================================
 
 class HeaderSection extends StatelessWidget {
@@ -1793,7 +1793,7 @@ class FooterSection extends StatelessWidget {
 }
 
 // ------------------------------------------------------------------------------
-// NOVA SEÇÃO DE PREÇO (SEXY CANVAS + QUIET LUXURY)
+// NOVA SEÇÃO DE PREÇO
 // ------------------------------------------------------------------------------
 
 class _NoBrainerPricingSection extends StatelessWidget {
@@ -1834,7 +1834,7 @@ class _NoBrainerPricingSection extends StatelessWidget {
               const Opacity(
                 opacity: 0.8,
                 child: Text(
-                  "Acesso VIP e irrestrito à elite de emissores fiscais. Sem letras miúdas.",
+                  "Acesso completo e irrestrito ao seu emissor fiscal. Sem letras miúdas.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: kIvoryLuxury,
@@ -1846,7 +1846,7 @@ class _NoBrainerPricingSection extends StatelessWidget {
               ),
               const SizedBox(height: 80),
 
-              // O CARD LUXUOSO (Bento Style isolado)
+              // O CARD DE PREÇO
               isDesktop ? _buildDesktopCard() : _buildMobileCard(),
             ],
           ),
