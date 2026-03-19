@@ -30,35 +30,6 @@ final clientListProvider =
   }
 });
 
-// ---------------------------------------------------------------------------
-// Provider para Busca Inteligente em Tempo Real (usado no Seletor da Nota)
-// ---------------------------------------------------------------------------
-final buscarTomadoresProvider =
-    FutureProvider.family<List<ClientModel>, String>((ref, query) async {
-  if (query.trim().length < 2) return [];
-
-  final pb = ref.read(pbProvider);
-  final userId = pb.authStore.record?.id;
-  if (userId == null) return [];
-
-  try {
-    // Filtro Flexível: Busca por nome, razao_social, cnpj ou apelido
-    final queryEscaped = query.replaceAll('"', '\\"');
-    final filtroSeguro =
-        'user = "$userId" && (razao_social ~ "$queryEscaped" || cnpj ~ "$queryEscaped" || apelido ~ "$queryEscaped")';
-
-    final result = await pb.collection('clientes_tomadores').getList(
-          page: 1,
-          perPage: 5,
-          filter: filtroSeguro,
-        );
-
-    return result.items.map((e) => ClientModel.fromRecord(e)).toList();
-  } catch (e) {
-    debugPrint("❌ Erro ao buscar tomadores: $e");
-    return [];
-  }
-});
 
 // ---------------------------------------------------------------------------
 // Providers para Filtragem Interna na Lista (Central de Clientes)

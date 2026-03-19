@@ -1,38 +1,74 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 
-/// Provider que consolida os dados de performance financeira do mês atual.
-/// Separa o que é Faturamento Bruto do que é a Cota-Parte (Líquido) do profissional.
-final performanceSoberaniaProvider = FutureProvider<Map<String, double>>((ref) async {
+/// Provider que controla o período de visualização do faturamento.
+/// Padrão: Últimos 15 dias (Quinzena).
+final periodoFiltroProvider = StateProvider<DateTimeRange>((ref) {
+  final agora = DateTime.now();
+  return DateTimeRange(
+    start: agora.subtract(const Duration(days: 15)),
+    end: agora.add(const Duration(days: 1)), // Inclui o dia de hoje
+  );
+});
+
+/// Provider que consolida os dados de performance financeira baseados no filtro.
+/// Separa o que é faturamento Bruto do que é a Cota-Parte (Líquido) do profissional.
+final performanceVendasProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final pb = ref.read(pbProvider);
   final userId = pb.authStore.record?.id;
+  final periodo = ref.watch(periodoFiltroProvider);
 
-  if (userId == null) return {'bruto': 0, 'liquido': 0, 'repasse_salao': 0};
+  if (userId == null) {
+    return {
+      'bruto': 0.0,
+      'liquido': 0.0,
+      'pendente': 0.0,
+      'registros': [],
+    };
+  }
 
-  // 1. Define o início do mês atual para o filtro
-  final agora = DateTime.now();
-  final inicioMes = DateTime(agora.year, agora.month, 1).toIso8601String();
+  final inicio = periodo.start.toIso8601String().split('T')[0];
+  final fim = "${periodo.end.toIso8601String().split('T')[0]}T23:59:59";
 
   try {
-    // 2. Busca todos os lançamentos do mês para o usuário logado
-    final registros = await pb.collection('lancamentos_servicos').getFullList(
-          filter: 'user = "$userId" && data_servico >= "$inicioMes"',
+    // 2. Busca lançamentos no período para o usuário logado
+    final registros = await pb.collection('servicos').getFullList(
+          filter: 'user_id = "$userId" && data_servico >= "$inicio" && data_servico <= "$fim"',
+          sort: '-data_servico',
         );
 
     double faturamentoBruto = 0; // Total pago pelos clientes
     double minhaParteReal = 0;   // O que o profissional de fato ganhou (cota-parte)
+    double pendenteNfe = 0;      // O que está 'aberto' mas não faturado ainda
 
     for (var reg in registros) {
-      faturamentoBruto += (reg.data['valor_total_cliente'] ?? 0.0).toDouble();
-      minhaParteReal += (reg.data['valor_cota_parte'] ?? 0.0).toDouble();
+      final status = reg.getStringValue('status_faturamento');
+      final valBruto = (reg.data['valor_bruto'] ?? 0.0).toDouble();
+      final valLiquido = (reg.data['valor_liquido'] ?? 0.0).toDouble();
+
+      faturamentoBruto += valBruto;
+      minhaParteReal += valLiquido;
+
+      // 🦅 Lógica Soberana: Soma o que está 'aberto' para fechamento
+      if (status == 'aberto') {
+        pendenteNfe += valLiquido;
+      }
     }
 
     return {
       'bruto': faturamentoBruto,
       'liquido': minhaParteReal,
-      'repasse_salao': faturamentoBruto - minhaParteReal,
+      'pendente': pendenteNfe,
+      'cota_parte': faturamentoBruto - minhaParteReal,
+      'registros': registros,
     };
   } catch (e) {
-    return {'bruto': 0, 'liquido': 0, 'repasse_salao': 0};
+    return {
+      'bruto': 0.0,
+      'liquido': 0.0,
+      'pendente': 0.0,
+      'registros': [],
+    };
   }
 });

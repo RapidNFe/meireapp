@@ -31,9 +31,10 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   final _cnpjMask = MaskTextInputFormatter(
       mask: '##.###.###/####-##', filter: {"#": RegExp(r'[0-9]')});
 
-  // State Step 1
   String _cnpj = '';
   String _razaoSocial = '';
+  bool _isBeleza = false;
+  String _cnae = '';
   
   // State Step 2
   String _nomeCompleto = '';
@@ -47,6 +48,11 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
 
       setState(() {
         _razaoSocial = data['razao_social'] ?? 'Não informada';
+        _cnae = data['cnae_fiscal']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+        
+        // Elite Filter: 9602-5/01 ou 9602-5/02
+        _isBeleza = _cnae == '9602501' || _cnae == '9602502';
+        
         _isLoading = false;
         _currentStep = 1; // Advance to next step
       });
@@ -93,6 +99,8 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             nomeCompleto: _nomeCompleto,
             razaoSocial: _razaoSocial,
             cnpj: cleanCnpj,
+            tipoAtuacao: _isBeleza ? 'salao_parceiro' : 'servico_geral',
+            moduloSalaoAtivo: _isBeleza,
           );
 
       if (mounted) {
@@ -286,6 +294,31 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
                     onChanged: (val) => _razaoSocial = val,
                     validator: (val) => (val == null || val.isEmpty) ? 'Campo obrigatório' : null,
                   ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _isBeleza ? amareloDestaque.withValues(alpha: 0.1) : Colors.white10,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: _isBeleza ? amareloDestaque : Colors.white24),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(_isBeleza ? Icons.auto_awesome_rounded : Icons.work_outline_rounded, 
+                           size: 14, color: _isBeleza ? amareloDestaque : Colors.white70),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isBeleza ? "PERFIL: ESTÉTICA & BELEZA" : "PERFIL: SERVIÇOS GERAIS",
+                        style: TextStyle(
+                          color: _isBeleza ? amareloDestaque : Colors.white70,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meire/core/ui/theme.dart';
-import 'package:meire/features/clients/models/client_model.dart';
-import 'package:meire/features/clients/provider/client_provider.dart';
+import 'package:meire/features/clients/models/tomador_model.dart';
+import 'package:meire/features/clients/services/tomador_service.dart';
+import 'package:meire/core/ui/widgets/cnae_validator_dialog.dart';
+import 'package:flutter/services.dart';
 
 /// Seletor de Tomadores (Clientes) com estilo Premium "Lux".
 /// 
 /// Realiza busca em tempo real no PocketBase conforme o usuário digita.
 class TomadorSelectorLux extends ConsumerStatefulWidget {
-  final Function(ClientModel tomadorSelecionado) onSelected;
+  final Function(TomadorModel tomadorSelecionado) onSelected;
   final VoidCallback onNovoCliente;
 
   const TomadorSelectorLux({
@@ -24,7 +26,7 @@ class TomadorSelectorLux extends ConsumerStatefulWidget {
 class _TomadorSelectorLuxState extends ConsumerState<TomadorSelectorLux> {
   String _searchQuery = '';
   final TextEditingController _controller = TextEditingController();
-  ClientModel? _selecionado;
+  TomadorModel? _selecionado;
 
   @override
   void dispose() {
@@ -32,13 +34,39 @@ class _TomadorSelectorLuxState extends ConsumerState<TomadorSelectorLux> {
     super.dispose();
   }
 
-  void _selecionar(ClientModel cliente) {
+  void _selecionar(TomadorModel tomador) {
+    _validarSelecao(tomador);
+  }
+
+  void _validarSelecao(TomadorModel tomador) {
+    final service = ref.read(tomadorServiceProvider);
+    
+    // Se for um parceiro já salvo como salão ou tiver CNAE de beleza
+    if (tomador.isSalaoParceiro || service.isCnaeBeleza(tomador.cnae)) {
+      _confirmarSelecao(tomador);
+    } else {
+      // 🛡️ ALERTA DE SOBERANIA (CNAE Divergente)
+      HapticFeedback.vibrate();
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => CnaeValidatorDialog(
+          razaoSocial: tomador.razaoSocial,
+          atividadePrincipal: tomador.cnaeDescricao ?? "Atividade não identificada",
+          onConfirmarDireto: () => _confirmarSelecao(tomador.copyWith(isSalaoParceiro: false)),
+          onForcarSalao: () => _confirmarSelecao(tomador.copyWith(isSalaoParceiro: true)),
+        ),
+      );
+    }
+  }
+
+  void _confirmarSelecao(TomadorModel tomador) {
     setState(() {
-      _selecionado = cliente;
+      _selecionado = tomador;
       _searchQuery = '';
-      _controller.text = cliente.apelido.isNotEmpty ? cliente.apelido : cliente.razaoSocial;
+      _controller.text = tomador.displayName;
     });
-    widget.onSelected(cliente);
+    widget.onSelected(tomador);
     FocusScope.of(context).unfocus();
   }
 
@@ -131,16 +159,16 @@ class _TomadorSelectorLuxState extends ConsumerState<TomadorSelectorLux> {
                   itemCount: resultados.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: MeireTheme.iceGray),
                   itemBuilder: (context, index) {
-                    final cliente = resultados[index];
+                    final tomador = resultados[index];
                     return ListTile(
                       title: Text(
-                        cliente.apelido.isNotEmpty ? cliente.apelido : cliente.razaoSocial,
+                        tomador.displayName,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
-                      subtitle: Text("Doc: ${cliente.cnpj}",
+                      subtitle: Text("Doc: ${tomador.cnpj}",
                           style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: MeireTheme.primaryColor),
-                      onTap: () => _selecionar(cliente),
+                      onTap: () => _selecionar(tomador),
                     );
                   },
                 ),

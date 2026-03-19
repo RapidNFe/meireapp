@@ -13,6 +13,7 @@ class FavoriteService {
   final double? valorBase;
   final String? idClientePadrao;
   final bool? isNichoBeleza; // Para marcar se é o template de Salão Parceiro
+  final String categoria;
 
   FavoriteService({
     String? id,
@@ -24,6 +25,7 @@ class FavoriteService {
     this.valorBase,
     this.idClientePadrao,
     this.isNichoBeleza = false,
+    this.categoria = '',
   }) : id = id ?? const Uuid().v4();
 
   FavoriteService copyWith({
@@ -35,6 +37,7 @@ class FavoriteService {
     double? valorBase,
     String? idClientePadrao,
     bool? isNichoBeleza,
+    String? categoria,
   }) {
     return FavoriteService(
       id: id,
@@ -46,6 +49,7 @@ class FavoriteService {
       valorBase: valorBase ?? this.valorBase,
       idClientePadrao: idClientePadrao ?? this.idClientePadrao,
       isNichoBeleza: isNichoBeleza ?? this.isNichoBeleza,
+      categoria: categoria ?? this.categoria,
     );
   }
 
@@ -60,6 +64,7 @@ class FavoriteService {
       valorBase: record.getDoubleValue('valor_base'),
       idClientePadrao: record.getStringValue('id_cliente_padrao'),
       isNichoBeleza: record.getBoolValue('is_nicho_beleza'),
+      categoria: record.getStringValue('categoria'),
     );
   }
 }
@@ -127,6 +132,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         "valor_base": service.valorBase,
         "idClientePadrao": service.idClientePadrao,
         "is_nicho_beleza": service.isNichoBeleza,
+        "categoria": service.categoria,
       };
 
       final record = await _pb.collection('servicos_favoritos').create(body: body);

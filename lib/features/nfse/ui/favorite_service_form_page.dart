@@ -25,6 +25,8 @@ class _FavoriteServiceFormPageState
   final _itemNbsController = TextEditingController();
   final _descricaoBaseController = TextEditingController();
   final _valorBaseController = TextEditingController();
+  final _outraCategoriaController = TextEditingController();
+  String? _selectedCategoria;
   bool _isNichoBeleza = true; // Inicia true para o foco atual
 
   @override
@@ -35,6 +37,7 @@ class _FavoriteServiceFormPageState
     _itemNbsController.dispose();
     _descricaoBaseController.dispose();
     _valorBaseController.dispose();
+    _outraCategoriaController.dispose();
     super.dispose();
   }
 
@@ -55,6 +58,9 @@ class _FavoriteServiceFormPageState
         descricaoBase: _descricaoBaseController.text,
         valorBase: valorBase,
         isNichoBeleza: _isNichoBeleza,
+        categoria: _selectedCategoria == 'Outros' 
+            ? _outraCategoriaController.text 
+            : (_selectedCategoria ?? ''),
       );
 
       ref.read(favoriteServicesProvider.notifier).addService(newService);
@@ -145,6 +151,52 @@ class _FavoriteServiceFormPageState
                         });
                       }),
                     ],
+                    // 💎 NOVO CAMPO: CATEGORIA (Para filtros da Vendas/Soberania)
+                    const SizedBox(height: 24),
+                    const Text('Categoria do Serviço',
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey)),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCategoria,
+                      items: [
+                        'Consultoria',
+                        'Estética',
+                        'Educação',
+                        'Manutenção',
+                        'Tecnologia',
+                        'Outros'
+                      ].map((cat) {
+                        return DropdownMenuItem(value: cat, child: Text(cat));
+                      }).toList(),
+                      decoration: const InputDecoration(
+                        labelText: 'Selecione uma Categoria',
+                        hintText: 'Escolha o grupo deste serviço',
+                        prefixIcon: Icon(Icons.category_outlined),
+                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedCategoria = val;
+                        });
+                      },
+                    ),
+                    if (_selectedCategoria == 'Outros') ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _outraCategoriaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Qual a sua Categoria? *',
+                          hintText: 'Digite o nome da categoria',
+                        ),
+                        validator: (val) => _selectedCategoria == 'Outros' 
+                            ? Validators.validateRequired(val, 'Categoria') 
+                            : null,
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
                     // Campos ocultos mas obrigatórios para submissão validada
                     Offstage(
                       offstage: true,

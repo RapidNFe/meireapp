@@ -1,52 +1,60 @@
 # 🛡️ MEIRI: BÚSSOLA DE CONTEXTO & REVISÃO ESTRATÉGICA
 
-**Códinome:** Meiri - A Assistente Inteligente Soberana (v2.0)
-**Data da Última Atualização:** 18/03/2026
-**Status do Deploy:** Pronto para Produção (100% Blindado)
+**Códinome:** Meiri - A Assistente Inteligente Soberana (v2.1 - SOBERANIA EDITION)
+**Data da Última Atualização:** 19/03/2026
+**Status do Deploy:** Pronto para Produção (Arquitetura Flexível & Blindada)
 
 ---
 
-## 🏛️ 1. ARQUITETURA DE DESIGN: "BENTO GRID & QUIET LUXURY"
-O Meiri agora utiliza a arquitetura visual de **Bento Grid**, proporcionando uma hierarquia clara de informações. O olhar do profissional flui do operacional (lançamento) para o estratégico (soberania).
+## 🏛️ 1. SCHEMA ÚNICO & SOBERANO: "A UNIFICAÇÃO" (v2.1)
+Migramos toda a inteligência de lançamentos para uma collection única e flexível no PocketBase, eliminando a fragmentação de dados:
 
-- **Cores Oficiais**: 🌲 Verde Floresta (#01291B) | 🔱 Ouro Meiri (#CC8B00) | 🍀 Esmeralda (#50C878)
-- **Haptic Feedback**: Retorno tátil leve em ações críticas para uma experiência premium "Quiet Luxury".
-- **Blindagem Visual**: Logo SVG otimizado (de 2.5MB para 240KB) com `placeholderBuilder` de carregamento dourado.
-
----
-
-## 🦅 2. MÓDULO SOBERANIA FINANCEIRA (DASHBOARD)
-O maior inimigo do profissional é a confusão entre o dinheiro que passou pela mão e o dinheiro que é dele de verdade. O Meiri resolve isso na Home:
-
-- **SoberaniaChartCard**: Gráfico comparativo que separa **Faturamento Bruto** vs. **Cota-Parte Líquida**.
-- **Performance Provider**: Motor que analisa centenas de lançamentos do mês em milissegundos.
-- **Visual de Retenção**: Barra de progresso graduada que mostra a porcentagem real de lucro retido pelo profissional.
+- **Collection `servicos`**: O coração do app. Consolida lançamentos de canais distintos (Salão vs. Direto) em uma estrutura padronizada.
+- **Campos Estratégicos**: Implementamos `modalidade_fluxo`, `status_faturamento` (aberto/faturado), `id_agrupador` e `comissao_aplicada`.
+- **Lógica de Agrupamento**: O `id_agrupador` dinâmico permite que o Meiri some 15 dias de trabalho em uma única nota fiscal final, sem perder a rastreabilidade de cada serviço.
 
 ---
 
-## ⚡ 3. HIPER-EFICIÊNCIA EM LANÇAMENTOS
-O profissional de beleza tem as mãos ocupadas. O Meiri virou um "Gerente Silencioso":
+## 🦅 2. DASHBOARD DE SOBERANIA (BENTO GRID PREMIUM)
+Elevamos o nível visual e funcional da aba **Vendas** para passar autoridade e clareza financeira:
 
-- **Quick Launch Card**: Campo de valor gigante na Home. Digite -> Enter -> Salvo.
-- **Settings Page (Cofre de Regras)**: O profissional trava sua **Comissão Padrão** no seu perfil.
-- **Automação de Campo**: Ao lançar um valor, o Meiri já calcula a comissão, aplica o CNAE de 6 dígitos e vincula ao salão parceiro automaticamente.
+- **ResumoFaturamentoCard**: Um widget de elite que utiliza o **Ouro Meiri (#CC8B00)** para destacar a "Sua Parte Soberana".
+- **Bento Grid de Fechamento**: Separação visual clara entre *Total Bruto* (entrada), *Cota-Parte* (retenção em vermelho suave) e *Lucro Real* (net profit).
+- **Floating Action Button (FAB) Dinâmico**: O botão "FECHAR FATURAMENTO 🚀" aparece apenas quando há saldo pendente, agindo como um gatilho de recompensa e organização.
 
 ---
 
-## 📑 4. SALÃO PARCEIRO & CONCILIAÇÃO FISCAL
-Acabamos com as brigas de "acerto de contas" no final da quinzena:
+## ⚡ 3. FLEXIBLE LAUNCH: "TROCA DE CHAVE"
+O Quick Launch Card evoluiu para lidar com a dualidade do MEI moderno:
 
-- **Extrato Generator (PDF Platinum)**: Motor de relatórios elegante e levepara conferência instantânea via WhatsApp.
-- **Batch Update (Baixa em Massa)**: Quando a nota é emitida pelo Serpro, o Meiri liquida todos os serviços pendentes de uma vez.
-- **Blindagem Serpro (Vortex)**: Emissão de nota direta para o ambiente nacional, 100% em conformidade com o layout v1.0.
+- **Canais de Venda**: O usuário pode alternar entre **SALÃO** (onde o Meiri aplica a comissão acordada) e **DIRETO** (onde o sistema trava a comissão em 100% automaticamente).
+- **Cálculo em Tempo Real**: O app calcula a cota-parte instantaneamente no momento do lançamento, alimentando o dashboard sem atrasos.
+
+---
+
+## 🚀 4. MOTOR DE CONSOLIDAÇÃO: "FATURAMENTO BATCH"
+Implementamos o `FaturamentoService` para automatizar o encerramento de ciclos produtivos:
+
+- **Fechamento em Massa**: Com um único clique, o Meiri marca todos os serviços abertos do período selecionado como `faturado`.
+- **Integridade de Fila**: Evita bitributação e garante que o saldo acumulado seja transformado em NF-e com precisão cirúrgica.
+- **Haptic Context**: Feedback tátil pesado ao consolidar faturamentos, gerando uma sensação física de "missão cumprida".
 
 ---
 
 ## 🎯 5. PRÓXIMOS PASSOS (A PRÓXIMA FRONTEIRA)
 1. **Integração BrasilAPI**: No TomadorSelector, para busca automática de CNPJs de salões.
-2. **Histórico de Relatórios**: Persistir uma cópia de cada extrato PDF gerado no PocketBase.
-3. **Notificações Push**: Alertar o profissional quando o salão der baixa no seu repasse.
+2. **Histórico de Relatórios**: Persistir uma cópia de cada extrato PDF gerado no PocketBase vinculado ao ciclo faturado.
+3. **Filtro Temporal Avançado**: Seletor de data para visualização de ciclos passados diretamente no Bento Grid.
 
 ---
 
-*Assinado: Antigravity - Seu Par de Programação Soberano.* 🦅🌑
+## 🦅 6. BLINDAGEM POR CNAE & PERFIL ADAPTATIVO
+Inteligência que separa o Meiri de soluções genéricas:
+
+- **Automação no Cadastro**: Consulta CNAE via BrasilAPI e classificação automática (*Estética/Beleza* vs. *Serviços Gerais*).
+- **Interface Camaleão**: O seletor de Salão no Quick Launch e o card de Cota-Parte se ocultam automaticamente para perfis que não pertencem ao nicho de beleza, mantendo o app limpo e focado.
+- **Configuração no Perfil**: Seção dedicada de "Salão Parceiro" integrada ao `ProfilePage` para gestão de CNPJ e comissão padrão do parceiro principal.
+
+---
+
+*Assinado: Antigravity - Seu Par de Programação de Alta Performance.* 🦅🌑

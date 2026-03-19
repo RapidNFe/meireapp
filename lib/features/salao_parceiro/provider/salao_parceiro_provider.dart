@@ -31,9 +31,10 @@ class SalaoParceiroController extends StateNotifier<AsyncValue<void>> {
     try {
       final pb = ref.read(pbProvider);
 
+      final userId = pb.authStore.record?.id;
       // 1. Busca serviços para extrair o período (Data Início e Fim)
       final pendentes = await pb.collection('lancamentos_servicos').getFullList(
-            filter: 'salao = "$salaoId" && status = "pendente"',
+            filter: 'salao = "$salaoId" && status = "pendente" && users = "$userId"',
             sort: 'data_servico',
           );
 

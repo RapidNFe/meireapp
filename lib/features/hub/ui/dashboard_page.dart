@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,17 +61,33 @@ class _HubPageState extends ConsumerState<HubPage> {
     final meiLimitString = currencyFormatter.format(stats.annualLimit);
     final remainingString = currencyFormatter.format(stats.remaining);
 
+    // Seletiva Soberana: Define se o usuário vê a Home Bento (Foco Beleza) ou Clássica (Geral)
+
+    final bool moduloSalaoAtivo = userRecord?.getBoolValue('modulo_salao_ativo') ?? false;
+
     final List<Widget> pages = [
-      const BentoHomePage(),
+      _buildInicioTab(
+          context,
+          stats.percentage,
+          annualLimitPercentageString,
+          annualRevenueString,
+          meiLimitString,
+          remainingString,
+          userRecord?.getStringValue('status_registro') ?? 'conta_criada',
+          userRecord),
       const InvoiceHistoryPage(),
       const CustomerCentralPage(),
+      if (moduloSalaoAtivo) const BentoHomePage(),
       const ProfilePage(),
     ];
 
     return Scaffold(
       appBar: _buildAppBar(userName, settings),
-      body: pages[_currentIndex],
-      bottomNavigationBar: _buildBottomNav(),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: pages,
+      ),
+      bottomNavigationBar: _buildBottomNav(userRecord),
     );
   }
 
@@ -85,13 +102,13 @@ class _HubPageState extends ConsumerState<HubPage> {
         children: [
           SvgPicture.asset(
             'assets/images/logo.svg',
-            height: 32,
+            height: 56,
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Olá, $userName",
+              Text(_getGreeting(userName),
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -185,53 +202,20 @@ class _HubPageState extends ConsumerState<HubPage> {
           constraints: const BoxConstraints(maxWidth: 1200),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              if (constraints.maxWidth > 950) {
-                return Column(
+              final isDesktop = constraints.maxWidth > 950;
+              
+              if (isDesktop) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 6,
-                          child: Column(
-                            children: [
-                              _buildTermometroCard(context),
-                              const SizedBox(height: 16),
-                              _buildPerformanceSemestral(context),
-                              const SizedBox(height: 16),
-                              _buildMeiLimitCard(
-                                  annualLimitPercentage,
-                                  annualLimitPercentageString,
-                                  annualRevenueString,
-                                  meiLimitString,
-                                  remainingString),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildDasUrgencyCard(),
-                              const SizedBox(height: 24),
-                              const Text(
-                                "AÇÕES RÁPIDAS",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: MeireTheme.accentColor,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildQuickActionsGrid(context, statusRegistro),
-                              _buildRecentActivities(context),
-                            ],
-                          ),
-                        ),
-                      ],
+                    Expanded(
+                      flex: 6,
+                      child: _buildMainColumn(context, annualLimitPercentage, annualLimitPercentageString, annualRevenueString, meiLimitString, remainingString),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 4,
+                      child: _buildSideColumn(context, statusRegistro),
                     ),
                   ],
                 );
@@ -239,31 +223,9 @@ class _HubPageState extends ConsumerState<HubPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTermometroCard(context),
+                    _buildMainColumn(context, annualLimitPercentage, annualLimitPercentageString, annualRevenueString, meiLimitString, remainingString),
                     const SizedBox(height: 16),
-                    _buildPerformanceSemestral(context),
-                    const SizedBox(height: 16),
-                    _buildMeiLimitCard(
-                        annualLimitPercentage,
-                        annualLimitPercentageString,
-                        annualRevenueString,
-                        meiLimitString,
-                        remainingString),
-                    const SizedBox(height: 16),
-                    _buildDasUrgencyCard(),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "AÇÕES RÁPIDAS",
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: MeireTheme.accentColor,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildQuickActionsGrid(context, statusRegistro),
-                    _buildRecentActivities(context),
+                    _buildSideColumn(context, statusRegistro),
                   ],
                 );
               }
@@ -272,6 +234,47 @@ class _HubPageState extends ConsumerState<HubPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildMainColumn(BuildContext context, double percentage, String percentageStr, String revenueStr, String limitStr, String remainingStr) {
+    return Column(
+      children: [
+        _buildTermometroCard(context),
+        const SizedBox(height: 16),
+        _buildPerformanceSemestral(context),
+        const SizedBox(height: 16),
+        _buildMeiLimitCard(percentage, percentageStr, revenueStr, limitStr, remainingStr),
+      ],
+    );
+  }
+
+  Widget _buildSideColumn(BuildContext context, String statusRegistro) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDasUrgencyCard(),
+        const SizedBox(height: 24),
+        const Text(
+          "AÇÕES RÁPIDAS",
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: MeireTheme.accentColor,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildQuickActionsGrid(context, statusRegistro),
+        _buildRecentActivities(context),
+      ],
+    );
+  }
+
+  String _getGreeting(String userName) {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return "Bom dia, $userName";
+    if (hour >= 12 && hour < 18) return "Boa tarde, $userName";
+    return "Boa noite, $userName";
   }
 
   Widget _buildTermometroCard(BuildContext context) {
@@ -632,19 +635,29 @@ class _HubPageState extends ConsumerState<HubPage> {
             if (notas.isEmpty) {
               return Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : MeireTheme.iceGray),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.withValues(alpha: 0.1)),
+                    Icon(Icons.history_edu_rounded, size: 48, color: MeireTheme.accentColor.withValues(alpha: 0.1)),
                     const SizedBox(height: 16),
+                    Text(
+                      "Nenhuma atividade recente",
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : MeireTheme.primaryColor.withValues(alpha: 0.5),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     const Text(
-                      "Sua primeira nota aparecerá aqui.",
-                      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                      "Suas últimas notas fiscais aparecerão aqui.",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
@@ -736,45 +749,58 @@ class _HubPageState extends ConsumerState<HubPage> {
       String subtitle, VoidCallback onTap,
       {bool isLocked = false, bool showLockIcon = false}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border:
-              Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : MeireTheme.iceGray,
-                borderRadius: BorderRadius.circular(12),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: MeireTheme.accentColor.withValues(alpha: 0.1),
+        highlightColor: MeireTheme.accentColor.withValues(alpha: 0.05),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border:
+                Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
+            boxShadow: isDark ? [] : [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : MeireTheme.iceGray,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon,
+                    color: isDark
+                        ? (isLocked ? Colors.grey : MeireTheme.accentColor)
+                        : (isLocked ? Colors.grey : MeireTheme.primaryColor)),
               ),
-              child: Icon(icon,
-                  color: isDark
-                      ? (isLocked ? Colors.grey : MeireTheme.accentColor)
-                      : (isLocked ? Colors.grey : MeireTheme.primaryColor)),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(subtitle,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(subtitle,
+                        style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
+                ),
               ),
-            ),
-            Icon(showLockIcon ? Icons.lock_outline : (isLocked ? Icons.arrow_forward : Icons.chevron_right),
-                color: (showLockIcon || isLocked) ? MeireTheme.accentColor : Colors.grey),
-          ],
+              Icon(showLockIcon ? Icons.lock_outline : (isLocked ? Icons.arrow_forward : Icons.chevron_right),
+                  size: 18,
+                  color: (showLockIcon || isLocked) ? MeireTheme.accentColor : Colors.grey.shade400),
+            ],
+          ),
         ),
       ),
     );
@@ -811,7 +837,7 @@ class _HubPageState extends ConsumerState<HubPage> {
     );
   }
 
-  Widget _buildBottomNav() {
+  Widget _buildBottomNav(RecordModel? userRecord) {
     return Container(
       decoration: BoxDecoration(
           border: Border(
@@ -824,14 +850,17 @@ class _HubPageState extends ConsumerState<HubPage> {
         onTap: (index) => setState(() => _currentIndex = index),
         elevation: 0,
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
+        items: [
+          const BottomNavigationBarItem(
               icon: Icon(Icons.grid_view_rounded), label: "Início"),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
               icon: Icon(Icons.history_edu), label: "Notas"),
-          BottomNavigationBarItem(
+          const BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
-          BottomNavigationBarItem(
+          if (userRecord?.getBoolValue('modulo_salao_ativo') ?? false)
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.auto_awesome_mosaic_rounded), label: "Vendas"),
+          const BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],
       ),

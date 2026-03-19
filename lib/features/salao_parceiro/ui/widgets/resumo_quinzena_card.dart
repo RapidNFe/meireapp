@@ -7,14 +7,36 @@ import 'package:meire/features/salao_parceiro/services/extrato_generator.dart';
 
 // Este provider fictício cuidará da lógica de soma dos valores pendentes
 final resumoQuinzenaProvider = FutureProvider.family<Map<String, double>, String>((ref, salaoId) async {
-  // Simulação de cálculo de soma. 
-  // No mundo real, aqui você usaria o PocketBase para somar 'valor_servico' 
-  // de todos onde status == 'pendente' && salão == salaoId
-  await Future.delayed(const Duration(milliseconds: 800)); // Simula rede
-  return {
-    'total_servicos': 1200.00, // Bruto
-    'valor_da_nota': 600.00,   // Cota-parte (50%)
-  };
+  final pb = ref.read(pbProvider);
+  final userId = pb.authStore.record?.id;
+
+  if (userId == null) return {'total_servicos': 0, 'valor_da_nota': 0};
+
+  try {
+    // 🦅 SORENARIA REALTIME: Busca todos os lançamentos 'pendentes' vinculados a este salão e ao profissional
+    // Filter: status = 'pendente' && salao = 'salaoId' && user = 'userId'
+    final filter = 'status = "pendente" && users = "$userId"${salaoId.isNotEmpty ? ' && salao = "$salaoId"' : ''}';
+    
+    final pendentes = await pb.collection('lancamentos_servicos').getFullList(
+      filter: filter,
+    );
+
+    double totalBruto = 0; // O que o cliente final pagou
+    double totalCotaPartePROF = 0; // A parte que o profissional deve receber (Sua Parte)
+
+    for (var p in pendentes) {
+      totalBruto += (p.data['valor_total_cliente'] ?? 0.0).toDouble();
+      totalCotaPartePROF += (p.data['valor_cota_parte'] ?? 0.0).toDouble();
+    }
+
+    return {
+      'total_servicos': totalBruto,
+      'valor_da_nota': totalCotaPartePROF,
+    };
+  } catch (e) {
+    debugPrint("❌ Erro ao calcular resumo da quinzena: $e");
+    return {'total_servicos': 0, 'valor_da_nota': 0};
+  }
 });
 
 /// Widget Premium de Resumo de Quinzena.
@@ -26,39 +48,42 @@ class ResumoQuinzenaCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resumoAsync = ref.watch(resumoQuinzenaProvider(salaoId));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return resumoAsync.when(
       data: (dados) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          image: const DecorationImage(
-            image: AssetImage('assets/images/dashboard_noise.png'), // Se houver
+          image: isDark ? const DecorationImage(
+            image: AssetImage('assets/images/dashboard_noise.png'),
             opacity: 0.1,
             fit: BoxFit.cover,
-          ),
-          gradient: const LinearGradient(
+          ) : null,
+          gradient: isDark ? const LinearGradient(
             colors: [Color(0xFF1A5A38), Color(0xFF01291B)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-          ),
+          ) : null,
+          color: isDark ? null : Colors.white,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 15,
-              offset: const Offset(0, 10),
+              color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+              blurRadius: isDark ? 15 : 20,
+              offset: Offset(0, isDark ? 10 : 10),
             )
           ],
+          border: isDark ? null : Border.all(color: Colors.black.withValues(alpha: 0.05)),
         ),
         child: Column(
           children: [
-            const Opacity(
+            Opacity(
               opacity: 0.6,
               child: Text(
                 "VALOR PENDENTE (SUA PARTE)",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDark ? Colors.white : Colors.black,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 2.0,
@@ -75,11 +100,11 @@ class ResumoQuinzenaCard extends ConsumerWidget {
                 letterSpacing: -1,
               ),
             ),
-            const Divider(color: Colors.white10, height: 40, thickness: 1),
+            Divider(color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05), height: 40, thickness: 1),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStat("Serviços Totais", "R\$ ${dados['total_servicos']?.toStringAsFixed(2)}"),
+                _buildStat("Serviços Totais", "R\$ ${dados['total_servicos']?.toStringAsFixed(2)}", isDark),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -87,8 +112,8 @@ class ResumoQuinzenaCard extends ConsumerWidget {
                     OutlinedButton.icon(
                       onPressed: () => _gerarExtrato(context, ref),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white70,
-                        side: const BorderSide(color: Colors.white24),
+                        foregroundColor: isDark ? Colors.white70 : Colors.black54,
+                        side: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
@@ -133,6 +158,7 @@ class ResumoQuinzenaCard extends ConsumerWidget {
 
   Future<void> _confirmarEmissao(BuildContext context, WidgetRef ref, double valor) async {
     // 🚀 INÍCIO DA COREOGRAFIA DA NOTA
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     // 1. Mostra o Diálogo de Carregamento Ultra-Leve
     showDialog(
@@ -144,17 +170,23 @@ class ResumoQuinzenaCard extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: MeireTheme.primaryColor,
+              color: isDark ? MeireTheme.primaryColor : Colors.white,
               borderRadius: BorderRadius.circular(24),
+              boxShadow: isDark ? [] : [
+                BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20)
+              ],
             ),
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: MeireTheme.accentColor),
-                SizedBox(height: 24),
+                const CircularProgressIndicator(color: MeireTheme.accentColor),
+                const SizedBox(height: 24),
                 Text(
                   "Finalizando acerto com o salão...",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : MeireTheme.primaryColor, 
+                    fontWeight: FontWeight.bold
+                  ),
                 ),
               ],
             ),
@@ -232,18 +264,26 @@ class ResumoQuinzenaCard extends ConsumerWidget {
     }
   }
 
-  Widget _buildStat(String label, String value) {
+  Widget _buildStat(String label, String value, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: isDark ? Colors.white54 : Colors.black54, 
+            fontSize: 10, 
+            fontWeight: FontWeight.bold
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: isDark ? Colors.white : MeireTheme.primaryColor, 
+            fontSize: 15, 
+            fontWeight: FontWeight.w600
+          ),
         ),
       ],
     );

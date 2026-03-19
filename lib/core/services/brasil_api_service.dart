@@ -4,7 +4,7 @@ import 'package:meire/core/services/pocketbase_service.dart';
 class BrasilApiService {
   static final Dio _dio = Dio();
 
-  // Retorna um Map com os dados da empresa via nosso Backend Meire
+  // Retorna um Map com os dados da empresa via BrasilAPI (Direto ou via Gateway)
   static Future<Map<String, dynamic>> buscarCnpj(String cnpj) async {
     final cnpjLimpo = cnpj.replaceAll(RegExp(r'[^0-9]'), '');
 
@@ -13,32 +13,41 @@ class BrasilApiService {
     }
 
     try {
-      // Usamos a Meire API para centralizar a busca e evitar CORS/Bloqueios
+      // 1. Tentamos a Meire API (Proxy com cache/regras)
       final response = await _dio.get('$meireApiUrl/api/cnpj/$cnpjLimpo');
-
+      
       if (response.statusCode == 200) {
         final data = response.data;
-        
-        if (data['sucesso'] == false) {
-           throw Exception(data['erro'] ?? 'Erro desconhecido no CNPJ');
+        if (data['sucesso'] != false && data['cnae_fiscal'] != null) {
+          return {
+            'razao_social': data['razao_social'],
+            'nome_fantasia': data['nome_fantasia'],
+            'situacao': data['situacao'],
+            'cnae_fiscal': data['cnae_fiscal'].toString(),
+            'cnae_fiscal_descricao': data['cnae_fiscal_descricao'],
+          };
         }
+      }
+    } catch (_) {
+      // Falha no proxy, tentamos direto
+    }
 
+    // 2. Fallback Direto (BrasilAPI) para garantir redundância no onboarding
+    try {
+      final directResponse = await _dio.get('https://brasilapi.com.br/api/cnpj/v1/$cnpjLimpo');
+      if (directResponse.statusCode == 200) {
+        final data = directResponse.data;
         return {
           'razao_social': data['razao_social'],
           'nome_fantasia': data['nome_fantasia'],
-          'situacao': data['situacao'],
+          'situacao': data['descricao_situacao_cadastral'],
+          'cnae_fiscal': data['cnae_fiscal'].toString(),
+          'cnae_fiscal_descricao': data['cnae_fiscal_descricao'],
         };
-      } else {
-        throw Exception('O servidor do CNPJ está instável. Tente novamente.');
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        throw Exception('CNPJ não encontrado na base da Receita.');
-      }
-      final serverMsg = e.response?.data?['erro'];
-      throw Exception(serverMsg ?? 'Sem conexão com o servidor Meire.');
+      throw Exception('Status ${directResponse.statusCode}');
     } catch (e) {
-      throw Exception('Erro ao validar CNPJ: $e');
+      throw Exception('Não foi possível validar o CNPJ. Tente preenchimento manual.');
     }
   }
 }

@@ -1,0 +1,33 @@
+# 🛡️ Cloudflare Pages Ultra-Leve Ignore
+# Reduz o tempo de build no Cloudflare em até 2x ignorando o que não é usado no build web
+
+node_modules/
+.dart_tool/
+.pub-cache/
+.pub/
+build/
+backend_node/
+ios/
+android/
+windows/
+macos/
+linux/
+test/
+*.pfx
+*.key
+*.pub
+npm-debug.log*
+.history
+.vscode
+.idea
+*.iml
+*.ipr
+*.iws
+README.md
+PROJECT_REVIEW.md
+DEPLOY_OPTIMIZATION.md
+package-lock.json
+package.json
+LICENSE
+.git
+.github

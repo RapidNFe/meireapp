@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:meire/features/auth/ui/login_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // ================= PALETA DE CORES (QUIET LUXURY) =================
 const Color kEmeraldDeep = Color(0xFF013220); // Verde Esmeralda Profundo
@@ -52,13 +53,9 @@ class NavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Meiri',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2),
+          SvgPicture.asset(
+            'assets/images/logo.svg',
+            height: isMobile ? 40 : 48,
           ),
           if (!isMobile)
             const Row(
@@ -1259,12 +1256,12 @@ class Footer extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 20),
       child: isMobile
-          ? const Column(
+          ? Column(
               children: [
-                Text('© 2024 Meiri Inteligência para MEI',
-                    style: TextStyle(color: Colors.white54, fontSize: 14)),
-                SizedBox(height: 24),
-                Wrap(
+                Text('© ${DateTime.now().year} Meiri Inteligência para MEI',
+                    style: const TextStyle(color: Colors.white54, fontSize: 14)),
+                const SizedBox(height: 24),
+                const Wrap(
                   spacing: 24,
                   runSpacing: 16,
                   alignment: WrapAlignment.center,
@@ -1276,12 +1273,12 @@ class Footer extends StatelessWidget {
                 ),
               ],
             )
-          : const Row(
+          : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('© 2024 Meiri Inteligência para MEI',
-                    style: TextStyle(color: Colors.white54, fontSize: 14)),
-                Row(
+                Text('© ${DateTime.now().year} Meiri Inteligência para MEI',
+                    style: const TextStyle(color: Colors.white54, fontSize: 14)),
+                const Row(
                   children: [
                     HoverNavText('Termos de Uso', isFooter: true),
                     SizedBox(width: 32),
@@ -1290,7 +1287,7 @@ class Footer extends StatelessWidget {
                     HoverNavText('Ajuda', isFooter: true),
                   ],
                 ),
-                Row(
+                const Row(
                   children: [
                     Icon(Icons.share, color: Colors.white54, size: 20),
                     SizedBox(width: 24),

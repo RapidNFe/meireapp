@@ -62,7 +62,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: esmeraldaFundo,
+      backgroundColor: const Color(0xFF064E3B), // Higher contrast emerald
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -90,10 +90,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Center(
                     child: SvgPicture.asset(
                       'assets/images/logo.svg',
-                      height: 100, // Aumentado conforme solicitado
+                      height: 140, 
                       placeholderBuilder: (BuildContext context) => const SizedBox(
-                        height: 100,
-                        width: 100,
+                        height: 140,
+                        width: 140,
                         child: CircularProgressIndicator(color: amareloDestaque),
                       ),
                     ),

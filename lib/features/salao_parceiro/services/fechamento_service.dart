@@ -13,9 +13,10 @@ class FechamentoService {
   /// e vincula o ID da nota fiscal gerada para auditoria.
   Future<void> realizarFechamento(String salaoId, String nfseId) async {
     try {
-      // 1. Busca todos os registros pendentes vinculados a este salão
+      final userId = pb.authStore.record?.id;
+      // 1. Busca todos os registros pendentes vinculados a este salão e usuário
       final pendentes = await pb.collection('lancamentos_servicos').getFullList(
-            filter: 'salao = "$salaoId" && status = "pendente"',
+            filter: 'salao = "$salaoId" && status = "pendente" && users = "$userId"',
           );
 
       if (pendentes.isEmpty) {

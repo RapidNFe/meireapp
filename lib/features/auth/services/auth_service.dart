@@ -27,6 +27,8 @@ class AuthService {
     required String nomeCompleto,
     required String razaoSocial,
     required String cnpj,
+    String tipoAtuacao = 'servico_geral',
+    bool moduloSalaoAtivo = false,
   }) async {
     try {
       final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
@@ -62,6 +64,8 @@ class AuthService {
         "mei_ativo": true,
         "faturamento_anual": 0.0,
         "producao": false,
+        "tipo_atuacao": tipoAtuacao,
+        "modulo_salao_ativo": moduloSalaoAtivo,
       };
 
       await _pb.collection('users').create(body: body);

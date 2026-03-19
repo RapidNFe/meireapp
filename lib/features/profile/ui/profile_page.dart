@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:meire/core/ui/theme.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
+import 'package:meire/features/salao_parceiro/provider/salao_config_provider.dart';
 
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:file_picker/file_picker.dart';
@@ -492,6 +493,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
               const SizedBox(height: 24),
 
+              // 💈 4. CONFIGURAÇÕES SALÃO PARCEIRO (Elite Move)
+              if (user.getBoolValue('modulo_salao_ativo'))
+                _SalaoConfigCard(),
+
+              const SizedBox(height: 24),
+
 
               
               const SizedBox(height: 32),
@@ -665,6 +672,175 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ...children,
         ],
       ),
+    );
+  }
+}
+
+class _SalaoConfigCard extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_SalaoConfigCard> createState() => _SalaoConfigCardState();
+}
+
+class _SalaoConfigCardState extends ConsumerState<_SalaoConfigCard> {
+  bool _isEditing = false;
+  final _formKey = GlobalKey<FormState>();
+
+  final _cnpjController = TextEditingController();
+  final _razaoController = TextEditingController();
+  final _fantasiaController = TextEditingController();
+  final _comissaoController = TextEditingController();
+  final _cotaController = TextEditingController();
+
+  @override
+  void dispose() {
+    _cnpjController.dispose();
+    _razaoController.dispose();
+    _fantasiaController.dispose();
+    _comissaoController.dispose();
+    _cotaController.dispose();
+    super.dispose();
+  }
+
+  void _loadData(SalaoParceiroModel? data) {
+    if (data != null) {
+      _cnpjController.text = data.cnpj;
+      _razaoController.text = data.razaoSocial;
+      _fantasiaController.text = data.nomeFantasia;
+      _comissaoController.text = data.comissaoPadrao.toString();
+      _cotaController.text = data.valorCotaParte.toString();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final salaoAsync = ref.watch(salaoConfigProvider);
+    final isSavingAsync = ref.watch(salaoConfigNotifierProvider);
+
+    return salaoAsync.when(
+      data: (salao) {
+        if (!_isEditing) _loadData(salao);
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: MeireTheme.accentColor.withValues(alpha: 0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: MeireTheme.accentColor.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.storefront_outlined, color: MeireTheme.accentColor),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Configuração Salão Parceiro',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: isSavingAsync.isLoading 
+                        ? null 
+                        : () async {
+                          if (_isEditing) {
+                            if (_formKey.currentState!.validate()) {
+                              await ref.read(salaoConfigNotifierProvider.notifier).saveSalao(
+                                cnpj: _cnpjController.text,
+                                razaoSocial: _razaoController.text,
+                                nomeFantasia: _fantasiaController.text,
+                                comissao: double.parse(_comissaoController.text),
+                                cotaParte: double.parse(_cotaController.text),
+                              );
+                              setState(() => _isEditing = false);
+                            }
+                          } else {
+                            setState(() => _isEditing = true);
+                          }
+                        },
+                      icon: Icon(_isEditing ? Icons.check : Icons.edit, size: 18),
+                      label: Text(_isEditing ? 'Salvar' : 'Editar'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _isEditing ? Colors.green : MeireTheme.accentColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Estes dados são usados para automatizar seu fechamento de quinzena e emissão de notas fiscais.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                const SizedBox(height: 24),
+                if (!_isEditing) ...[
+                  _InfoRow(label: 'Salão', value: salao?.razaoSocial ?? '⚠️ Não configurado', isPending: salao == null),
+                  const Divider(height: 24),
+                  _InfoRow(label: 'CNPJ', value: salao?.cnpj ?? '---'),
+                  const Divider(height: 24),
+                  _InfoRow(label: 'Comissão', value: '${salao?.comissaoPadrao ?? 0}%'),
+                  const Divider(height: 24),
+                  _InfoRow(label: 'Cota-Parte', value: 'R\$ ${salao?.valorCotaParte ?? 0}'),
+                ] else ...[
+                  TextFormField(
+                    controller: _cnpjController,
+                    decoration: const InputDecoration(labelText: 'CNPJ do Salão *'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _razaoController,
+                    decoration: const InputDecoration(labelText: 'Razão Social *'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _fantasiaController,
+                    decoration: const InputDecoration(labelText: 'Nome Fantasia'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _comissaoController,
+                          decoration: const InputDecoration(labelText: 'Comissão %', suffixText: '%'),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _cotaController,
+                          decoration: const InputDecoration(labelText: 'Cota-Parte R\$', prefixText: 'R\$ '),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                if (isSavingAsync.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Center(child: LinearProgressIndicator(color: MeireTheme.accentColor)),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator(color: MeireTheme.accentColor)),
+      error: (e, _) => Text('Erro ao carregar configurações do salão: $e', style: const TextStyle(color: Colors.red)),
     );
   }
 }

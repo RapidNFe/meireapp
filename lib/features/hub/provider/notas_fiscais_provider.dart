@@ -245,14 +245,15 @@ final impostoEstimativaProvider = FutureProvider<ImpostoEstimativa>((ref) async 
     
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      debugPrint('✅ Resumo Financeiro recebido: ${response.body}');
+      // debugPrint('✅ Resumo Financeiro recebido: ${response.body}');
+      debugPrint('✅ Resumo Financeiro recebido com sucesso.');
       return ImpostoEstimativa.fromJson(json);
     }
     
     debugPrint('⚠️ Erro no Servidor Node: ${response.statusCode}');
     return ImpostoEstimativa.empty();
   } catch (e) {
-    debugPrint('💥 Falha total ao conectar no Node: $e');
+    debugPrint('💥 Falha ao conectar no gateway de impostos.');
     return ImpostoEstimativa.empty();
   }
 });
