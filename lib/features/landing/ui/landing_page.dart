@@ -48,48 +48,52 @@ class NavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          SvgPicture.asset(
-            'assets/images/logo.svg',
-            height: isMobile ? 40 : 48,
-          ),
-          if (!isMobile)
-            const Row(
-              children: [
-                HoverNavText('Funcionalidades'),
-                SizedBox(width: 32),
-                HoverNavText('Planos'),
-                SizedBox(width: 32),
-                HoverNavText('Depoimentos'),
-                SizedBox(width: 32),
-                HoverNavText('FAQ'),
-              ],
+    return Container(
+      color: Colors.white,
+      width: double.infinity,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SvgPicture.asset(
+              'assets/images/logo.svg',
+              height: isMobile ? 32 : 40,
             ),
-          Row(
-            children: [
-              if (!isMobile)
-                TextButton(
+            if (!isMobile)
+              const Row(
+                children: [
+                  HoverNavText('Funcionalidades', color: verdeSecundario),
+                  SizedBox(width: 32),
+                  HoverNavText('Planos', color: verdeSecundario),
+                  SizedBox(width: 32),
+                  HoverNavText('Depoimentos', color: verdeSecundario),
+                  SizedBox(width: 32),
+                  HoverNavText('FAQ', color: verdeSecundario),
+                ],
+              ),
+            Row(
+              children: [
+                if (!isMobile)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context, MaterialPageRoute(builder: (context) => const LoginPage()));
+                    },
+                    child: const Text('Login', style: TextStyle(color: verdeSecundario, fontSize: 16)),
+                  ),
+                if (!isMobile) const SizedBox(width: 16),
+                HoverButton(
+                  text: 'Assinar Agora',
                   onPressed: () {
                     Navigator.push(
                         context, MaterialPageRoute(builder: (context) => const LoginPage()));
                   },
-                  child: const Text('Login', style: TextStyle(color: amareloDestaque, fontSize: 16)),
                 ),
-              if (!isMobile) const SizedBox(width: 16),
-              HoverButton(
-                text: 'Assinar Agora',
-                onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => const LoginPage()));
-                },
-              ),
-            ],
-          )
-        ],
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
@@ -1305,7 +1309,8 @@ class Footer extends StatelessWidget {
 class HoverNavText extends StatefulWidget {
   final String text;
   final bool isFooter;
-  const HoverNavText(this.text, {super.key, this.isFooter = false});
+  final Color? color;
+  const HoverNavText(this.text, {super.key, this.isFooter = false, this.color});
 
   @override
   State<HoverNavText> createState() => _HoverNavTextState();
@@ -1335,7 +1340,7 @@ class _HoverNavTextState extends State<HoverNavText> {
           style: TextStyle(
             color: isHovered
                 ? amareloDestaque
-                : (widget.isFooter ? Colors.white54 : Colors.white70),
+                : (widget.isFooter ? Colors.white54 : (widget.color ?? Colors.white70)),
             fontWeight: FontWeight.w500,
             fontSize: widget.isFooter ? 14 : 16,
           ),

@@ -607,8 +607,23 @@ class _HubPageState extends ConsumerState<HubPage> {
             () => Navigator.pushNamed(context, '/favorite_service_form')),
         const SizedBox(height: 12),
         _buildActionItem(context, Icons.description_outlined,
-            "Declaração Anual", "DASN-SIMEI 2024", 
+            "Declaração Anual", "DASN-SIMEI 2024 • já copiamos o seu CNPJ", 
             () async {
+              // Copia o CNPJ automaticamente
+              final user = ref.read(userProvider);
+              final cnpj = user?.getStringValue('cnpj').replaceAll(RegExp(r'\D'), '') ?? '';
+              if (cnpj.isNotEmpty) {
+                await Clipboard.setData(ClipboardData(text: cnpj));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('CNPJ copiado para transferência!'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+
               final uri = Uri.parse('https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao');
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);

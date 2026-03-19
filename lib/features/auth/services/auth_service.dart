@@ -58,7 +58,6 @@ class AuthService {
         "passwordConfirm": password,
         "name": nomeCompleto,
         "razao_social": razaoSocial,
-        "cpf": "",
         "cnpj": cleanCnpj,
         "status_registro": "conta_criada",
         "mei_ativo": true,
