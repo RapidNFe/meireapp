@@ -67,7 +67,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   void _mostrarOpcaoManual() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('⚠️ Não conseguimos validar o CNPJ automaticamente.'),
+        content: const Text('Não conseguimos validar o CNPJ automaticamente.'),
         duration: const Duration(seconds: 8),
         backgroundColor: verdeSecundario,
         action: SnackBarAction(

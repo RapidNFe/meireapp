@@ -166,15 +166,19 @@ class _HubPageState extends ConsumerState<HubPage> {
         const SizedBox(width: 8),
         Badge(
           isLabelVisible: unreadCount > 0,
-          label: Text(unreadCount.toString()),
-          backgroundColor: MeireTheme.accentColor,
+          label: Text(
+            unreadCount > 9 ? '9+' : unreadCount.toString(),
+            style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: const Color(0xFFE57373), // Vermelho de Alerta
           offset: const Offset(-4, 4),
           child: IconButton(
             onPressed: () {
               NotificationsModal.show(context);
             },
-            icon: Icon(Icons.notifications_none,
-                color: isDark ? Colors.white : MeireTheme.primaryColor),
+            icon: const Icon(Icons.notifications_none_rounded,
+                color: Color(0xFFCC8B00), // Ouro Meiri
+                size: 26),
             style: IconButton.styleFrom(
                 backgroundColor:
                     isDark ? const Color(0xFF1E293B) : MeireTheme.iceGray,
@@ -888,7 +892,7 @@ class _HubPageState extends ConsumerState<HubPage> {
           BottomNavigationBarItem(
               icon: Icon(Icons.people_alt), label: "Clientes"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.analytics_outlined), label: "Relatórios"),
+              icon: Icon(Icons.menu_book_rounded), label: "Relatórios"),
           BottomNavigationBarItem(
               icon: Icon(Icons.person_outline), label: "Perfil"),
         ],

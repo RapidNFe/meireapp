@@ -29,7 +29,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                '🛡️ Política de Privacidade e Proteção de Dados (Meiri App)',
+                'Política de Privacidade e Proteção de Dados (Meiri App)',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

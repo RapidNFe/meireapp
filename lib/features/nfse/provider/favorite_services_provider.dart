@@ -7,7 +7,7 @@ class FavoriteService {
   final String id;
   final String idMunicipio;
   final String apelido;
-  final String codigoNational;
+  final String codigoNacional;
   final String descricaoBase;
   final double? valorBase;
   final String? idClientePadrao;
@@ -18,7 +18,7 @@ class FavoriteService {
     String? id,
     required this.idMunicipio,
     required this.apelido,
-    required this.codigoNational,
+    required this.codigoNacional,
     required this.descricaoBase,
     this.valorBase,
     this.idClientePadrao,
@@ -29,7 +29,7 @@ class FavoriteService {
   FavoriteService copyWith({
     String? idMunicipio,
     String? apelido,
-    String? codigoNational,
+    String? codigoNacional,
     String? descricaoBase,
     double? valorBase,
     String? idClientePadrao,
@@ -40,7 +40,7 @@ class FavoriteService {
       id: id,
       idMunicipio: idMunicipio ?? this.idMunicipio,
       apelido: apelido ?? this.apelido,
-      codigoNational: codigoNational ?? this.codigoNational,
+      codigoNacional: codigoNacional ?? this.codigoNacional,
       descricaoBase: descricaoBase ?? this.descricaoBase,
       valorBase: valorBase ?? this.valorBase,
       idClientePadrao: idClientePadrao ?? this.idClientePadrao,
@@ -54,7 +54,7 @@ class FavoriteService {
       id: record.id,
       idMunicipio: record.getStringValue('id_municipio'),
       apelido: record.getStringValue('apelido'),
-      codigoNational: record.getStringValue('codigo_national'),
+      codigoNacional: record.getStringValue('codigo_nacional'),
       descricaoBase: record.getStringValue('descricao_padrao'),
       valorBase: record.getDoubleValue('valor_base'),
       idClientePadrao: record.getStringValue('id_cliente_padrao'),
@@ -80,7 +80,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
 
     try {
       final records = await _pb.collection('servicos_favoritos').getFullList(
-        filter: 'user = "$_userId"',
+        filter: 'user_id = "$_userId"',
       );
       
       if (records.isEmpty) {
@@ -98,7 +98,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
       FavoriteService(
         idMunicipio: 'Goiânia/GO',
         apelido: 'SERVIÇOS GERAIS MEI',
-        codigoNational: '06.01.01',
+        codigoNacional: '06.01.01',
         descricaoBase: 'Nota fiscal referente a serviços prestados no período de {QUINZENA_PASSADA}.',
         userId: _userId ?? 'mock',
       ),
@@ -113,7 +113,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         "user_id": _userId,
         "id_municipio": service.idMunicipio,
         "apelido": service.apelido,
-        "codigo_national": service.codigoNational,
+        "codigo_nacional": service.codigoNacional,
         "descricao_padrao": service.descricaoBase,
         "valor_base": service.valorBase,
         "id_cliente_padrao": service.idClientePadrao,

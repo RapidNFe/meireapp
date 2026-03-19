@@ -18,17 +18,38 @@ class NotificationsModal extends ConsumerWidget {
     );
   }
 
-  void _markAsRead(WidgetRef ref, NotificationModel notification) async {
-    if (notification.isRead) return;
-    
+  void _markAllAsRead(BuildContext context, WidgetRef ref) async {
+    final notifications = ref.read(notificationsProvider).valueOrNull ?? [];
+    final unread = notifications.where((n) => !n.isRead).toList();
+    if (unread.isEmpty) return;
+
     final pbInstance = ref.read(pbProvider);
     try {
-      await pbInstance.collection('notificacoes').update(
-        notification.id,
-        body: {'lido': true},
-      );
+      for (var n in unread) {
+        await pbInstance.collection('notificacoes').update(n.id, body: {'lida': true});
+      }
     } catch (e) {
-      debugPrint('Erro ao marcar como lida: $e');
+      debugPrint('Erro ao marcar todas como lidas: $e');
+    }
+  }
+
+  void _markAsRead(BuildContext context, WidgetRef ref, NotificationModel notification) async {
+    if (!notification.isRead) {
+      final pbInstance = ref.read(pbProvider);
+      try {
+        await pbInstance.collection('notificacoes').update(
+          notification.id,
+          body: {'lida': true}, // 'lida' conforme novo padrão
+        );
+      } catch (e) {
+        debugPrint('Erro ao marcar como lida: $e');
+      }
+    }
+
+    // Navegação Inteligente (Ação de Rota)
+    if (context.mounted && notification.routeAction != null && notification.routeAction!.isNotEmpty) {
+      Navigator.pop(context); // Fecha o modal antes de navegar
+      Navigator.pushNamed(context, notification.routeAction!);
     }
   }
 
@@ -54,16 +75,24 @@ class NotificationsModal extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Central de Notificações",
+                  "Avisos da Meire",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: MeireTheme.primaryColor,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => _markAllAsRead(context, ref),
+                      child: const Text("Limpar", style: TextStyle(color: MeireTheme.accentColor, fontWeight: FontWeight.bold)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -81,7 +110,7 @@ class NotificationsModal extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final n = notifications[index];
                     return InkWell(
-                      onTap: () => _markAsRead(ref, n),
+                      onTap: () => _markAsRead(context, ref, n),
                       borderRadius: BorderRadius.circular(12),
                       child: _buildNotificationItem(
                         context,
@@ -124,7 +153,7 @@ class NotificationsModal extends ConsumerWidget {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 40),
           child: Text(
-            "Você não tem pendências no momento. A Meire te avisará se algo precisar de atenção.",
+            "Você não tem avisos pendentes. A Meire te notificará se houver novidades fiscais.",
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF757575)),
           ),
@@ -135,18 +164,20 @@ class NotificationsModal extends ConsumerWidget {
 
   IconData _getIconForType(String type) {
     switch (type) {
-      case 'warning': return Icons.warning_amber_rounded;
-      case 'success': return Icons.check_circle_outline_rounded;
-      case 'error': return Icons.error_outline_rounded;
+      case 'fiscal': return Icons.account_balance_outlined;
+      case 'faturamento': return Icons.trending_up_rounded;
+      case 'sucesso': return Icons.check_circle_outline_rounded;
+      case 'sistema': return Icons.settings_suggest_outlined;
       default: return Icons.info_outline_rounded;
     }
   }
 
   Color _getColorForType(String type) {
     switch (type) {
-      case 'warning': return Colors.orange.shade700;
-      case 'success': return Colors.green.shade700;
-      case 'error': return Colors.red.shade700;
+      case 'fiscal': return Colors.red.shade700;
+      case 'faturamento': return MeireTheme.accentColor;
+      case 'sucesso': return Colors.green.shade700;
+      case 'sistema': return Colors.blue.shade700;
       default: return MeireTheme.primaryColor;
     }
   }

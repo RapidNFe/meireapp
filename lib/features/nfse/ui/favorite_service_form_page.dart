@@ -78,7 +78,7 @@ class _FavoriteServiceFormPageState
       final newService = FavoriteService(
         idMunicipio: _idMunicipioController.text,
         apelido: _apelidoController.text.toUpperCase(),
-        codigoNational: _codigoNationalController.text,
+        codigoNacional: _codigoNationalController.text,
         descricaoBase: _descricaoBaseController.text,
         valorBase: valorBase,
         issRetido: _issRetido,
