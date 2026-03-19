@@ -34,9 +34,11 @@ class ExtratoGenerator {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text("EXTRATO DE SERVIÇOS", 
+                        // ignore: prefer_const_constructors
                         style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFF1E1E1E))),
                       pw.SizedBox(height: 4),
                       pw.Text("MEIRI PLATINUM v2.1", 
+                        // ignore: prefer_const_constructors
                         style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600, letterSpacing: 1.2)),
                     ],
                   ),
@@ -99,6 +101,7 @@ class ExtratoGenerator {
                   crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                   children: [
                     pw.Text("RESUMO CONSOLIDADO", 
+                      // ignore: prefer_const_constructors
                       style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12, color: PdfColor.fromInt(0xFF1A5A38))),
                     pw.Divider(color: PdfColors.grey300),
                     _buildSummaryRow("Total Movimentado (Bruto)", "R\$ ${valorBruto.toStringAsFixed(2)}"),
@@ -111,6 +114,7 @@ class ExtratoGenerator {
                         pw.Text("BASE PARA NFS-E (Soberania)", 
                           style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
                         pw.Text("R\$ ${valorLiquido.toStringAsFixed(2)}", 
+                          // ignore: prefer_const_constructors
                           style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColor.fromInt(0xFFCC8B00))),
                       ],
                     ),
@@ -122,7 +126,8 @@ class ExtratoGenerator {
                 child: pw.Column(
                   children: [
                     pw.Text("Este documento é um demonstrativo auxiliar de faturamento.", 
-                      style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey)),
+                      // ignore: prefer_const_constructors
+                      style: pw.TextStyle(fontSize: 8, color: PdfColors.grey)),
                     pw.Text("Gerado automaticamente pelo MEIRI - Bússola Financeira do MEI", 
                       style: pw.TextStyle(fontSize: 8, color: PdfColors.grey500, fontWeight: pw.FontWeight.bold)),
                   ],
