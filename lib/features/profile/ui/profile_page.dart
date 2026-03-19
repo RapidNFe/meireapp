@@ -25,6 +25,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   final _imController = TextEditingController();
   final _cepController = TextEditingController();
+  final _cnaeController = TextEditingController();
   final _senhaPfxController = TextEditingController();
   PlatformFile? _pickedFile;
 
@@ -39,6 +40,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     if (user != null) {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
+      _cnaeController.text = user.getStringValue('cnae');
       _senhaPfxController.text = user.getBoolValue('possui_certificado') ? '********' : '';
     }
   }
@@ -47,6 +49,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void dispose() {
     _imController.dispose();
     _cepController.dispose();
+    _cnaeController.dispose();
     _senhaPfxController.dispose();
     super.dispose();
   }
@@ -62,6 +65,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       final Map<String, dynamic> body = {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'cnae': _cnaeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
       };
 
       // 1. Atualiza dados Cadastrais no PocketBase (Dados Seguros/Públicos)
@@ -469,6 +473,31 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(labelText: 'CEP'),
                           ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _cnaeController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'CNAE Principal',
+                              hintText: 'Ex: 9602501',
+                              helperText: '9602501 para Barbeiro/Cabelereiro',
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Módulo Salão Parceiro', style: TextStyle(fontSize: 14)),
+                            subtitle: const Text('Ativa a aba de Vendas na navegação inferior', style: TextStyle(fontSize: 12)),
+                            value: user.getBoolValue('modulo_salao_ativo'),
+                            activeColor: MeireTheme.accentColor,
+                            onChanged: (bool value) async {
+                              await ref.read(pbProvider).collection('users').update(user.id, body: {
+                                'modulo_salao_ativo': value,
+                              });
+                              await ref.read(pbProvider).collection('users').authRefresh();
+                              if (mounted) setState(() {});
+                            },
+                          ),
                         ],
                       )
                     : Column(
@@ -484,6 +513,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             label: 'CEP', 
                             value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
                             isPending: user.getStringValue('cep').isEmpty,
+                          ),
+                          const Divider(height: 24),
+                          _InfoRow(
+                            label: 'CNAE', 
+                            value: user.getStringValue('cnae').isEmpty ? '⚠️ Pendente' : user.getStringValue('cnae'),
+                            isPending: user.getStringValue('cnae').isEmpty,
+                          ),
+                          const Divider(height: 24),
+                          _InfoRow(
+                            label: 'Módulo Salão', 
+                            value: user.getBoolValue('modulo_salao_ativo') ? 'Ativado' : 'Desativado',
                           ),
                         ],
                       ),
