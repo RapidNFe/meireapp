@@ -304,11 +304,11 @@ class _HubPageState extends ConsumerState<HubPage> {
     );
   }
 
-  String _getGreeting(String userName) {
+  String _getGreeting(String name) {
     final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) return "Bom dia, $userName";
-    if (hour >= 12 && hour < 18) return "Boa tarde, $userName";
-    return "Boa noite, $userName";
+    if (hour < 12) return "Bom dia, $name"; // Removido Emoji para evitar erros de fonte no Web
+    if (hour < 18) return "Boa tarde, $name";
+    return "Boa noite, $name";
   }
 
   Widget _buildTermometroCard(BuildContext context) {
@@ -327,7 +327,7 @@ class _HubPageState extends ConsumerState<HubPage> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           )
@@ -344,7 +344,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                   const Text("Resumo Financeiro", style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(20)),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
                     child: Text(imposto.referencia.isNotEmpty ? imposto.referencia : "Atual", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -430,7 +430,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                   color:
-                      Colors.amber.shade50.withValues(alpha: isDark ? 0.1 : 1),
+                      Colors.amber.shade50.withOpacity(isDark ? 0.1 : 1),
                   borderRadius: BorderRadius.circular(12)),
               child: Row(
                 children: [
@@ -494,7 +494,7 @@ class _HubPageState extends ConsumerState<HubPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: MeireTheme.primaryColor.withValues(alpha: 0.3),
+              color: MeireTheme.primaryColor.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 10))
         ],
@@ -505,7 +505,7 @@ class _HubPageState extends ConsumerState<HubPage> {
             right: 0,
             top: 10,
             child: Icon(Icons.event_available,
-                size: 100, color: Colors.white.withValues(alpha: 0.05)),
+                size: 100, color: Colors.white.withOpacity(0.05)),
           ),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -546,9 +546,9 @@ class _HubPageState extends ConsumerState<HubPage> {
                   margin: const EdgeInsets.only(bottom: 16.0),
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +579,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("✨ CNPJ $cnpj copiado para o pagamento!"),
+                            content: Text("CNPJ $cnpj copiado para o pagamento!"),
                             backgroundColor: MeireTheme.primaryColor,
                             behavior: SnackBarBehavior.floating,
                             duration: const Duration(seconds: 4),
@@ -693,12 +693,12 @@ class _HubPageState extends ConsumerState<HubPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.history_edu_rounded, size: 48, color: MeireTheme.accentColor.withValues(alpha: 0.1)),
+                    Icon(Icons.history_edu_rounded, size: 48, color: MeireTheme.accentColor.withOpacity(0.1)),
                     const SizedBox(height: 16),
                     Text(
                       "Nenhuma atividade recente",
                       style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : MeireTheme.primaryColor.withValues(alpha: 0.5),
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : MeireTheme.primaryColor.withOpacity(0.5),
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -761,7 +761,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: CircleAvatar(
-                      backgroundColor: statusColor.withValues(alpha: 0.9),
+                      backgroundColor: statusColor.withOpacity(0.9),
                       radius: 20,
                       child: Icon(statusIcon, color: statusColor, size: 20),
                     ),
@@ -803,8 +803,8 @@ class _HubPageState extends ConsumerState<HubPage> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        splashColor: MeireTheme.accentColor.withValues(alpha: 0.1),
-        highlightColor: MeireTheme.accentColor.withValues(alpha: 0.05),
+        splashColor: MeireTheme.accentColor.withOpacity(0.1),
+        highlightColor: MeireTheme.accentColor.withOpacity(0.05),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -814,7 +814,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                 Border.all(color: isDark ? Colors.white10 : MeireTheme.iceGray),
             boxShadow: isDark ? [] : [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
+                color: Colors.black.withOpacity(0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
@@ -825,7 +825,7 @@ class _HubPageState extends ConsumerState<HubPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white.withValues(alpha: 0.05) : MeireTheme.iceGray,
+                  color: isDark ? Colors.white.withOpacity(0.05) : MeireTheme.iceGray,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon,
@@ -873,7 +873,7 @@ class _HubPageState extends ConsumerState<HubPage> {
             children: [
               const Text("Performance Semestral",
                   style: TextStyle(fontWeight: FontWeight.bold)),
-              Icon(Icons.timeline, color: Colors.grey.shade400, size: 20),
+              const Icon(Icons.article_rounded, color: MeireTheme.accentColor, size: 28),
             ],
           ),
           const SizedBox(height: 24),

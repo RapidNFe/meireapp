@@ -166,7 +166,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     right: -20,
                     top: -20,
                     child: Opacity(
-                      opacity: 0.1,
+                      opacity: 0.25, // Aumentado de 0.1 para melhor visibilidade
                       child: SvgPicture.asset(
                         'assets/images/logo.svg',
                         width: 200,
@@ -230,7 +230,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               color: MeireTheme.primaryColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
+            child: const Icon(Icons.description_rounded, color: MeireTheme.primaryColor, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
