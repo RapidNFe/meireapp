@@ -27,6 +27,7 @@ class AuthService {
     required String nomeCompleto,
     required String razaoSocial,
     required String cnpj,
+    bool isBeleza = false,
   }) async {
     try {
       final cleanCnpj = cnpj.replaceAll(RegExp(r'\D'), '');
@@ -57,6 +58,7 @@ class AuthService {
         "name": nomeCompleto,
         "razao_social": razaoSocial,
         "cnpj": cleanCnpj,
+        "is_beleza": isBeleza,
         "status_registro": "conta_criada",
         "mei_ativo": true,
         "faturamento_anual": 0.0,

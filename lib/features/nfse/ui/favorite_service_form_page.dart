@@ -23,7 +23,34 @@ class _FavoriteServiceFormPageState
   final _codigoNationalController = TextEditingController();
   final _descricaoBaseController = TextEditingController();
   final _valorBaseController = TextEditingController();
-  bool _issRetido = false;
+   bool _issRetido = false;
+ 
+   @override
+   void initState() {
+     super.initState();
+     _codigoNationalController.addListener(_checkEsteticaLogic);
+
+     // Inteligência: Se o usuário é do setor de Beleza/Estética (Setado no cadastro via BrasilAPI), 
+     // já inicia com a opção de ISS Retido ATIVADA.
+     Future.microtask(() {
+        final user = ref.read(userProvider);
+        if (user?.getBoolValue('is_beleza') == true) {
+          if (mounted) setState(() => _issRetido = true);
+        }
+     });
+   }
+ 
+   void _checkEsteticaLogic() {
+     final code = _codigoNationalController.text.replaceAll('.', '').trim();
+     // Lógica de Salão Parceiro / Estética (LC 116: 06.01 e 06.02)
+     if (code.startsWith('0601') || code.startsWith('0602')) {
+       if (!_issRetido) {
+         setState(() {
+           _issRetido = true;
+         });
+       }
+     }
+   }
 
   @override
   void dispose() {
@@ -32,6 +59,7 @@ class _FavoriteServiceFormPageState
     _codigoNationalController.dispose();
     _descricaoBaseController.dispose();
     _valorBaseController.dispose();
+    _codigoNationalController.removeListener(_checkEsteticaLogic);
     super.dispose();
   }
 

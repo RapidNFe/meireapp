@@ -99,6 +99,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             nomeCompleto: _nomeCompleto,
             razaoSocial: _razaoSocial,
             cnpj: cleanCnpj,
+            isBeleza: _isBeleza,
           );
 
       if (mounted) {
