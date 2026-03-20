@@ -12,7 +12,12 @@ class BotaoSuporteMeiri extends ConsumerWidget {
       onPressed: () => SupportModal.show(context, ref),
       backgroundColor: MeireTheme.primaryColor,
       elevation: 4,
-      child: const Icon(Icons.support_agent, color: Colors.white, size: 28),
+      child: Image.asset(
+        'assets/images/meiribb.png',
+        width: 32,
+        height: 32,
+        fit: BoxFit.contain,
+      ),
     );
   }
 }

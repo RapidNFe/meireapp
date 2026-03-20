@@ -97,11 +97,12 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
                   )
                 ],
               ),
-              child: const Center(
-                child: Icon(
-                  Icons.support_agent_rounded,
-                  color: MeireTheme.primaryColor,
-                  size: 28,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/meiribb.png',
+                  width: 38,
+                  height: 38,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
