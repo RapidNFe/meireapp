@@ -31,22 +31,22 @@ class MeireTheme {
         primary: isDark ? const Color(0xFFE2E8F0) : primaryColor,
         secondary: accentColor,
       ),
-      textTheme: GoogleFonts.interTextTheme(baseTheme.textTheme).copyWith(
-        displayLarge: GoogleFonts.inter(
+      textTheme: GoogleFonts.outfitTextTheme(baseTheme.textTheme).copyWith(
+        displayLarge: GoogleFonts.outfit(
           fontWeight: FontWeight.bold,
           color: isDark ? Colors.white : primaryColor,
           fontSize: 24 * scale,
         ),
-        titleLarge: GoogleFonts.inter(
+        titleLarge: GoogleFonts.outfit(
           fontWeight: FontWeight.w600,
           color: isDark ? Colors.white : primaryColor,
           fontSize: 18 * scale,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.outfit(
           color: isDark ? const Color(0xFFCBD5E1) : textBodyColor,
           fontSize: 14 * scale,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.outfit(
           color: isDark ? const Color(0xFFCBD5E1) : textBodyColor,
           fontSize: 12 * scale,
         ),

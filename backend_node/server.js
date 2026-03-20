@@ -373,8 +373,8 @@ app.get('/api/dashboard/resumo/:userId', async (req, res) => {
         const somaRows = await query(`
             SELECT SUM(valor) as total, COUNT(id) as qtd 
             FROM notas_fiscais 
-            WHERE user = ? AND status = 'CONCLUIDA' AND (competencia >= ? OR (competencia IS NULL AND created >= ?))
-        `, [userId, inicioAno, inicioAno]);
+            WHERE user = ? AND status = 'CONCLUIDA' AND competencia >= ?
+        `, [userId, inicioAno]);
 
         const faturamentoTotal = somaRows[0].total || 0;
         const qtdEmitida = somaRows[0].qtd || 0;
@@ -383,10 +383,10 @@ app.get('/api/dashboard/resumo/:userId', async (req, res) => {
 
         // 2. Pega as últimas 5 notas para o histórico rápido
         const notas = await query(`
-            SELECT id, tomador_nome, valor, created, status, chave_acesso 
+            SELECT id, tomador_nome, valor, competencia, status, chave_acesso 
             FROM notas_fiscais 
             WHERE user = ? 
-            ORDER BY created DESC 
+            ORDER BY competencia DESC 
             LIMIT 5
         `, [userId]);
 
@@ -394,7 +394,7 @@ app.get('/api/dashboard/resumo/:userId', async (req, res) => {
             id: nota.id,
             tomador: nota.tomador_nome,
             valor: nota.valor,
-            data: nota.created,
+            data: nota.competencia,
             status: nota.status,
             chave_acesso: nota.chave_acesso
         }));
@@ -645,8 +645,8 @@ app.get('/api/impostos/estimativa/:userId', async (req, res) => {
             SELECT valor FROM notas_fiscais 
             WHERE user = ? 
             AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
-            AND (competencia LIKE ? OR (competencia IS NULL AND created LIKE ?))
-        `, [userId, `${anoAtual}-${mesAtualNum}%`, `${anoAtual}-${mesAtualNum}%`]);
+            AND competencia LIKE ?
+        `, [userId, `${anoAtual}-${mesAtualNum}%`]);
 
         console.log(`✅ Notas filtradas (Mês Atual): ${records.length}`);
 
@@ -683,10 +683,10 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
 
         // Priorizamos a data de competência para o histórico visual
         const records = await query(`
-            SELECT valor, created, competencia FROM notas_fiscais 
+            SELECT valor, competencia FROM notas_fiscais 
             WHERE user = ? 
             AND status IN ('emitida', 'CONCLUIDA', 'Autorizada')
-            ORDER BY COALESCE(competencia, created) DESC
+            ORDER BY competencia DESC
         `, [userId]);
 
         console.log(`✅ Notas no histórico: ${records.length}`);
@@ -708,9 +708,7 @@ app.get('/api/faturamento/historico/:userId', async (req, res) => {
 
         // 3. Agregamos os valores das notas no mês correspondente
         records.forEach(nota => {
-            // Usa competência se disponível, senão usa a data de criação
-            const dataBase = nota.competencia || nota.created;
-            const dataNota = new Date(dataBase);
+            const dataNota = new Date(nota.competencia);
             
             // Encontramos o bucket de mês/ano correto no histórico
             const item = historico.find(h => h.mesNum === dataNota.getMonth() && h.ano === dataNota.getFullYear());
@@ -883,7 +881,7 @@ app.post('/api/certificados/upload', upload.single('arquivo_pfx'), async (req, r
 });
 
 // 🔄 GATEWAY INTELIGENTE (ESTRATÉGIA MEIRE) - REDIRECIONAMENTO PARA POCKETBASE
-app.use('/', proxy('http://127.0.0.1:8090', {
+app.use('/', proxy(config.pocketbase.url, {
     proxyReqPathResolver: (req) => {
         console.log(`🚀 [PROXY] Encaminhando: ${req.method} ${req.originalUrl}`);
         return req.originalUrl;

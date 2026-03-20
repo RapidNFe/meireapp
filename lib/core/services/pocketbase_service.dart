@@ -64,17 +64,28 @@ class SecureAuthStore extends AuthStore {
   }
 }
 
-// Configuração de Ambientes
+// Configurações de Blindagem de Ambiente (Soberania de Ambiente)
 const String _prodUrl = 'https://api.meireapp.com.br';
-const String _devApiUrl = 'http://127.0.0.1:3000'; // Gateway Inteligente (Node)
+const String _devApiUrl = 'http://127.0.0.1:3000'; // Gateway Inteligente (Local)
 
-// Em desenvolvimento, apontamos TUDO para o Gateway (3000) para testar o Proxy/CORS localmente
-// Em produção, apontamos para o domínio oficial que faz o roteamento
-const String meirePbUrl = kDebugMode ? _devApiUrl : _prodUrl;
-const String meireApiUrl = kDebugMode ? _devApiUrl : _prodUrl;
+// Lógica de Detecção Atômica:
+// 1. Se estivermos em Modo Debug (flutter run) -> DEV
+// 2. Se estivermos na Web e o host for localhost/127.0.0.1 -> DEV
+// 3. Caso contrário -> PRODUÇÃO (Deploy Oficial)
+bool get _isDevelopment {
+  if (kDebugMode) return true;
+  if (kIsWeb) {
+    final host = Uri.base.host;
+    return host == 'localhost' || host == '127.0.0.1';
+  }
+  return false;
+}
+
+final String meirePbUrl = _isDevelopment ? _devApiUrl : _prodUrl;
+final String meireApiUrl = _isDevelopment ? _devApiUrl : _prodUrl;
 
 // Retrocompatibilidade
-const String meireBaseUrl = meirePbUrl;
+final String meireBaseUrl = meirePbUrl;
 
 // Create the global PocketBase client instance with secure storage
 final pocketBaseAuthStore = SecureAuthStore();

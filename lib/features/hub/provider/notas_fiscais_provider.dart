@@ -14,6 +14,7 @@ class NotaFiscal {
   final String numeroNota;
   final DateTime created;
   final DateTime competencia;
+  final String servico;
 
   NotaFiscal({
     required this.id,
@@ -23,6 +24,7 @@ class NotaFiscal {
     required this.numeroNota,
     required this.created,
     required this.competencia,
+    required this.servico,
   });
 
   factory NotaFiscal.fromRecord(RecordModel record) {
@@ -46,6 +48,7 @@ class NotaFiscal {
       competencia: (DateTime.tryParse(record.getStringValue('competencia')) ?? 
                    DateTime.tryParse(record.getStringValue('created')) ?? 
                    DateTime.now()).toLocal(),
+      servico: record.getStringValue('servico'),
     );
   }
 }
@@ -62,7 +65,7 @@ final historicoNotasProvider = StreamProvider.autoDispose<List<NotaFiscal>>((ref
   Future<List<NotaFiscal>> fetchNotas() async {
     try {
       final records = await pb.collection('notas_fiscais').getFullList(
-        sort: '-created',
+        sort: '-competencia',
         filter: 'user = "${user.id}"',
       );
       return records.map((r) => NotaFiscal.fromRecord(r)).toList();
@@ -163,7 +166,7 @@ final revenueStatsProvider = FutureProvider<RevenueStats>((ref) async {
       // Também contamos se estiver "PROCESSANDO", mas o ideal é só sucessos reais
       if (!isSucesso && status != 'PROCESSANDO') continue;
 
-      final date = n.created;
+      final date = n.competencia;
       final val = n.valor;
 
       // Filtramos o ano atual e o mês atual

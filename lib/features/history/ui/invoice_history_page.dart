@@ -53,7 +53,7 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
             clientName: n.tomadorNome,
             clientCnpj: '', // Não temos esse campo na model básica de NotaFiscal no momento
             amount: n.valor,
-            issueDate: n.created,
+            issueDate: n.competencia,
             status: n.status,
             chaveAcesso: null, // Campo não disponível na NotaFiscal simplificada
           );

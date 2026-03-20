@@ -751,7 +751,7 @@ class _HubPageState extends ConsumerState<HubPage> {
                       statusIcon = Icons.sync;
                   }
 
-                  final dataFormatada = DateFormat("dd MMM, HH:mm", "pt_BR").format(nota.created);
+                  final dataFormatada = DateFormat("dd MMM, HH:mm", "pt_BR").format(nota.competencia);
                   final subtitle = nota.numeroNota.isNotEmpty 
                       ? "$dataFormatada • Nota #${nota.numeroNota}"
                       : dataFormatada;

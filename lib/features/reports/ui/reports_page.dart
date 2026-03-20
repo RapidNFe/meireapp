@@ -6,30 +6,28 @@ import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:meire/features/reports/services/report_generator_service.dart';
+import 'package:meire/features/reports/utils/pdf_generator_helper.dart';
+import 'package:meire/features/reports/ui/report_preview_modal.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ReportItem {
   final String id;
   final String periodo;
   final double valorTotal;
-  final String pdfUrl;
   final DateTime created;
 
   ReportItem({
     required this.id,
     required this.periodo,
     required this.valorTotal,
-    required this.pdfUrl,
     required this.created,
   });
 
-  factory ReportItem.fromRecord(RecordModel record, String baseUrl) {
+  factory ReportItem.fromRecord(RecordModel record) {
     return ReportItem(
       id: record.id,
       periodo: record.getStringValue('periodo'),
       valorTotal: record.getDoubleValue('valor_total'),
-      pdfUrl: "$baseUrl/api/files/${record.collectionId}/${record.id}/${record.getStringValue('arquivo_pdf')}",
       created: (DateTime.tryParse(record.getStringValue('created')) ?? DateTime.now()).toLocal(),
     );
   }
@@ -45,7 +43,7 @@ final generatedReportsProvider = FutureProvider.autoDispose<List<ReportItem>>((r
     sort: '-created',
   );
 
-  return records.map((r) => ReportItem.fromRecord(r, pb.baseURL)).toList();
+  return records.map((r) => ReportItem.fromRecord(r)).toList();
 });
 
 class ReportsPage extends ConsumerStatefulWidget {
@@ -115,6 +113,21 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         end: _selectedDateRange!.end,
         allNotas: notasList,
       );
+
+        // Gatilho de Visualização (Versão Web): Experiência Premium
+        if (mounted) {
+          final periodStr = DateFormat('MMMM/yyyy', 'pt_BR').format(_selectedDateRange!.start);
+          final filteredNotas = notasList.where((n) {
+            return n.competencia.isAfter(_selectedDateRange!.start.subtract(const Duration(minutes: 1))) &&
+                   n.competencia.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
+          }).toList();
+          
+          mostrarModalRelatorio(
+            context,
+            "${periodStr[0].toUpperCase()}${periodStr.substring(1)}",
+            filteredNotas,
+          );
+        }
 
       if (result != null && mounted) {
         ref.invalidate(generatedReportsProvider);
@@ -215,41 +228,71 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
   }
 
   Widget _buildReportCard(ReportItem report) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () {
+          final revenueData = ref.read(revenueStatsProvider).value;
+          if (revenueData == null) return;
+          
+          final pdfNotas = revenueData.allNotas.where((nota) {
+            final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
+            final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
+            return formattedNotaPeriodo == report.periodo;
+          }).toList();
+
+          mostrarModalRelatorio(context, report.periodo, pdfNotas);
+        },
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: MeireTheme.iceGray),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: MeireTheme.primaryColor.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.description, color: MeireTheme.primaryColor),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: MeireTheme.iceGray),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(report.periodo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(
-                  "Total: R\$ ${NumberFormat("#,##0.00", "pt_BR").format(report.valorTotal)}",
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: MeireTheme.primaryColor.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
+                child: const Icon(Icons.description, color: MeireTheme.primaryColor),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(report.periodo, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      "Total: R\$ ${NumberFormat("#,##0.00", "pt_BR").format(report.valorTotal)}",
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                   final revenueData = ref.read(revenueStatsProvider).value;
+                   if (revenueData == null) return;
+
+                   // Re-filter notes for the period
+                   final pdfNotas = revenueData.allNotas.where((nota) {
+                     final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
+                     final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
+                     return formattedNotaPeriodo == report.periodo;
+                   }).toList();
+                   
+                   await PdfGeneratorHelper.gerarEBaixarPDF(report.periodo, pdfNotas);
+                },
+                icon: const Icon(Icons.download_for_offline_outlined, color: MeireTheme.primaryColor),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () => launchUrl(Uri.parse(report.pdfUrl)),
-            icon: const Icon(Icons.download_for_offline_outlined, color: MeireTheme.primaryColor),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -320,7 +363,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                     width: 20,
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Text("Gerar PDF Inteligente", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                : const Text("Salvar Dados do Relatório", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
