@@ -54,17 +54,17 @@ class _LandingPageState extends State<LandingPage> {
               onFaqTap: () => _scrollTo(_faqKey),
             ),
             _NoBrainerPricingSection(key: _pricingKey), // Seção de preço trazida para o topo (Logo após Hero)
-            DividerSection(),
-            CustoInvisivelSection(), // A Âncora (Avareza/Ira)
-            DividerSection(),
+            const DividerSection(),
+            const CustoInvisivelSection(), // A Âncora (Avareza/Ira)
+            const DividerSection(),
             FeaturesSection(key: _featuresKey), // Bento Grid (Preguiça/Luxúria)
-            DividerSection(),
+            const DividerSection(),
             TestimonialsSection(key: _testimonialsKey),
-            DividerSection(),
+            const DividerSection(),
             FAQSection(key: _faqKey),
-            DividerSection(),
+            const DividerSection(),
             const BottomCTASection(),
-            DividerSection(), // Separador elegante
+            const DividerSection(), // Separador elegante
             const FooterSection(),
           ],
         ),

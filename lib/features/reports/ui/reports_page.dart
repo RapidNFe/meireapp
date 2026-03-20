@@ -116,7 +116,8 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
 
         // Gatilho de Visualização (Versão Web): Experiência Premium
         if (mounted) {
-          final periodStr = DateFormat('MMMM/yyyy', 'pt_BR').format(_selectedDateRange!.start);
+          final periodoStr = "${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start)} - ${DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end)}";
+          
           final filteredNotas = notasList.where((n) {
             return n.competencia.isAfter(_selectedDateRange!.start.subtract(const Duration(minutes: 1))) &&
                    n.competencia.isBefore(_selectedDateRange!.end.add(const Duration(days: 1)));
@@ -124,7 +125,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           
           mostrarModalRelatorio(
             context,
-            "${periodStr[0].toUpperCase()}${periodStr.substring(1)}",
+            periodoStr,
             filteredNotas,
           );
         }
@@ -236,11 +237,30 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           final revenueData = ref.read(revenueStatsProvider).value;
           if (revenueData == null) return;
           
-          final pdfNotas = revenueData.allNotas.where((nota) {
-            final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
-            final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
-            return formattedNotaPeriodo == report.periodo;
-          }).toList();
+          List<NotaFiscal> pdfNotas = [];
+          
+          // Lógica Soberana de Filtragem: Suporta tanto Mês/Ano (antigo) quanto Faixa de Datas (novo)
+          if (report.periodo.contains(' - ')) {
+            try {
+              final dates = report.periodo.split(' - ');
+              final start = DateFormat('dd/MM/yyyy').parse(dates[0]);
+              final end = DateFormat('dd/MM/yyyy').parse(dates[1]);
+
+              pdfNotas = revenueData.allNotas.where((nota) {
+                return nota.competencia.isAfter(start.subtract(const Duration(minutes: 1))) &&
+                       nota.competencia.isBefore(end.add(const Duration(days: 1)));
+              }).toList();
+            } catch (e) {
+              debugPrint('Erro ao parsear período: $e');
+            }
+          } else {
+            // Legado: Mês/Ano
+            pdfNotas = revenueData.allNotas.where((nota) {
+              final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
+              final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
+              return formattedNotaPeriodo == report.periodo;
+            }).toList();
+          }
 
           mostrarModalRelatorio(context, report.periodo, pdfNotas);
         },
@@ -279,12 +299,28 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
                    final revenueData = ref.read(revenueStatsProvider).value;
                    if (revenueData == null) return;
 
-                   // Re-filter notes for the period
-                   final pdfNotas = revenueData.allNotas.where((nota) {
-                     final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
-                     final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
-                     return formattedNotaPeriodo == report.periodo;
-                   }).toList();
+                   List<NotaFiscal> pdfNotas = [];
+                   
+                   if (report.periodo.contains(' - ')) {
+                     try {
+                       final dates = report.periodo.split(' - ');
+                       final start = DateFormat('dd/MM/yyyy').parse(dates[0]);
+                       final end = DateFormat('dd/MM/yyyy').parse(dates[1]);
+
+                       pdfNotas = revenueData.allNotas.where((nota) {
+                         return nota.competencia.isAfter(start.subtract(const Duration(minutes: 1))) &&
+                                nota.competencia.isBefore(end.add(const Duration(days: 1)));
+                       }).toList();
+                     } catch (e) {
+                        debugPrint('Erro ao parsear período no download: $e');
+                     }
+                   } else {
+                     pdfNotas = revenueData.allNotas.where((nota) {
+                       final notaPeriodo = DateFormat('MMMM/yyyy', 'pt_BR').format(nota.competencia);
+                       final formattedNotaPeriodo = "${notaPeriodo[0].toUpperCase()}${notaPeriodo.substring(1)}";
+                       return formattedNotaPeriodo == report.periodo;
+                     }).toList();
+                   }
                    
                    await PdfGeneratorHelper.gerarEBaixarPDF(report.periodo, pdfNotas);
                 },

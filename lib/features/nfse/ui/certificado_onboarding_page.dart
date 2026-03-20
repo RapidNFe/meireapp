@@ -34,6 +34,7 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
         _showPasswordDialog();
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao selecionar arquivo.")),
       );
@@ -108,7 +109,7 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
 
   Future<void> _iniciarCompraParceiro() async {
     const String numeroVendedor = "5562999999999"; // TODO: Número real da certificadora
-    final String mensagem = "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
+    const String mensagem = "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
     final Uri urlWhatsApp = Uri.parse("https://wa.me/$numeroVendedor?text=${Uri.encodeComponent(mensagem)}");
 
     try {
@@ -127,6 +128,7 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Erro ao abrir WhatsApp.")),
       );
