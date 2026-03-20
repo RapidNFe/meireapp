@@ -82,29 +82,31 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
           onTap: widget.onTap,
           child: ScaleTransition(
             scale: _animation,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: MeireTheme.iceGray,
-                shape: BoxShape.circle,
-                border: Border.all(color: MeireTheme.primaryColor, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: MeireTheme.primaryColor.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  )
-                ],
-              ),
-              child: Center(
-                child: Image.asset(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Subtle highlight glow
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: MeireTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        spreadRadius: 10,
+                      )
+                    ],
+                  ),
+                ),
+                Image.asset(
                   'assets/images/meiribb.png',
-                  width: 38,
-                  height: 38,
+                  width: 64,
+                  height: 64,
                   fit: BoxFit.contain,
                 ),
-              ),
+              ],
             ),
           ),
         ),

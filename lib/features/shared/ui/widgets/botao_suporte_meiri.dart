@@ -8,15 +8,36 @@ class BotaoSuporteMeiri extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FloatingActionButton(
-      onPressed: () => SupportModal.show(context, ref),
-      backgroundColor: MeireTheme.primaryColor,
-      elevation: 4,
-      child: Image.asset(
-        'assets/images/meiribb.png',
-        width: 32,
-        height: 32,
-        fit: BoxFit.contain,
+    return GestureDetector(
+      onTap: () => SupportModal.show(context, ref),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Subtle highlight glow
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: MeireTheme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  spreadRadius: 8,
+                )
+              ],
+            ),
+          ),
+          Hero(
+            tag: 'meiri_assistant_hero',
+            child: Image.asset(
+              'assets/images/meiribb.png',
+              width: 56,
+              height: 56,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
       ),
     );
   }
