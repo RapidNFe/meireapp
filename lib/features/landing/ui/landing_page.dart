@@ -14,24 +14,58 @@ const Color verdeSecundario = kEmeraldMain;
 const Color verdeCard = Color(0xFF003D2A); // Tom luxuoso para os cards
 const Color amareloDestaque = kEmeraldAccent;
 
-class LandingPage extends StatelessWidget {
+class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
   @override
+  State<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _featuresKey = GlobalKey();
+  final GlobalKey _pricingKey = GlobalKey();
+  final GlobalKey _testimonialsKey = GlobalKey();
+  final GlobalKey _faqKey = GlobalKey();
+
+  void _scrollTo(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(seconds: 1),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: kEmeraldDeep, // Fundo escuro luxuoso
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: [
-            HeaderSection(),
+            HeaderSection(
+              onFeaturesTap: () => _scrollTo(_featuresKey),
+              onPricingTap: () => _scrollTo(_pricingKey),
+              onTestimonialsTap: () => _scrollTo(_testimonialsKey),
+              onFaqTap: () => _scrollTo(_faqKey),
+            ),
+            _NoBrainerPricingSection(key: _pricingKey), // Seção de preço trazida para o topo (Logo após Hero)
             DividerSection(),
             CustoInvisivelSection(), // A Âncora (Avareza/Ira)
             DividerSection(),
-            FeaturesSection(), // Bento Grid (Preguiça/Luxúria)
+            FeaturesSection(key: _featuresKey), // Bento Grid (Preguiça/Luxúria)
+            DividerSection(),
+            TestimonialsSection(key: _testimonialsKey),
+            DividerSection(),
+            FAQSection(key: _faqKey),
+            DividerSection(),
+            const BottomCTASection(),
             DividerSection(), // Separador elegante
-            _NoBrainerPricingSection(), // NOVA SEÇÃO DE PREÇO ÚNICO
-            FooterSection(),
+            const FooterSection(),
           ],
         ),
       ),
@@ -42,7 +76,18 @@ class LandingPage extends StatelessWidget {
 // ================= SEÇÕES DA PÁGINA =================
 
 class NavBar extends StatelessWidget {
-  const NavBar({super.key});
+  final VoidCallback? onFeaturesTap;
+  final VoidCallback? onPricingTap;
+  final VoidCallback? onTestimonialsTap;
+  final VoidCallback? onFaqTap;
+
+  const NavBar({
+    super.key,
+    this.onFeaturesTap,
+    this.onPricingTap,
+    this.onTestimonialsTap,
+    this.onFaqTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -61,15 +106,15 @@ class NavBar extends StatelessWidget {
               height: isMobile ? 32 : 40,
             ),
             if (!isMobile)
-              const Row(
+              Row(
                 children: [
-                  HoverNavText('Funcionalidades', color: verdeSecundario),
-                  SizedBox(width: 32),
-                  HoverNavText('Planos', color: verdeSecundario),
-                  SizedBox(width: 32),
-                  HoverNavText('Depoimentos', color: verdeSecundario),
-                  SizedBox(width: 32),
-                  HoverNavText('FAQ', color: verdeSecundario),
+                   HoverNavText('Funcionalidades', color: verdeSecundario, onTap: onFeaturesTap),
+                   const SizedBox(width: 32),
+                   HoverNavText('Planos', color: verdeSecundario, onTap: onPricingTap),
+                   const SizedBox(width: 32),
+                   HoverNavText('Depoimentos', color: verdeSecundario, onTap: onTestimonialsTap),
+                   const SizedBox(width: 32),
+                   HoverNavText('FAQ', color: verdeSecundario, onTap: onFaqTap),
                 ],
               ),
             Row(
@@ -410,8 +455,8 @@ class _BentoDesktop extends StatelessWidget {
                     Expanded(
                       child: _BentoCardCompact(
                         icon: Icons.notifications_active_rounded,
-                        title: 'Alertas de DAS',
-                        desc: 'Lembretes via WhatsApp antes do vencimento.',
+                        title: 'Alerta de DAS',
+                        desc: 'Lembretes pra você nunca perder o vencimento.',
                         accent: Color(0xFFFBBF24),
                       ),
                     ),
@@ -468,8 +513,8 @@ class _BentoMobile extends StatelessWidget {
             Expanded(
               child: _BentoCardCompact(
                 icon: Icons.notifications_active_rounded,
-                title: 'DAS Alertas',
-                desc: 'Lembretes via WhatsApp.',
+                title: 'Alerta de DAS',
+                desc: 'Lembretes pra você nunca perder o vencimento.',
                 accent: Color(0xFFFBBF24),
               ),
             ),
@@ -1310,7 +1355,8 @@ class HoverNavText extends StatefulWidget {
   final String text;
   final bool isFooter;
   final Color? color;
-  const HoverNavText(this.text, {super.key, this.isFooter = false, this.color});
+  final VoidCallback? onTap;
+  const HoverNavText(this.text, {super.key, this.isFooter = false, this.color, this.onTap});
 
   @override
   State<HoverNavText> createState() => _HoverNavTextState();
@@ -1325,24 +1371,27 @@ class _HoverNavTextState extends State<HoverNavText> {
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
       cursor: SystemMouseCursors.click,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isHovered ? amareloDestaque : Colors.transparent,
-              width: 2,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isHovered ? amareloDestaque : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Text(
-          widget.text,
-          style: TextStyle(
-            color: isHovered
-                ? amareloDestaque
-                : (widget.isFooter ? Colors.white54 : (widget.color ?? Colors.white70)),
-            fontWeight: FontWeight.w500,
-            fontSize: widget.isFooter ? 14 : 16,
+          child: Text(
+            widget.text,
+            style: TextStyle(
+              color: isHovered
+                  ? amareloDestaque
+                  : (widget.isFooter ? Colors.white54 : (widget.color ?? Colors.white70)),
+              fontWeight: FontWeight.w500,
+              fontSize: widget.isFooter ? 14 : 16,
+            ),
           ),
         ),
       ),
@@ -1744,14 +1793,30 @@ class FaqTile extends StatelessWidget {
 // ==============================================================================
 
 class HeaderSection extends StatelessWidget {
-  const HeaderSection({super.key});
+  final VoidCallback? onFeaturesTap;
+  final VoidCallback? onPricingTap;
+  final VoidCallback? onTestimonialsTap;
+  final VoidCallback? onFaqTap;
+
+  const HeaderSection({
+    super.key,
+    this.onFeaturesTap,
+    this.onPricingTap,
+    this.onTestimonialsTap,
+    this.onFaqTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       children: [
-        NavBar(),
-        HeroSection(),
+        NavBar(
+          onFeaturesTap: onFeaturesTap,
+          onPricingTap: onPricingTap,
+          onTestimonialsTap: onTestimonialsTap,
+          onFaqTap: onFaqTap,
+        ),
+        const HeroSection(),
       ],
     );
   }
@@ -1802,7 +1867,7 @@ class FooterSection extends StatelessWidget {
 // ------------------------------------------------------------------------------
 
 class _NoBrainerPricingSection extends StatelessWidget {
-  const _NoBrainerPricingSection();
+  const _NoBrainerPricingSection({super.key});
 
   @override
   Widget build(BuildContext context) {

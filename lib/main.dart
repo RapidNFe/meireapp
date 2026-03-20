@@ -19,6 +19,7 @@ import 'package:meire/features/shared/ui/privacy_policy_page.dart';
 import 'package:meire/features/copiloto/ui/dasn_copiloto_page.dart';
 import 'package:meire/features/nfse/ui/pdf_viewer_page.dart';
 import 'package:meire/features/landing/ui/landing_page.dart';
+import 'package:meire/features/nfse/ui/certificado_onboarding_page.dart';
 
 // Create a global navigator key to allow navigation from anywhere, like auth listeners
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -49,7 +50,9 @@ class MeireApp extends ConsumerWidget {
 
     // Check if session is valid for auto-login
     final isAuthenticated = ref.watch(pbProvider).authStore.isValid;
-    final isAdmin = ref.watch(pbProvider).authStore.record?.getStringValue('email') == 'thiago514@hotmail.com';
+    final userRecord = ref.watch(userProvider);
+    final possuiCertificado = userRecord?.getBoolValue('possui_certificado') ?? false;
+    final isAdmin = userRecord?.getStringValue('email') == 'thiago514@hotmail.com';
 
     // Listen to Auth State globally
     ref.listen(pbAuthChangeProvider, (previous, next) {
@@ -67,7 +70,15 @@ class MeireApp extends ConsumerWidget {
           navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
         } else if (!isLoggedOut && wasLoggedOut) {
           final eventIsAdmin = event.record?.getStringValue('email') == 'thiago514@hotmail.com';
-          navigatorKey.currentState?.pushNamedAndRemoveUntil(eventIsAdmin ? '/admin_hub' : '/hub', (route) => false);
+          final eventPossuiCertificado = event.record?.getBoolValue('possui_certificado') ?? false;
+          
+          if (eventIsAdmin) {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil('/admin_hub', (route) => false);
+          } else if (!eventPossuiCertificado) {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil('/certificado_onboarding', (route) => false);
+          } else {
+            navigatorKey.currentState?.pushNamedAndRemoveUntil('/hub', (route) => false);
+          }
         }
       }
     });
@@ -87,7 +98,13 @@ class MeireApp extends ConsumerWidget {
         Locale('pt', 'BR'),
       ],
       locale: const Locale('pt', 'BR'),
-      home: isAuthenticated ? (isAdmin ? const AdminDashboardPage() : const HubPage()) : const LandingPage(),
+      home: isAuthenticated 
+          ? (isAdmin 
+              ? const AdminDashboardPage() 
+              : (possuiCertificado 
+                  ? const HubPage() 
+                  : const CertificadoOnboardingPage())) 
+          : const LandingPage(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterStepperPage(),
@@ -103,6 +120,7 @@ class MeireApp extends ConsumerWidget {
         '/dasn_copiloto': (context) => const DasnCopilotoPage(),
         '/pdf_viewer': (context) => const PdfViewerPage(),
         '/landing': (context) => const LandingPage(),
+        '/certificado_onboarding': (context) => const CertificadoOnboardingPage(),
       },
       debugShowCheckedModeBanner: false,
     );
