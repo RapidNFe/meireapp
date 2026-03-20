@@ -45,6 +45,39 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   String _password = '';
   String _codigoIbge = '';
 
+  late final TextEditingController _cepController;
+  late final TextEditingController _ibgeController;
+  late final TextEditingController _cnaeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _cepController = TextEditingController();
+    _ibgeController = TextEditingController();
+    _cnaeController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _cepController.dispose();
+    _ibgeController.dispose();
+    _cnaeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchCepData(String cep) async {
+    if (cep.replaceAll(RegExp(r'\D'), '').length != 8) return;
+    try {
+      final data = await BrasilApiService.buscarCep(cep);
+      if (data['codigo_ibge'] != null && data['codigo_ibge'].toString().isNotEmpty) {
+        setState(() {
+          _codigoIbge = data['codigo_ibge'].toString();
+          _ibgeController.text = _codigoIbge;
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _fetchCnpjData(String cnpj) async {
     setState(() => _isLoading = true);
     try {
@@ -57,6 +90,10 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
         _cep = data['cep'] ?? '';
         _codigoIbge = data['municipio_ibge']?.toString() ?? '';
         _cnaeFull = "$rawCnae - ${data['cnae_fiscal_descricao']}";
+        
+        _cepController.text = _cep;
+        _ibgeController.text = _codigoIbge;
+        _cnaeController.text = _cnaeFull;
         
         // Elite Filter: 9602-5/01 ou 9602-5/02
         _isBeleza = _cnae == '9602501' || _cnae == '9602502';
@@ -351,23 +388,30 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             children: [
               Expanded(
                 child: TextFormField(
-                  initialValue: _cep,
+                  controller: _cepController,
                   style: const TextStyle(color: Colors.white70),
                   decoration: _inputDecoration('CEP', Icons.location_on_outlined),
+                  onChanged: (val) => _fetchCepData(val),
                   onSaved: (val) => _cep = val?.trim() ?? '',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                flex: 2,
                 child: TextFormField(
-                  initialValue: _cnae,
+                  controller: _ibgeController,
                   style: const TextStyle(color: Colors.white70),
-                  decoration: _inputDecoration('CNAE Principal', Icons.work_history_outlined),
-                  onSaved: (val) => _cnaeFull = val?.trim() ?? '',
+                  decoration: _inputDecoration('Código IBGE', Icons.map_outlined),
+                  onSaved: (val) => _codigoIbge = val?.trim() ?? '',
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _cnaeController,
+            style: const TextStyle(color: Colors.white70),
+            decoration: _inputDecoration('CNAE Principal', Icons.work_history_outlined),
+            onSaved: (val) => _cnaeFull = val?.trim() ?? '',
           ),
           const SizedBox(height: 40),
           const Text(

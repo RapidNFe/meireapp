@@ -26,6 +26,7 @@ class BrasilApiService {
             'cep': data['cep'] ?? '',
             'cnae_fiscal': data['cnae_fiscal'].toString(),
             'cnae_fiscal_descricao': data['cnae_fiscal_descricao'] ?? '',
+            'municipio_ibge': data['municipio_ibge']?.toString() ?? '',
           };
         }
       }
@@ -56,6 +57,28 @@ class BrasilApiService {
       throw Exception('Status ${directResponse.statusCode}');
     } catch (e) {
       throw Exception('Não foi possível validar o CNPJ. Tente preenchimento manual.');
+    }
+  }
+
+  // Retorna dados do CEP incluindo Código IBGE
+  static Future<Map<String, dynamic>> buscarCep(String cep) async {
+    final cepLimpo = cep.replaceAll(RegExp(r'\D'), '');
+    try {
+      final response = await _dio.get('https://brasilapi.com.br/api/cep/v1/$cepLimpo');
+      if (response.statusCode == 200) {
+        return {
+          'cep': response.data['cep'],
+          'city': response.data['city'],
+          'state': response.data['state'],
+          'street': response.data['street'],
+          'neighborhood': response.data['neighborhood'],
+          'service': response.data['service'],
+          'codigo_ibge': response.data['city_ibge'] ?? '',
+        };
+      }
+      throw Exception('Falha ao buscar CEP');
+    } catch (e) {
+      rethrow;
     }
   }
 }
