@@ -20,8 +20,6 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:meire/core/services/das_reminder_service.dart';
-import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
-import 'package:meire/core/ui/modals/support_modal.dart';
 
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
@@ -97,10 +95,6 @@ class _HubPageState extends ConsumerState<HubPage> {
         children: pages,
       ),
       bottomNavigationBar: _buildBottomNav(userRecord),
-      floatingActionButton: MeireAssistantWidget(
-        message: "Olá! Precisa de ajuda?",
-        onTap: () => SupportModal.show(context, ref),
-      ),
     );
   }
 

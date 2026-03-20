@@ -8,8 +8,6 @@ import 'package:meire/core/utils/validators.dart';
 import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
-import 'package:meire/core/ui/modals/support_modal.dart';
-import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
 import 'package:meire/features/clients/provider/client_provider.dart';
 import 'package:meire/features/clients/models/tomador_model.dart';
 import 'package:meire/core/ui/widgets/tomador_selector_lux.dart';
@@ -157,17 +155,6 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
     }
   }
 
-  String get _meireMessage {
-    if (_documentController.text.isEmpty) {
-      return "Lembre-se de conferir o CNPJ do tomador.";
-    } else if (_selectedServiceId == null) {
-      return "Qual serviço você prestou hoje?";
-    } else if (_valueController.text.isEmpty) {
-      return "Não se esqueça de preencher o valor!";
-    }
-    return "Tudo pronto! Pode emitir.";
-  }
-
   @override
   Widget build(BuildContext context) {
     final favoriteServices = ref.watch(favoriteServicesProvider);
@@ -188,11 +175,6 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       ),
       body:
           _isLoading ? _buildLoadingState() : _buildFormState(favoriteServices),
-      floatingActionButton:
-          _isLoading ? null : MeireAssistantWidget(
-              message: _meireMessage,
-              onTap: () => SupportModal.show(context, ref),
-            ),
     );
   }
 

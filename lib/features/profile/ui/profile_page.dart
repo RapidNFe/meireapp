@@ -26,6 +26,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final _imController = TextEditingController();
   final _cepController = TextEditingController();
   final _cnaeController = TextEditingController();
+  final _codigoMunicipioController = TextEditingController();
   final _senhaPfxController = TextEditingController();
   PlatformFile? _pickedFile;
 
@@ -41,6 +42,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
       _cnaeController.text = user.getStringValue('cnae_principal');
+      _codigoMunicipioController.text = user.getStringValue('codigo_municipio');
       _senhaPfxController.text = user.getBoolValue('possui_certificado') ? '********' : '';
     }
   }
@@ -50,6 +52,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _imController.dispose();
     _cepController.dispose();
     _cnaeController.dispose();
+    _codigoMunicipioController.dispose();
     _senhaPfxController.dispose();
     super.dispose();
   }
@@ -66,6 +69,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         'cnae_principal': _cnaeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'codigo_municipio': _codigoMunicipioController.text.replaceAll(RegExp(r'[^0-9]'), ''),
       };
 
       // 1. Atualiza dados Cadastrais no PocketBase (Dados Seguros/Públicos)
@@ -128,9 +132,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _checkCadastroCompleto(RecordModel user) {
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
+    final ibge = user.getStringValue('codigo_municipio');
     final cnpj = user.getStringValue('cnpj');
     final possuiCert = user.getBoolValue('possui_certificado');
-    return im.isNotEmpty && cep.isNotEmpty && cnpj.length == 14 && possuiCert;
+    return im.isNotEmpty && cep.isNotEmpty && ibge.isNotEmpty && cnpj.length == 14 && possuiCert;
   }
 
   bool _validarRequisitosProducao(RecordModel user) {
@@ -140,12 +145,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final razaoSocial = user.getStringValue('razao_social');
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
+    final ibge = user.getStringValue('codigo_municipio');
     final possuiCert = user.getBoolValue('possui_certificado');
 
     if (cnpj.isEmpty || cnpj.length != 14) pendencias.add("CNPJ inválido ou incompleto");
     if (razaoSocial.isEmpty) pendencias.add("Razão Social ausente");
     if (im.isEmpty) pendencias.add("Inscrição Municipal (IM) ausente");
     if (cep.isEmpty) pendencias.add("CEP ausente");
+    if (ibge.isEmpty) pendencias.add("Código IBGE do Município ausente");
     if (!possuiCert) pendencias.add("Certificado Digital A1 não configurado");
 
     if (pendencias.isNotEmpty) {
@@ -480,11 +487,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             controller: _cnaeController,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'CNAE Principal',
-                              hintText: 'Ex: 9602501',
+                                labelText: 'CNAE Principal',
+                                hintText: 'Ex: 9602501',
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _codigoMunicipioController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Código IBGE (Município) *',
+                                hintText: 'Ex: 5208707',
+                              ),
+                            ),
+                          ],
                       )
                     : Column(
                         key: const ValueKey('display_profile'),

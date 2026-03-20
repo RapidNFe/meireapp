@@ -20,6 +20,8 @@ import 'package:meire/features/copiloto/ui/dasn_copiloto_page.dart';
 import 'package:meire/features/nfse/ui/pdf_viewer_page.dart';
 import 'package:meire/features/landing/ui/landing_page.dart';
 import 'package:meire/features/nfse/ui/certificado_onboarding_page.dart';
+import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
+import 'package:meire/core/ui/modals/support_modal.dart';
 
 // Create a global navigator key to allow navigation from anywhere, like auth listeners
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -128,6 +130,23 @@ class MeireApp extends ConsumerWidget {
         '/certificado_onboarding': (context) => const CertificadoOnboardingPage(),
       },
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        if (!isAuthenticated || child == null) return child ?? const SizedBox();
+        
+        return Stack(
+          children: [
+            child,
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: MeireAssistantWidget(
+                message: "Como posso te ajudar?",
+                onTap: () => SupportModal.show(navigatorKey.currentContext ?? context, ref),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
