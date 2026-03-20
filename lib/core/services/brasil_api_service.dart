@@ -43,8 +43,14 @@ class BrasilApiService {
           'nome_fantasia': data['nome_fantasia'],
           'situacao': data['descricao_situacao_cadastral'],
           'cep': data['cep'] ?? '',
-          'cnae_fiscal': data['cnae_fiscal'].toString(),
+          'cnae_fiscal': data['cnae_fiscal']?.toString() ?? '',
           'cnae_fiscal_descricao': data['cnae_fiscal_descricao'] ?? '',
+          'logradouro': data['logradouro'] ?? '',
+          'numero': data['numero'] ?? 'S/N',
+          'bairro': data['bairro'] ?? '',
+          'municipio_ibge': data['codigo_municipio']?.toString() ?? '',
+          'cidade_nome': data['municipio'] ?? '',
+          'uf': data['uf'] ?? '',
         };
       }
       throw Exception('Status ${directResponse.statusCode}');

@@ -6,6 +6,8 @@ import 'package:pocketbase/pocketbase.dart';
 import '../../../core/services/pocketbase_service.dart';
 import '../../auth/services/auth_service.dart';
 
+import '../../clients/models/tomador_model.dart';
+
 class NotasFiscaisService {
   final PocketBase _pb;
   final AuthService _auth;
@@ -21,15 +23,19 @@ class NotasFiscaisService {
     String? codigoTributacao,
     String? itemNbs,
     String? competencia,
+    TomadorModel? clientModel, // Novo parâmetro!
   }) async {
-    final userId = _auth.currentUser?.id;
+    final user = _auth.currentUser;
+    final userId = user?.id;
     if (userId == null) throw Exception("Usuário não autenticado");
 
     // 🚀 CHAMADA AO NOVO MOTOR VORTEX (Node.js)
     final String emissionUrl = '${_pb.baseURL}/api/nacional/emitir';
     
     final now = DateTime.now();
-    final formattedDate = "${now.toIso8601String().substring(0, 19)}-03:00"; // Simplificado para teste
+    final formattedDate = "${now.toIso8601String().substring(0, 19)}-03:00"; 
+
+    final cleanCnpj = clientCnpj.replaceAll(RegExp(r'[^0-9]'), '');
 
     try {
       final response = await _dio.post(
@@ -37,30 +43,28 @@ class NotasFiscaisService {
         data: {
           "userId": userId,
           "payload": {
-            "numeroDPS": (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(), // Número único baseado em tempo
+            "numeroDPS": (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString(), 
             "numeroSerie": "900",
             "dataHoraEmissao": formattedDate,
-            "competencia": competencia, // Sem fallback para data atual aqui!
-            "codigoMunicipioEmissor": _auth.currentUser?.getStringValue('codigo_municipio') ?? "5208707",
+            "competencia": competencia, 
+            "codigoMunicipioEmissor": user?.getStringValue('codigo_municipio') ?? "5208707",
             "tomador": {
-              "cnpj": clientCnpj.replaceAll(RegExp(r'[^0-9]'), ''),
+              "cnpj": cleanCnpj,
               "nome": clientName,
               "endereco": {
-                "municipio": "5208707", // Ideal seria vir do cadastro do cliente
-                "cep": "74820090",
-                "logradouro": "Endereço Fixado",
-                "numero": "1",
-                "bairro": "Centro"
+                "municipio": clientModel?.municipioIbge ?? "5208707", 
+                "cep": clientModel?.cep.replaceAll(RegExp(r'[^0-9]'), '') ?? "74820090",
+                "logradouro": clientModel?.logradouro ?? "Endereço Fixado",
+                "numero": clientModel?.numero ?? "1",
+                "bairro": clientModel?.bairro ?? "Centro"
               }
             },
             "servico": {
-              "municipioPrestacao": "5208707",
-              // Blindagem Serpro: Limpa pontos e garante 6 dígitos (ex: 01.01 -> 010100)
+              "municipioPrestacao": clientModel?.municipioIbge ?? "5208707", 
               "codigoTribNacional": (codigoTributacao ?? "060101")
                   .split(' ')[0]
                   .replaceAll('.', '')
                   .padRight(6, '0'),
-              // Blindagem NBS: Garante 9 dígitos (padrão NBS)
               "itemNbs": (itemNbs ?? "126021000")
                   .split(' ')[0]
                   .replaceAll('.', '')

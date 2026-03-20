@@ -4,11 +4,13 @@ import 'package:meire/core/ui/theme.dart';
 class MeireAssistantWidget extends StatefulWidget {
   final String message;
   final bool showBubble;
+  final VoidCallback? onTap;
 
   const MeireAssistantWidget({
     super.key,
     required this.message,
     this.showBubble = true,
+    this.onTap,
   });
 
   @override
@@ -76,28 +78,31 @@ class _MeireAssistantWidgetState extends State<MeireAssistantWidget> with Single
           ),
           const SizedBox(width: 8),
         ],
-        ScaleTransition(
-          scale: _animation,
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: MeireTheme.iceGray,
-              shape: BoxShape.circle,
-              border: Border.all(color: MeireTheme.primaryColor, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: MeireTheme.primaryColor.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  spreadRadius: 2,
-                )
-              ],
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.support_agent_rounded,
-                color: MeireTheme.primaryColor,
-                size: 28,
+        GestureDetector(
+          onTap: widget.onTap,
+          child: ScaleTransition(
+            scale: _animation,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: MeireTheme.iceGray,
+                shape: BoxShape.circle,
+                border: Border.all(color: MeireTheme.primaryColor, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: MeireTheme.primaryColor.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  )
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.support_agent_rounded,
+                  color: MeireTheme.primaryColor,
+                  size: 28,
+                ),
               ),
             ),
           ),

@@ -9,6 +9,14 @@ class TomadorModel {
   final String? cnae;
   final String? cnaeDescricao;
   final bool isSalaoParceiro;
+  final String cep;
+  final String logradouro;
+  final String numero;
+  final String bairro;
+  final String municipioIbge;
+  final String cidadeNome;
+  final String uf;
+  final String email;
 
   TomadorModel({
     required this.id,
@@ -19,6 +27,14 @@ class TomadorModel {
     this.cnae,
     this.cnaeDescricao,
     this.isSalaoParceiro = false,
+    this.cep = '',
+    this.logradouro = '',
+    this.numero = '',
+    this.bairro = '',
+    this.municipioIbge = '',
+    this.cidadeNome = '',
+    this.uf = '',
+    this.email = '',
   });
 
   factory TomadorModel.fromRecord(RecordModel record) {
@@ -31,6 +47,14 @@ class TomadorModel {
       cnae: record.getStringValue('cnae'),
       cnaeDescricao: record.getStringValue('cnae_descricao'),
       isSalaoParceiro: record.collectionName == 'salao_parceiro',
+      cep: record.getStringValue('cep'),
+      logradouro: record.getStringValue('logradouro'),
+      numero: record.getStringValue('numero'),
+      bairro: record.getStringValue('bairro'),
+      municipioIbge: record.getStringValue('municipio_ibge'),
+      cidadeNome: record.getStringValue('cidade_nome'),
+      uf: record.getStringValue('uf'),
+      email: record.getStringValue('email'),
     );
   }
 
@@ -43,6 +67,14 @@ class TomadorModel {
       cnae: json['cnae_fiscal']?.toString(),
       cnaeDescricao: json['cnae_fiscal_descricao'],
       isSalaoParceiro: false, // Será validado pelo service
+      cep: json['cep'] ?? '',
+      logradouro: json['logradouro'] ?? '',
+      numero: json['numero'] ?? 'S/N',
+      bairro: json['bairro'] ?? '',
+      municipioIbge: json['municipio_ibge'] ?? '',
+      cidadeNome: json['cidade_nome'] ?? '',
+      uf: json['uf'] ?? '',
+      email: json['email'] ?? '',
     );
   }
 

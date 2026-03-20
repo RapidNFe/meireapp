@@ -20,6 +20,8 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:meire/core/services/das_reminder_service.dart';
+import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
+import 'package:meire/core/ui/modals/support_modal.dart';
 
 class HubPage extends ConsumerStatefulWidget {
   const HubPage({super.key});
@@ -95,6 +97,10 @@ class _HubPageState extends ConsumerState<HubPage> {
         children: pages,
       ),
       bottomNavigationBar: _buildBottomNav(userRecord),
+      floatingActionButton: MeireAssistantWidget(
+        message: "Olá! Precisa de ajuda?",
+        onTap: () => SupportModal.show(context, ref),
+      ),
     );
   }
 
@@ -271,8 +277,14 @@ class _HubPageState extends ConsumerState<HubPage> {
   }
 
   Widget _buildMainColumn(BuildContext context, double percentage, String percentageStr, String revenueStr, String limitStr, String remainingStr) {
+    final user = ref.read(userProvider);
+    final possuiCertificado = user?.getBoolValue('possui_certificado') ?? false;
+    final onboardingStatus = user?.getStringValue('status_onboarding_nota') ?? 'pendente';
+
     return Column(
       children: [
+        if (!possuiCertificado && onboardingStatus == 'comprando_parceiro')
+          _buildStatusBanner(context),
         _buildTermometroCard(context),
         const SizedBox(height: 16),
         _buildPerformanceSemestral(context),
@@ -301,6 +313,39 @@ class _HubPageState extends ConsumerState<HubPage> {
         _buildQuickActionsGrid(context, statusRegistro),
         _buildRecentActivities(context),
       ],
+    );
+  }
+
+  Widget _buildStatusBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.hourglass_bottom, color: Colors.amber),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Certificado em Processo",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 13),
+                ),
+                Text(
+                  "Você já pode acessar o Meiri! A emissão de notas será liberada assim que o certificado for validado.",
+                  style: TextStyle(color: Colors.amber, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -620,12 +665,21 @@ class _HubPageState extends ConsumerState<HubPage> {
       children: [
         // Canal Liberado: Removido banner de bloqueio e-CAC
         const SizedBox.shrink(),
-        _buildActionItem(
-          context, 
-          Icons.receipt_long,
-          "Emitir Nota Fiscal", 
-          "Emissão Nacional da NFSe", 
-          () => Navigator.pushNamed(context, '/nfse_form'),
+        Builder(
+          builder: (context) {
+            final user = ref.watch(userProvider);
+            final possuiCertificado = user?.getBoolValue('possui_certificado') ?? false;
+
+            return _buildActionItem(
+              context, 
+              Icons.receipt_long,
+              "Emitir Nota Fiscal", 
+              "Emissão Nacional da NFSe", 
+              () => Navigator.pushNamed(context, '/nfse_form'),
+              isLocked: !possuiCertificado,
+              showLockIcon: !possuiCertificado,
+            );
+          }
         ),
         const SizedBox(height: 12),
         _buildActionItem(

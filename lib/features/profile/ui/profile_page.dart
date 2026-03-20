@@ -129,7 +129,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
     final cnpj = user.getStringValue('cnpj');
-    return im.isNotEmpty && cep.isNotEmpty && cnpj.length == 14;
+    final possuiCert = user.getBoolValue('possui_certificado');
+    return im.isNotEmpty && cep.isNotEmpty && cnpj.length == 14 && possuiCert;
   }
 
   bool _validarRequisitosProducao(RecordModel user) {
@@ -139,11 +140,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final razaoSocial = user.getStringValue('razao_social');
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
+    final possuiCert = user.getBoolValue('possui_certificado');
 
     if (cnpj.isEmpty || cnpj.length != 14) pendencias.add("CNPJ inválido ou incompleto");
     if (razaoSocial.isEmpty) pendencias.add("Razão Social ausente");
     if (im.isEmpty) pendencias.add("Inscrição Municipal (IM) ausente");
     if (cep.isEmpty) pendencias.add("CEP ausente");
+    if (!possuiCert) pendencias.add("Certificado Digital A1 não configurado");
 
     if (pendencias.isNotEmpty) {
       _mostrarAlertaPendencias(pendencias);
@@ -285,7 +288,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         Text(
                           isCompleto 
                             ? 'Dica: Em Modo de Testes, as notas não possuem valor legal.'
-                            : '⚠️ Finalize seu cadastro para habilitar o Modo de Produção.',
+                            : '⚠️ Finalize seu cadastro e o certificado para habilitar o Modo de Produção.',
                           style: TextStyle(
                             color: isCompleto ? Colors.grey : Colors.redAccent, 
                             fontSize: 12, 
@@ -492,10 +495,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             isPending: user.getStringValue('inscricao_municipal').isEmpty,
                           ),
                           const Divider(height: 24),
-                          _InfoRow(
+                           _InfoRow(
                             label: 'CEP', 
                             value: user.getStringValue('cep').isEmpty ? '⚠️ Pendente' : _formatCEP(user.getStringValue('cep')),
                             isPending: user.getStringValue('cep').isEmpty,
+                          ),
+                          const Divider(height: 24),
+                          _InfoRow(
+                            label: 'Código IBGE (Município)', 
+                            value: user.getStringValue('codigo_municipio').isEmpty ? '⚠️ Pendente' : user.getStringValue('codigo_municipio'),
+                            isPending: user.getStringValue('codigo_municipio').isEmpty,
                           ),
                           const Divider(height: 24),
                           _InfoRow(

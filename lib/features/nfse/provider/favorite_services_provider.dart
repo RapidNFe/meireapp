@@ -13,6 +13,7 @@ class FavoriteService {
   final String? idClientePadrao;
   final bool issRetido;
   final String userId;
+  final String? itemNbs; // Novo!
 
   FavoriteService({
     String? id,
@@ -24,6 +25,7 @@ class FavoriteService {
     this.idClientePadrao,
     this.issRetido = false,
     required this.userId,
+    this.itemNbs, // Novo!
   }) : id = id ?? const Uuid().v4();
 
   FavoriteService copyWith({
@@ -35,6 +37,7 @@ class FavoriteService {
     String? idClientePadrao,
     bool? issRetido,
     String? userId,
+    String? itemNbs, // Novo!
   }) {
     return FavoriteService(
       id: id,
@@ -46,6 +49,7 @@ class FavoriteService {
       idClientePadrao: idClientePadrao ?? this.idClientePadrao,
       issRetido: issRetido ?? this.issRetido,
       userId: userId ?? this.userId,
+      itemNbs: itemNbs ?? this.itemNbs,
     );
   }
 
@@ -60,6 +64,7 @@ class FavoriteService {
       idClientePadrao: record.getStringValue('id_cliente_padrao'),
       issRetido: record.getBoolValue('iss_retido'),
       userId: record.getStringValue('user_id'),
+      itemNbs: record.getStringValue('item_nbs'),
     );
   }
 }
@@ -118,6 +123,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         "valor_base": service.valorBase,
         "id_cliente_padrao": service.idClientePadrao,
         "iss_retido": service.issRetido,
+        "item_nbs": service.itemNbs,
       };
 
       final record = await _pb.collection('servicos_favoritos').create(body: body);

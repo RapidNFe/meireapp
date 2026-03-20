@@ -8,11 +8,13 @@ import 'package:meire/core/utils/validators.dart';
 import 'package:meire/features/nfse/services/notas_fiscais_service.dart';
 import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
+import 'package:meire/core/ui/modals/support_modal.dart';
 import 'package:meire/features/shared/ui/widgets/meire_assistant_widget.dart';
 import 'package:meire/features/clients/provider/client_provider.dart';
-import 'package:meire/features/clients/models/client_model.dart';
+import 'package:meire/features/clients/models/tomador_model.dart';
 import 'package:meire/core/ui/widgets/tomador_selector_lux.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:meire/core/services/pocketbase_service.dart';
 
 // ZELADORIA: Ativando suporte a competência retroativa no formulário
 class NfseFormPage extends ConsumerStatefulWidget {
@@ -33,6 +35,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
   String? _selectedServiceId;
   DateTime? _mesCompetencia;
+  TomadorModel? _selectedClient;
   bool _isLoading = false;
   bool _initialized = false;
 
@@ -46,8 +49,9 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      final client = ModalRoute.of(context)?.settings.arguments as ClientModel?;
+      final client = ModalRoute.of(context)?.settings.arguments as TomadorModel?;
       if (client != null) {
+        _selectedClient = client;
         _documentController.text = client.cnpj;
         _nameController.text = client.razaoSocial;
       }
@@ -106,12 +110,18 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
       // Add to PocketBase via Service
       try {
+        final favoriteServices = ref.read(favoriteServicesProvider);
+        final selectedService = favoriteServices.firstWhere((s) => s.id == _selectedServiceId);
+        
         final responseData = await ref.read(notasFiscaisServiceProvider).addNotaFiscal(
               clientName: _nameController.text,
               clientCnpj: _documentController.text,
               amount: amount,
               description: _descriptionController.text,
               competencia: _mesCompetencia!.toIso8601String().split('T')[0],
+              clientModel: _selectedClient,
+              codigoTributacao: selectedService.codigoNacional, // Mapeado!
+              itemNbs: selectedService.itemNbs, 
             );
 
         // Refresh dashboard data
@@ -162,6 +172,13 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   Widget build(BuildContext context) {
     final favoriteServices = ref.watch(favoriteServicesProvider);
 
+    final user = ref.watch(userProvider);
+    final possuiCertificado = user?.getBoolValue('possui_certificado') ?? false;
+
+    if (!possuiCertificado) {
+       return _buildBlockedState();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Emitir NFS-e'),
@@ -172,7 +189,10 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       body:
           _isLoading ? _buildLoadingState() : _buildFormState(favoriteServices),
       floatingActionButton:
-          _isLoading ? null : MeireAssistantWidget(message: _meireMessage),
+          _isLoading ? null : MeireAssistantWidget(
+              message: _meireMessage,
+              onTap: () => SupportModal.show(context, ref),
+            ),
     );
   }
 
@@ -194,6 +214,7 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                   child: TomadorSelectorLux(
                     onSelected: (client) {
                       setState(() {
+                        _selectedClient = client;
                         _documentController.text = client.cnpj;
                         _nameController.text = client.razaoSocial;
                       });
@@ -451,5 +472,53 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
       texto = texto.replaceAll('{QUINZENA_PASSADA}', _calcularQuinzenaPassada());
     }
     return texto;
+  }
+  Widget _buildBlockedState() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Emitir NFS-e'),
+        backgroundColor: Colors.white,
+        foregroundColor: MeireTheme.primaryColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_person_outlined, size: 80, color: MeireTheme.accentColor),
+              const SizedBox(height: 24),
+              const Text(
+                'Emissão bloqueada',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: MeireTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Para emitir notas fiscais pelo Sistema Nacional, você precisa de um Certificado Digital A1 ativo no seu perfil.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 16),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(200, 50),
+                ),
+                child: const Text('Voltar ao Dashboard'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

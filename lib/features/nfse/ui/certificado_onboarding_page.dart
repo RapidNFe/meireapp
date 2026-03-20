@@ -12,10 +12,12 @@ class CertificadoOnboardingPage extends ConsumerStatefulWidget {
   const CertificadoOnboardingPage({super.key});
 
   @override
-  ConsumerState<CertificadoOnboardingPage> createState() => _CertificadoOnboardingPageState();
+  ConsumerState<CertificadoOnboardingPage> createState() =>
+      _CertificadoOnboardingPageState();
 }
 
-class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardingPage> {
+class _CertificadoOnboardingPageState
+    extends ConsumerState<CertificadoOnboardingPage> {
   bool _isLoading = false;
   File? _selectedFile;
   final TextEditingController _passwordController = TextEditingController();
@@ -50,7 +52,8 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Digite a senha do arquivo .pfx para validarmos o acesso."),
+            const Text(
+                "Digite a senha do arquivo .pfx para validarmos o acesso."),
             const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
@@ -86,9 +89,9 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
 
     try {
       await ref.read(certificateServiceProvider).depositCertificate(
-        _selectedFile!,
-        _passwordController.text,
-      );
+            _selectedFile!,
+            _passwordController.text,
+          );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,7 +102,9 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro: ${e.toString().replaceAll('Exception: ', '')}")),
+          SnackBar(
+              content:
+                  Text("Erro: ${e.toString().replaceAll('Exception: ', '')}")),
         );
       }
     } finally {
@@ -108,20 +113,25 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
   }
 
   Future<void> _iniciarCompraParceiro() async {
-    const String numeroVendedor = "5562999999999"; // TODO: Número real da certificadora
-    const String mensagem = "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
-    final Uri urlWhatsApp = Uri.parse("https://wa.me/$numeroVendedor?text=${Uri.encodeComponent(mensagem)}");
+    const String numeroVendedor = "62982339927";
+    const String mensagem =
+        "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
+    final Uri urlWhatsApp = Uri.parse(
+        "https://wa.me/$numeroVendedor?text=${Uri.encodeComponent(mensagem)}");
 
     try {
       if (await canLaunchUrl(urlWhatsApp)) {
         await launchUrl(urlWhatsApp, mode: LaunchMode.externalApplication);
-        
+
         // Atualiza status para aguardando
-        await ref.read(certificateServiceProvider).updateOnboardingStatus('comprando_parceiro');
-        
+        await ref
+            .read(certificateServiceProvider)
+            .updateOnboardingStatus('comprando_parceiro');
+
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Aguardamos o seu retorno após a compra!")),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text("Aguardamos o seu retorno após a compra!")),
           );
           // Opcional: Recarrega a tela para mostrar estado de espera
           setState(() {});
@@ -138,46 +148,74 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(userProvider);
-    final onboardingStatus = user?.getStringValue('status_onboarding_nota') ?? 'pendente';
+    final onboardingStatus =
+        user?.getStringValue('status_onboarding_nota') ?? 'pendente';
 
     return Scaffold(
       backgroundColor: MeireTheme.primaryColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              const Icon(Icons.shield_outlined, color: Colors.greenAccent, size: 80),
-              const SizedBox(height: 32),
-              const Text(
-                "Passo Final: Certificado Digital",
-                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+                  const Icon(Icons.shield_outlined,
+                      color: Colors.greenAccent, size: 80),
+                  const SizedBox(height: 32),
+                  const Text(
+                    "Passo Final: Certificado Digital",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Para emitir notas automaticamente pelo Sistema Nacional, você precisa de um Certificado Digital A1 ativo.",
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 48),
+                  if (onboardingStatus == 'comprando_parceiro') ...[
+                    _buildWaitingState(),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context)
+                            .pushNamedAndRemoveUntil('/hub', (route) => false),
+                        icon: const Icon(Icons.dashboard_outlined),
+                        label: const Text("Ir para o Aplicativo",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: MeireTheme.primaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    _buildOptionA(),
+                    const SizedBox(height: 24),
+                    _buildOptionB(),
+                  ],
+                  const SizedBox(height: 48),
+                  TextButton(
+                    onPressed: () => ref.read(authServiceProvider).logout(),
+                    child: const Text("Sair da conta",
+                        style: TextStyle(color: Colors.white54)),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              const Text(
-                "Para emitir notas automaticamente pelo Sistema Nacional, você precisa de um Certificado Digital A1 ativo.",
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-
-              if (onboardingStatus == 'comprando_parceiro') ...[
-                _buildWaitingState(),
-              ] else ...[
-                _buildOptionA(),
-                const SizedBox(height: 24),
-                _buildOptionB(),
-              ],
-
-              const SizedBox(height: 48),
-              TextButton(
-                onPressed: () => ref.read(authServiceProvider).logout(),
-                child: const Text("Sair da conta", style: TextStyle(color: Colors.white54)),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -193,7 +231,8 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
       ),
       child: Column(
         children: [
-          const Icon(Icons.file_upload_outlined, color: MeireTheme.primaryColor, size: 32),
+          const Icon(Icons.file_upload_outlined,
+              color: MeireTheme.primaryColor, size: 32),
           const SizedBox(height: 16),
           const Text(
             "Já tenho o arquivo",
@@ -213,11 +252,15 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
               onPressed: _isLoading ? null : _pickFile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: MeireTheme.primaryColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
-              child: _isLoading 
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                : const Text("Selecionar Arquivo .pfx"),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white))
+                  : const Text("Selecionar Arquivo .pfx"),
             ),
           ),
         ],
@@ -243,13 +286,17 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
             ),
             child: const Text(
               "💎 BENEFÍCIO EXCLUSIVO MEIRI",
-              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+              style: TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12),
             ),
           ),
           const SizedBox(height: 16),
           const Text(
             "Adquirir com Desconto",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -264,11 +311,13 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
             child: ElevatedButton.icon(
               onPressed: _iniciarCompraParceiro,
               icon: const Icon(Icons.chat_bubble_outline, size: 24),
-              label: const Text("Garantir Certificado com Desconto", style: TextStyle(fontWeight: FontWeight.bold)),
+              label: const Text("Garantir Certificado com Desconto",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF25D366),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
@@ -287,11 +336,13 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
       ),
       child: Column(
         children: [
-          const Icon(Icons.hourglass_empty_rounded, color: Colors.amber, size: 48),
+          const Icon(Icons.hourglass_empty_rounded,
+              color: Colors.amber, size: 48),
           const SizedBox(height: 24),
           const Text(
             "Pronto! Você foi redirecionado.",
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -303,8 +354,10 @@ class _CertificadoOnboardingPageState extends ConsumerState<CertificadoOnboardin
           const SizedBox(height: 32),
           OutlinedButton(
             onPressed: () => setState(() {
-               // Permite ao usuário voltar pro fluxo de upload caso tenha o arquivo
-               ref.read(certificateServiceProvider).updateOnboardingStatus('pendente');
+              // Permite ao usuário voltar pro fluxo de upload caso tenha o arquivo
+              ref
+                  .read(certificateServiceProvider)
+                  .updateOnboardingStatus('pendente');
             }),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,

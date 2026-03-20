@@ -101,7 +101,7 @@ class CustomerCentralPage extends ConsumerWidget {
                 CircleAvatar(
                   backgroundColor: MeireTheme.accentColor.withValues(alpha: 0.1),
                   child: Text(
-                    client.apelido.isNotEmpty ? client.apelido.substring(0, 1).toUpperCase() : 'C',
+                    client.displayName.isNotEmpty ? client.displayName.substring(0, 1).toUpperCase() : 'C',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: MeireTheme.accentColor),
                   ),
                 ),
@@ -111,7 +111,7 @@ class CustomerCentralPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        client.apelido,
+                        client.displayName,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       const SizedBox(height: 4),

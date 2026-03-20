@@ -43,6 +43,8 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
     super.dispose();
   }
 
+  Map<String, dynamic>? _lastFetchedData;
+
   void _onDocumentChanged() async {
     String text = _documentController.text;
     String cleanText = text.replaceAll(RegExp(r'[^0-9]'), '');
@@ -56,6 +58,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
         final data = await BrasilApiService.buscarCnpj(cleanText);
         setState(() {
           _nameController.text = data['razao_social'];
+          _lastFetchedData = data;
         });
         _nicknameFocus.requestFocus(); // Auto-focus no Apelido
       } catch (e) {
@@ -74,6 +77,7 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
     } else if (cleanText.length < 14 && _nameController.text.isNotEmpty) {
        setState(() {
          _nameController.clear();
+         _lastFetchedData = null;
        });
     }
   }
@@ -89,13 +93,28 @@ class _AddClientPageState extends ConsumerState<AddClientPage> {
 
         final cleanCnpj = _documentController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
-        await pb.collection('clientes_tomadores').create(body: {
+        // Prepara objeto com fallback para dados manuais se não buscou (mas aqui no Meiri o buscarCnpj faz o trabalho pesado)
+        final body = {
           'user': userId,
           'cnpj': cleanCnpj,
           'razao_social': _nameController.text,
           'apelido': _nicknameController.text,
           'email': _emailController.text,
-        });
+        };
+
+        if (_lastFetchedData != null) {
+          body.addAll({
+            'cep': _lastFetchedData!['cep'],
+            'logradouro': _lastFetchedData!['logradouro'],
+            'numero': _lastFetchedData!['numero'],
+            'bairro': _lastFetchedData!['bairro'],
+            'municipio_ibge': _lastFetchedData!['municipio_ibge'],
+            'cidade_nome': _lastFetchedData!['cidade_nome'],
+            'uf': _lastFetchedData!['uf'],
+          });
+        }
+
+        await pb.collection('clientes_tomadores').create(body: body);
 
         ref.invalidate(clientListProvider);
 

@@ -52,7 +52,10 @@ class MeireApp extends ConsumerWidget {
     final isAuthenticated = ref.watch(pbProvider).authStore.isValid;
     final userRecord = ref.watch(userProvider);
     final possuiCertificado = userRecord?.getBoolValue('possui_certificado') ?? false;
+    final statusOnboarding = userRecord?.getStringValue('status_onboarding_nota') ?? 'pendente';
+    
     final isAdmin = userRecord?.getStringValue('email') == 'thiago514@hotmail.com';
+    final podeAcessarApp = possuiCertificado || statusOnboarding == 'comprando_parceiro';
 
     // Listen to Auth State globally
     ref.listen(pbAuthChangeProvider, (previous, next) {
@@ -71,10 +74,12 @@ class MeireApp extends ConsumerWidget {
         } else if (!isLoggedOut && wasLoggedOut) {
           final eventIsAdmin = event.record?.getStringValue('email') == 'thiago514@hotmail.com';
           final eventPossuiCertificado = event.record?.getBoolValue('possui_certificado') ?? false;
+          final eventStatusOnboarding = event.record?.getStringValue('status_onboarding_nota') ?? 'pendente';
+          final eventPodeAcessarApp = eventPossuiCertificado || eventStatusOnboarding == 'comprando_parceiro';
           
           if (eventIsAdmin) {
             navigatorKey.currentState?.pushNamedAndRemoveUntil('/admin_hub', (route) => false);
-          } else if (!eventPossuiCertificado) {
+          } else if (!eventPodeAcessarApp) {
             navigatorKey.currentState?.pushNamedAndRemoveUntil('/certificado_onboarding', (route) => false);
           } else {
             navigatorKey.currentState?.pushNamedAndRemoveUntil('/hub', (route) => false);
@@ -101,7 +106,7 @@ class MeireApp extends ConsumerWidget {
       home: isAuthenticated 
           ? (isAdmin 
               ? const AdminDashboardPage() 
-              : (possuiCertificado 
+              : (podeAcessarApp 
                   ? const HubPage() 
                   : const CertificadoOnboardingPage())) 
           : const LandingPage(),

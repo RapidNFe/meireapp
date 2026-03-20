@@ -1,14 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
-import 'package:meire/features/clients/models/client_model.dart';
+import 'package:meire/features/clients/models/tomador_model.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 // ---------------------------------------------------------------------------
 // Provider para Listar Todos os Clientes do Usuário Logado
 // ---------------------------------------------------------------------------
 final clientListProvider =
-    FutureProvider.autoDispose<List<ClientModel>>((ref) async {
+    FutureProvider.autoDispose<List<TomadorModel>>((ref) async {
   final pb = ref.watch(pbProvider);
   if (!pb.authStore.isValid) return [];
 
@@ -20,7 +20,7 @@ final clientListProvider =
           filter: 'user = "$userId"',
           sort: 'apelido',
         );
-    return records.map((r) => ClientModel.fromRecord(r)).toList();
+    return records.map((r) => TomadorModel.fromRecord(r)).toList();
   } catch (e) {
     if (e is ClientException && e.statusCode == 404) {
       return [];
@@ -36,14 +36,14 @@ final clientListProvider =
 // ---------------------------------------------------------------------------
 final clienteSearchProvider = StateProvider<String>((ref) => '');
 
-final filteredClientesProvider = Provider<List<ClientModel>>((ref) {
+final filteredClientesProvider = Provider<List<TomadorModel>>((ref) {
   final allClientes = ref.watch(clientListProvider).asData?.value ?? [];
   final searchTerm = ref.watch(clienteSearchProvider).toLowerCase();
 
   if (searchTerm.isEmpty) return allClientes;
 
   return allClientes.where((cliente) {
-    return cliente.apelido.toLowerCase().contains(searchTerm) ||
+    return (cliente.apelido?.toLowerCase().contains(searchTerm) ?? false) ||
         cliente.razaoSocial.toLowerCase().contains(searchTerm) ||
         cliente.cnpj.contains(searchTerm);
   }).toList();
