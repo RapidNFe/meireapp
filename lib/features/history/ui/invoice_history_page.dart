@@ -51,11 +51,11 @@ class _InvoiceHistoryPageState extends ConsumerState<InvoiceHistoryPage> {
           return InvoiceModel(
             id: n.id, // pocketbase id
             clientName: n.tomadorNome,
-            clientCnpj: '', // Não temos esse campo na model básica de NotaFiscal no momento
+            clientCnpj: n.tomadorCnpj ?? '',
             amount: n.valor,
             issueDate: n.competencia,
             status: n.status,
-            chaveAcesso: null, // Campo não disponível na NotaFiscal simplificada
+            chaveAcesso: n.chaveAcesso, // Usando o link real da nota para o PDF
           );
         }).toList() ??
         [];

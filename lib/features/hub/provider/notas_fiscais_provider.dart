@@ -9,12 +9,14 @@ import 'dart:convert';
 class NotaFiscal {
   final String id;
   final String tomadorNome;
+  final String? tomadorCnpj;
   final double valor;
   final String status;
   final String numeroNota;
   final DateTime created;
   final DateTime competencia;
   final String servico;
+  final String? chaveAcesso;
 
   NotaFiscal({
     required this.id,
@@ -25,6 +27,8 @@ class NotaFiscal {
     required this.created,
     required this.competencia,
     required this.servico,
+    this.tomadorCnpj,
+    this.chaveAcesso,
   });
 
   factory NotaFiscal.fromRecord(RecordModel record) {
@@ -49,6 +53,8 @@ class NotaFiscal {
                    DateTime.tryParse(record.getStringValue('created')) ?? 
                    DateTime.now()).toLocal(),
       servico: record.getStringValue('servico'),
+      tomadorCnpj: record.getStringValue('tomador_cnpj'),
+      chaveAcesso: record.getStringValue('chave_acesso').isEmpty ? null : record.getStringValue('chave_acesso'),
     );
   }
 }

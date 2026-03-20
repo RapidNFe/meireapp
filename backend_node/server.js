@@ -145,8 +145,12 @@ const app = express();
 app.use(cors({
     origin: (origin, callback) => {
         // Permite qualquer localhost, qualquer subdomínio de meireapp.com.br, ou sem origin (request direto)
-        if (!origin || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:') || 
-            origin.endsWith('meireapp.com.br') || origin.endsWith('meireapp.com.br/')) {
+        if (!origin || 
+            origin.startsWith('http://localhost:') || 
+            origin.startsWith('http://127.0.0.1:') || 
+            origin === 'https://meireapp.com.br' ||
+            origin.endsWith('.meireapp.com.br') ||
+            origin.endsWith('://meireapp.com.br')) { // Garante match da root
             callback(null, true);
         } else {
             console.warn(`🚫 [CORS] Origin bloqueado: ${origin}`);
@@ -909,13 +913,20 @@ app.use('/', proxy(config.pocketbase.url, {
             headers['x-accel-buffering'] = 'no'; // Importante se houver Nginx/Cloudflare
         }
 
+        // Remove headers de CORS que possam vir do PocketBase para evitar duplicidade
+        delete headers['access-control-allow-origin'];
+        delete headers['access-control-allow-credentials'];
+        delete headers['access-control-allow-methods'];
+        delete headers['access-control-allow-headers'];
+
         // Força os headers de CORS da Meire para evitar bloqueios no Flutter
         const origin = userReq.headers.origin;
         if (origin && (
             origin.startsWith('http://localhost:') || 
             origin.startsWith('http://127.0.0.1:') ||
-            origin.endsWith('meireapp.com.br') ||
-            origin.endsWith('meireapp.com.br/')
+            origin === 'https://meireapp.com.br' ||
+            origin.endsWith('.meireapp.com.br') ||
+            origin.endsWith('://meireapp.com.br')
         )) {
             headers['access-control-allow-origin'] = origin;
         } else {
