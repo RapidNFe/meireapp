@@ -2016,7 +2016,7 @@ class _PriceAndCallToAction extends StatelessWidget {
               ),
               SizedBox(width: 4),
               Text(
-                "27,90",
+                "29,90",
                 style: TextStyle(
                   color: kEmeraldAccent,
                   fontSize: 64,
