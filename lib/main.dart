@@ -138,7 +138,7 @@ class MeireApp extends ConsumerWidget {
             child,
             Positioned(
               right: 16,
-              bottom: 16,
+              bottom: 90,
               child: MeireAssistantWidget(
                 message: "Como posso te ajudar?",
                 onTap: () => SupportModal.show(navigatorKey.currentContext ?? context, ref),

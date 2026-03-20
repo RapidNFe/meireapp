@@ -108,9 +108,9 @@ class NavBar extends StatelessWidget {
             if (!isMobile)
               Row(
                 children: [
-                   HoverNavText('Funcionalidades', color: verdeSecundario, onTap: onFeaturesTap),
-                   const SizedBox(width: 32),
                    HoverNavText('Planos', color: verdeSecundario, onTap: onPricingTap),
+                   const SizedBox(width: 32),
+                   HoverNavText('Funcionalidades', color: verdeSecundario, onTap: onFeaturesTap),
                    const SizedBox(width: 32),
                    HoverNavText('Depoimentos', color: verdeSecundario, onTap: onTestimonialsTap),
                    const SizedBox(width: 32),
@@ -169,7 +169,7 @@ class HeroSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(color: amareloDestaque.withValues(alpha: 0.3)),
                   ),
-                  child: const Text('⭐ INTELIGÊNCIA PARA MEI',
+                  child: const Text('⭐ GESTÃO COMPLETA E SIMPLIFICADA',
                       style: TextStyle(
                           color: amareloDestaque,
                           fontSize: 12,
@@ -178,7 +178,7 @@ class HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Inteligência real\npara o seu MEI',
+                  'Tudo na palma\nda sua mão.',
                   style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 40 : 56,
@@ -187,7 +187,7 @@ class HeroSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Transforme sua burocracia em crescimento com gestão premium. O braço inteligente do MEI chegou para revolucionar seu negócio com automação e clareza.',
+                  'A assistente MEIRI te ajuda na gestão da sua empresa simplificando as rotinas e obrigações fiscais em um só lugar.\n\nCom o emissor de nota fiscal do APP MEIRI integrado a Receita Federal, você fica em conformidade com a legislação. A transmissão da declaração anual de forma automática, evita que você empreendedor pague multas ou até perca o seu CNPJ.',
                   style: TextStyle(color: Colors.white70, fontSize: isMobile ? 16 : 18, height: 1.5),
                 ),
                 const SizedBox(height: 40),

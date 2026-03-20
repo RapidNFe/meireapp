@@ -113,7 +113,7 @@ class _CertificadoOnboardingPageState
   }
 
   Future<void> _iniciarCompraParceiro() async {
-    const String numeroVendedor = "62982339927";
+    const String numeroVendedor = "5562984279588";
     const String mensagem =
         "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
     final Uri urlWhatsApp = Uri.parse(

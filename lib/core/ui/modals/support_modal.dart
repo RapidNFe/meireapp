@@ -5,7 +5,7 @@ import 'package:meire/core/ui/theme.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 
 class SupportModal {
-  static const String numeroSuporte = "5562982339927";
+  static const String numeroSuporte = "5562984279588";
 
   static final List<Map<String, dynamic>> categorias = [
     {
@@ -67,13 +67,21 @@ class SupportModal {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
+              margin: const EdgeInsets.only(left: 16, right: 16, bottom: 32),
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom + 24,
                 top: 24, left: 24, right: 24,
               ),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -186,14 +194,14 @@ class SupportModal {
     String nomeCliente = user?.getStringValue('name') ?? "Cliente Meiri";
     String cnpjCliente = user?.getStringValue('cnpj') ?? "Não informado";
 
-    String mensagem = "Olá, suporte da Meiri! 🚀\n\n"
-        "👤 *Cliente:* $nomeCliente\n"
-        "📄 *CNPJ:* $cnpjCliente\n";
+    String mensagem = "Olá, suporte da Meiri! \n\n"
+        "Cliente: $nomeCliente\n"
+        "CNPJ: $cnpjCliente\n";
     
     if (detalhes.isNotEmpty) {
       mensagem += "\n$detalhes";
     } else {
-      mensagem += "🚨 *Motivo:* $motivo\n";
+      mensagem += "Motivo: $motivo\n";
     }
 
     final Uri url = Uri.parse("https://wa.me/$numeroSuporte?text=${Uri.encodeComponent(mensagem)}");
