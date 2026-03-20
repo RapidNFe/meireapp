@@ -30,6 +30,7 @@ class AuthService {
     String cep = '',
     String cnaePrincipal = '',
     String inscricaoMunicipal = '',
+    String codigoIbge = '',
     bool isBeleza = false,
   }) async {
     try {
@@ -64,6 +65,7 @@ class AuthService {
         "cep": cep,
         "cnae_principal": cnaePrincipal,
         "inscricao_municipal": inscricaoMunicipal,
+        "codigo_ibge": codigoIbge,
         "is_beleza": isBeleza,
         "status_registro": "conta_criada",
         "mei_ativo": true,

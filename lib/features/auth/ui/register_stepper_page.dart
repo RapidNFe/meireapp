@@ -43,6 +43,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   String _nomeCompleto = '';
   String _email = '';
   String _password = '';
+  String _codigoIbge = '';
 
   Future<void> _fetchCnpjData(String cnpj) async {
     setState(() => _isLoading = true);
@@ -54,6 +55,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
         final rawCnae = data['cnae_fiscal']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
         _cnae = rawCnae;
         _cep = data['cep'] ?? '';
+        _codigoIbge = data['municipio_ibge']?.toString() ?? '';
         _cnaeFull = "$rawCnae - ${data['cnae_fiscal_descricao']}";
         
         // Elite Filter: 9602-5/01 ou 9602-5/02
@@ -108,6 +110,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             cep: _cep,
             cnaePrincipal: _cnaeFull,
             inscricaoMunicipal: _inscricaoMunicipal,
+            codigoIbge: _codigoIbge,
             isBeleza: _isBeleza,
           );
 
