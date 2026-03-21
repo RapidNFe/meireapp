@@ -11,6 +11,7 @@ import 'package:meire/features/hub/provider/notas_fiscais_provider.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/provider/settings_provider.dart';
 import 'package:meire/features/clients/ui/customer_central_page.dart';
+import 'package:meire/features/nfse/provider/favorite_services_provider.dart';
 import 'package:meire/features/reports/ui/reports_page.dart';
 import 'package:meire/core/services/pocketbase_service.dart';
 import 'package:meire/core/provider/notifications_provider.dart';
@@ -111,8 +112,8 @@ class _HubPageState extends ConsumerState<HubPage> {
       centerTitle: false,
       title: Row(
         children: [
-          // Logo: Aumentada no Web (60), Padrão no Tablet (40), Oculta no Mobile na Página Inicial
-          if (!(isMobile && _currentIndex == 0)) ...[
+          // Logo: Aumentada no Web (60), Padrão no Tablet (40), Sempre Oculta no Mobile para não espremer o texto
+          if (!isMobile) ...[
             SvgPicture.asset(
               'assets/images/logo.svg',
               height: isDesktop ? 60 : 40,
@@ -280,6 +281,8 @@ class _HubPageState extends ConsumerState<HubPage> {
         if (!possuiCertificado && onboardingStatus == 'comprando_parceiro')
           _buildStatusBanner(context),
         _buildTermometroCard(context),
+        const SizedBox(height: 16),
+        _buildFavoritosRapidos(context),
         const SizedBox(height: 16),
         _buildPerformanceSemestral(context),
         const SizedBox(height: 16),
@@ -706,6 +709,95 @@ class _HubPageState extends ConsumerState<HubPage> {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               }
             }),
+      ],
+    );
+  }
+
+  Widget _buildFavoritosRapidos(BuildContext context) {
+    final favoritesList = ref.watch(favoriteServicesProvider).where((s) => s.favorito).toList();
+
+    if (favoritesList.isEmpty) {
+      return const SizedBox.shrink(); 
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+          child: Text(
+            "Emissão Rápida (Favoritos)",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: MeireTheme.primaryColor,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 100, // Altura ajustada
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: favoritesList.length,
+            separatorBuilder: (context, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final servico = favoritesList[index];
+              return Card(
+                elevation: 1,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: MeireTheme.primaryColor.withValues(alpha: 0.1)),
+                ),
+                color: Colors.white,
+                margin: EdgeInsets.zero,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pushNamed(context, '/nfse_form', arguments: {'serviceId': servico.id});
+                  },
+                  child: Container(
+                    width: 220,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.flash_on, color: Colors.amber, size: 16),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                servico.apelido.toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: MeireTheme.primaryColor,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          servico.valorBase != null ? NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$ ').format(servico.valorBase) : 'Valor Variável',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }

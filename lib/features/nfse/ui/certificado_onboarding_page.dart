@@ -113,9 +113,9 @@ class _CertificadoOnboardingPageState
   }
 
   Future<void> _iniciarCompraParceiro() async {
-    const String numeroVendedor = "5562984279588";
+    const String numeroVendedor = "556230915051";
     const String mensagem =
-        "Olá! Sou cliente do app Meiri. Vi que temos uma parceria com valor exclusivo para nós e quero garantir meu Certificado Digital A1 com esse desconto!";
+        "Bom dia, sou Cliente da Assistente Meiri, e gostaria de fazer o meu certificado A1 E-CNPJ 12 meses";
     final Uri urlWhatsApp = Uri.parse(
         "https://wa.me/$numeroVendedor?text=${Uri.encodeComponent(mensagem)}");
 

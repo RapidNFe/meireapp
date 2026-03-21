@@ -14,6 +14,7 @@ class FavoriteService {
   final bool issRetido;
   final String userId;
   final String? itemNbs; // Novo!
+  final bool favorito;
 
   FavoriteService({
     String? id,
@@ -26,6 +27,7 @@ class FavoriteService {
     this.issRetido = false,
     required this.userId,
     this.itemNbs, // Novo!
+    this.favorito = false,
   }) : id = id ?? const Uuid().v4();
 
   FavoriteService copyWith({
@@ -38,6 +40,7 @@ class FavoriteService {
     bool? issRetido,
     String? userId,
     String? itemNbs, // Novo!
+    bool? favorito,
   }) {
     return FavoriteService(
       id: id,
@@ -50,6 +53,7 @@ class FavoriteService {
       issRetido: issRetido ?? this.issRetido,
       userId: userId ?? this.userId,
       itemNbs: itemNbs ?? this.itemNbs,
+      favorito: favorito ?? this.favorito,
     );
   }
 
@@ -65,6 +69,7 @@ class FavoriteService {
       issRetido: record.getBoolValue('iss_retido'),
       userId: record.getStringValue('user_id'),
       itemNbs: record.getStringValue('item_nbs'),
+      favorito: record.getBoolValue('favorito'),
     );
   }
 }
@@ -106,6 +111,7 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         codigoNacional: '06.01.01',
         descricaoBase: 'Nota fiscal referente a serviços prestados no período de {QUINZENA_PASSADA}.',
         userId: _userId ?? 'mock',
+        favorito: true,
       ),
     ];
   }
@@ -122,8 +128,11 @@ class FavoriteServicesNotifier extends StateNotifier<List<FavoriteService>> {
         "descricao_padrao": service.descricaoBase,
         "valor_base": service.valorBase,
         "id_cliente_padrao": service.idClientePadrao,
-        "iss_retido": service.issRetido,
+        "iss_retido": false, // MEI is exempt
         "item_nbs": service.itemNbs,
+        "favorito": service.favorito,
+        "regime_especial_tributacao": 6, // 6 = MEI
+        "exigibilidade_iss": 1, // 1 = Exigível do Simples/MEI
       };
 
       final record = await _pb.collection('servicos_favoritos').create(body: body);

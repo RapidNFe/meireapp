@@ -5,6 +5,7 @@ import 'package:meire/core/services/brasil_api_service.dart';
 import 'package:meire/features/auth/services/auth_service.dart';
 import 'package:meire/core/utils/validators.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Paleta Esmeralda
 const Color esmeraldaFundo = Color(0xFF022C22);
@@ -37,6 +38,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   String _cnae = '';
   String _cep = '';
   String _cnaeFull = '';
+  List<String> _cnaesSecundarios = [];
   String _inscricaoMunicipal = '';
   
   // State Step 2
@@ -44,6 +46,16 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
   String _email = '';
   String _password = '';
   String _codigoIbge = '';
+  bool _isIbgeValido = false;
+  String _mensagemErroIbge = '';
+  String _estadoSigla = '';
+
+  final Map<String, String> _prefixosUf = {
+    'RO': '11', 'AC': '12', 'AM': '13', 'RR': '14', 'PA': '15', 'AP': '16', 'TO': '17',
+    'MA': '21', 'PI': '22', 'CE': '23', 'RN': '24', 'PB': '25', 'PE': '26', 'AL': '27',
+    'SE': '28', 'BA': '29', 'MG': '31', 'ES': '32', 'RJ': '33', 'SP': '35', 'PR': '41',
+    'SC': '42', 'RS': '43', 'MS': '50', 'MT': '51', 'GO': '52', 'DF': '53'
+  };
 
   late final TextEditingController _cepController;
   late final TextEditingController _ibgeController;
@@ -55,6 +67,28 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
     _cepController = TextEditingController();
     _ibgeController = TextEditingController();
     _cnaeController = TextEditingController();
+
+    _ibgeController.addListener(() {
+      setState(() {
+        final valor = _ibgeController.text.trim();
+        if (valor.isEmpty) {
+          _isIbgeValido = false;
+          _mensagemErroIbge = "O código IBGE é obrigatório.";
+        } else if (valor.length < 7) {
+          _isIbgeValido = false;
+          _mensagemErroIbge = "O código deve ter 7 dígitos.";
+        } else {
+          String prefixoEsperado = _prefixosUf[_estadoSigla] ?? "";
+          if (prefixoEsperado.isNotEmpty && !valor.startsWith(prefixoEsperado)) {
+            _isIbgeValido = false;
+            _mensagemErroIbge = "Este código não pertence ao estado selecionado ($_estadoSigla).";
+          } else {
+            _isIbgeValido = true;
+            _mensagemErroIbge = ""; // Sucesso
+          }
+        }
+      });
+    });
   }
 
   @override
@@ -71,6 +105,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
       final data = await BrasilApiService.buscarCep(cep);
       if (data['codigo_ibge'] != null && data['codigo_ibge'].toString().isNotEmpty) {
         setState(() {
+          _estadoSigla = data['state'] ?? _estadoSigla;
           _codigoIbge = data['codigo_ibge'].toString();
           _ibgeController.text = _codigoIbge;
         });
@@ -88,8 +123,20 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
         final rawCnae = data['cnae_fiscal']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
         _cnae = rawCnae;
         _cep = data['cep'] ?? '';
+        _estadoSigla = data['uf'] ?? '';
         _codigoIbge = data['municipio_ibge']?.toString() ?? '';
         _cnaeFull = "$rawCnae - ${data['cnae_fiscal_descricao']}";
+        
+        _cnaesSecundarios = [];
+        if (data['cnaes_secundarios'] is List) {
+           for (var item in data['cnaes_secundarios']) {
+             final codeStr = item['codigo']?.toString().replaceAll(RegExp(r'\D'), '') ?? '';
+             final descStr = item['descricao']?.toString() ?? '';
+             if (codeStr.isNotEmpty) {
+                _cnaesSecundarios.add("$codeStr - $descStr");
+             }
+           }
+        }
         
         _cepController.text = _cep;
         _ibgeController.text = _codigoIbge;
@@ -146,6 +193,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
             cnpj: cleanCnpj,
             cep: _cep,
             cnaePrincipal: _cnaeFull,
+            cnaesSecundarios: _cnaesSecundarios,
             inscricaoMunicipal: _inscricaoMunicipal,
             codigoIbge: _codigoIbge,
             isBeleza: _isBeleza,
@@ -397,11 +445,45 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: TextFormField(
-                  controller: _ibgeController,
-                  style: const TextStyle(color: Colors.white70),
-                  decoration: _inputDecoration('Código IBGE', Icons.map_outlined),
-                  onSaved: (val) => _codigoIbge = val?.trim() ?? '',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextFormField(
+                      controller: _ibgeController,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(7),
+                      ],
+                      maxLength: 7,
+                      style: const TextStyle(color: Colors.white70),
+                      decoration: _inputDecoration('Código IBGE', Icons.map_outlined).copyWith(
+                        counterText: '',
+                        errorText: _mensagemErroIbge.isEmpty ? null : _mensagemErroIbge,
+                        errorMaxLines: 2,
+                        suffixIcon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (Widget child, Animation<double> animation) {
+                            return ScaleTransition(scale: animation, child: child);
+                          },
+                          child: _isIbgeValido
+                              ? const Icon(
+                                  Icons.check_circle_rounded,
+                                  key: ValueKey('icon_success'),
+                                  color: Colors.greenAccent,
+                                  size: 24,
+                                )
+                              : IconButton(
+                                  key: const ValueKey('icon_help'),
+                                  icon: const Icon(Icons.help_outline, color: Colors.blueAccent),
+                                  onPressed: _mostrarAjudaIbge,
+                                ),
+                        ),
+                      ),
+                      onChanged: (val) => _codigoIbge = val.trim(),
+                      onSaved: (val) => _codigoIbge = val?.trim() ?? '',
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -502,7 +584,7 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
           ),
           const SizedBox(height: 40),
           ElevatedButton(
-            onPressed: (_isLoading || !_aceitouTermos) ? null : _performRegistration,
+            onPressed: (_isLoading || !_aceitouTermos || !_isIbgeValido) ? null : _performRegistration,
             style: ElevatedButton.styleFrom(
               backgroundColor: amareloDestaque,
               foregroundColor: Colors.black,
@@ -528,6 +610,64 @@ class _RegisterStepperPageState extends ConsumerState<RegisterStepperPage> {
               setState(() => _currentStep = 0);
             },
             child: const Text('Voltar e editar CNPJ', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  void _mostrarAjudaIbge() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: verdeCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: amareloDestaque),
+            SizedBox(width: 8),
+            Expanded(child: Text('Código IBGE de 7 dígitos?', style: TextStyle(color: Colors.white, fontSize: 18))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Para emitir suas Notas Fiscais, precisamos do código oficial da sua cidade.\n',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const Text('• O código deve ter exatamente 7 números.', style: TextStyle(color: Colors.white70, height: 1.5)),
+            const Text('• Ele é diferente do CEP (que identifica sua rua).', style: TextStyle(color: Colors.white70, height: 1.5)),
+            const Text('• Não use o código TOM (que tem apenas 4 dígitos).', style: TextStyle(color: Colors.white70, height: 1.5)),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final url = Uri.parse('https://cidades.ibge.gov.br/');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: const Icon(Icons.search, size: 20),
+                label: const Text("Consultar código no IBGE"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: verdeSecundario,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendi', style: TextStyle(color: amareloDestaque, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

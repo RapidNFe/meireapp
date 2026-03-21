@@ -23,34 +23,79 @@ class _FavoriteServiceFormPageState
   final _codigoNationalController = TextEditingController();
   final _descricaoBaseController = TextEditingController();
   final _valorBaseController = TextEditingController();
-   bool _issRetido = false;
+
+   bool _isFavorito = false;
+   List<String> _cnaesOptions = [];
+   String? _cnaeSelecionado;
+
+   final Map<String, String> deParaCnaeNacional = {
+     "9602501": "06.01.01",
+     "9602502": "06.01.01",
+     "8219999": "17.02.01",
+     "9609206": "06.01.01",
+   };
  
    @override
    void initState() {
      super.initState();
-     _codigoNationalController.addListener(_checkEsteticaLogic);
 
      // Inteligência: Se o usuário é do setor de Beleza/Estética (Setado no cadastro via BrasilAPI), 
      // já inicia com a opção de ISS Retido ATIVADA.
      Future.microtask(() {
         final user = ref.read(userProvider);
-        if (user?.getBoolValue('is_beleza') == true) {
-          if (mounted) setState(() => _issRetido = true);
+        if (user != null) {
+          if (mounted) {
+             setState(() {
+               _idMunicipioController.text = user.getStringValue('codigo_ibge');
+             });
+          }
+
+          // Busca de CNAEs
+          final principal = user.getStringValue('cnae_principal');
+          final scds = user.getListValue<String>('cnaes_cadastrados');
+          
+          final Set<String> opts = {};
+          if (principal.isNotEmpty) opts.add(principal);
+          opts.addAll(scds);
+          
+          if (mounted) setState(() => _cnaesOptions = opts.toList());
         }
      });
    }
  
-   void _checkEsteticaLogic() {
-     final code = _codigoNationalController.text.replaceAll('.', '').trim();
-     // Lógica de Salão Parceiro / Estética (LC 116: 06.01 e 06.02)
-     if (code.startsWith('0601') || code.startsWith('0602')) {
-       if (!_issRetido) {
-         setState(() {
-           _issRetido = true;
-         });
+   void _onCnaeSelecionado(String? cnae) {
+     if (cnae == null) return;
+     setState(() {
+       _cnaeSelecionado = cnae;
+       
+       String trimCode = cnae.split(' - ').first.replaceAll(RegExp(r'\D'), '');
+       final parts = cnae.split(' - ');
+       
+       if (parts.length > 1) {
+         if (_apelidoController.text.isEmpty) {
+           _apelidoController.text = parts[1].toUpperCase();
+         }
+         if (_descricaoBaseController.text.isEmpty) {
+           _descricaoBaseController.text = _gerarDescricaoPadrao(parts[1].trim());
+         }
        }
-     }
+       
+       if (deParaCnaeNacional.containsKey(trimCode)) {
+         _codigoNationalController.text = deParaCnaeNacional[trimCode]!;
+       }
+     });
    }
+
+   String _gerarDescricaoPadrao(String nomeServico) {
+     return '''Prestação de serviços de $nomeServico.
+  
+Documento emitido por MEI - Optante pelo SIMEI. 
+Não gera direito a crédito fiscal de IPI. 
+Valor aproximado dos tributos: R\$ 0,00 (0,00%) Fonte: IBPT.
+Lei 12.741/2012.''';
+   }
+ 
+
 
   @override
   void dispose() {
@@ -59,7 +104,6 @@ class _FavoriteServiceFormPageState
     _codigoNationalController.dispose();
     _descricaoBaseController.dispose();
     _valorBaseController.dispose();
-    _codigoNationalController.removeListener(_checkEsteticaLogic);
     super.dispose();
   }
 
@@ -81,8 +125,9 @@ class _FavoriteServiceFormPageState
         codigoNacional: _codigoNationalController.text,
         descricaoBase: _descricaoBaseController.text,
         valorBase: valorBase,
-        issRetido: _issRetido,
+        issRetido: false, // MEI is exempt
         userId: user.id,
+        favorito: _isFavorito,
       );
 
       ref.read(favoriteServicesProvider.notifier).addService(newService);
@@ -133,12 +178,37 @@ class _FavoriteServiceFormPageState
                   children: [
                     TextFormField(
                       controller: _idMunicipioController,
-                      decoration:
-                          const InputDecoration(labelText: 'Município (Nome ou Código IBGE) *'),
+                      readOnly: true,
+                      style: const TextStyle(color: Colors.grey),
+                      decoration: InputDecoration(
+                        labelText: 'Município (Código IBGE)',
+                        helperText: 'Preenchido automaticamente pelo seu cadastro de conta.',
+                        filled: true,
+                        fillColor: Colors.amber.withValues(alpha: 0.1),
+                      ),
                       validator: (val) =>
                           Validators.validateRequired(val, 'Município'),
                     ),
                     const SizedBox(height: 16),
+                    if (_cnaesOptions.isNotEmpty) ...[
+                      DropdownButtonFormField<String>(
+                        initialValue: _cnaeSelecionado,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Selecione o Serviço (CNAE)',
+                          prefixIcon: Icon(Icons.content_cut),
+                        ),
+                        items: _cnaesOptions.map((cnae) {
+                          return DropdownMenuItem(
+                            value: cnae,
+                            child: Text(cnae, overflow: TextOverflow.ellipsis),
+                          );
+                        }).toList(),
+                        onChanged: _onCnaeSelecionado,
+                        validator: (val) => Validators.validateRequired(val, 'Serviço CNAE'),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     TextFormField(
                       controller: _apelidoController,
                       decoration: const InputDecoration(
@@ -151,9 +221,11 @@ class _FavoriteServiceFormPageState
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _codigoNationalController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Código Nacional (NFS-e) *',
-                        helperText: 'Ex: 06.01.01',
+                        helperText: 'Ex: 06.01.01. Preenchido auto pelo seu CNAE.',
+                        filled: _cnaeSelecionado != null,
+                        fillColor: _cnaeSelecionado != null ? Colors.amber.withValues(alpha: 0.1) : null,
                       ),
                       validator: (val) =>
                           Validators.validateRequired(val, 'Código Nacional'),
@@ -161,7 +233,7 @@ class _FavoriteServiceFormPageState
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descricaoBaseController,
-                      maxLines: 4,
+                      maxLines: 5,
                       maxLength: 2000,
                       decoration: const InputDecoration(
                           labelText: 'Descrição Padrão da Nota *',
@@ -181,13 +253,18 @@ class _FavoriteServiceFormPageState
                         hintText: 'R\$ 0,00',
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     SwitchListTile(
-                      title: const Text('ISS Retido pelo Tomador?', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Marque apenas se o imposto for pago pelo cliente'),
-                      value: _issRetido,
-                      activeThumbColor: MeireTheme.accentColor,
-                      onChanged: (val) => setState(() => _issRetido = val),
+                      title: const Text('Exibir no Atalho Rápido?', style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text('Aparecerá na tela inicial para emissão em 1 clique.'),
+                      value: _isFavorito,
+                      activeTrackColor: MeireTheme.primaryColor.withValues(alpha: 0.5),
+                      activeThumbColor: MeireTheme.primaryColor,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _isFavorito = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 32),
                     ElevatedButton(

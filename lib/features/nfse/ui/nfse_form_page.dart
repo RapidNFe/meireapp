@@ -47,11 +47,43 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      final client = ModalRoute.of(context)?.settings.arguments as TomadorModel?;
-      if (client != null) {
-        _selectedClient = client;
-        _documentController.text = client.cnpj;
-        _nameController.text = client.razaoSocial;
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is TomadorModel) {
+        _selectedClient = args;
+        _documentController.text = args.cnpj;
+        _nameController.text = args.razaoSocial;
+      } else if (args is Map<String, dynamic>) {
+        if (args['serviceId'] != null) {
+          _selectedServiceId = args['serviceId'];
+          Future.microtask(() {
+            final favoriteServices = ref.read(favoriteServicesProvider);
+            try {
+              final selectedService = favoriteServices.firstWhere((s) => s.id == _selectedServiceId);
+              if (mounted) {
+                setState(() {
+                  _descriptionController.text = _processarDescricaoInteligente(selectedService.descricaoBase);
+                  if (selectedService.valorBase != null) {
+                    _valueController.text = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$ ').format(selectedService.valorBase);
+                  }
+                });
+              }
+              if (selectedService.idClientePadrao != null) {
+                ref.read(clientListProvider).whenData((clients) {
+                  try {
+                    final cliente = clients.firstWhere((c) => c.id == selectedService.idClientePadrao);
+                    if (mounted) {
+                      setState(() {
+                        _selectedClient = cliente;
+                        _documentController.text = cliente.cnpj;
+                        _nameController.text = cliente.razaoSocial;
+                      });
+                    }
+                  } catch (_) {}
+                });
+              }
+            } catch (_) {}
+          });
+        }
       }
       _initialized = true;
     }
@@ -69,6 +101,49 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
 
   void _onDocumentChanged() {
     // Se quiser voltar o auto-fill mock aqui, ok.
+  }
+
+  Future<void> _excluirServico(String recordId) async {
+    bool? confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Excluir Serviço?", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text("Tem certeza que deseja remover este modelo de serviço?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("Excluir", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      if (!mounted) return;
+      setState(() => _isLoading = true);
+      try {
+        await ref.read(favoriteServicesProvider.notifier).removeService(recordId);
+        if (mounted) {
+          setState(() {
+            _selectedServiceId = null;
+            _descriptionController.clear();
+            _valueController.clear();
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Serviço removido com sucesso!", style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Erro ao excluir: $e")),
+          );
+        }
+      }
+    }
   }
 
 
@@ -223,44 +298,62 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                           ),
                         )
                       else
-                        DropdownButtonFormField<String>(
-                          initialValue: _selectedServiceId,
-                          isExpanded: true,
-                          decoration: const InputDecoration(
-                              labelText: 'Serviço prestado *'),
-                          items: favoriteServices.map((service) {
-                            return DropdownMenuItem(
-                              value: service.id,
-                              child: Text(service.apelido,
-                                  style: const TextStyle(fontSize: 14),
-                                  overflow: TextOverflow.ellipsis),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedServiceId = val;
-                              if (val != null) {
-                                final selectedService = favoriteServices
-                                    .firstWhere((s) => s.id == val);
-                                
-                                // 1. Preenchimento Automático da Descrição com Inteligência de Quinzena
-                                _descriptionController.text = _processarDescricaoInteligente(
-                                    selectedService.descricaoBase);
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _selectedServiceId,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                  labelText: 'Serviço prestado *'),
+                              items: favoriteServices.map((service) {
+                                return DropdownMenuItem(
+                                  value: service.id,
+                                  child: Text(service.apelido,
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedServiceId = val;
+                                  if (val != null) {
+                                    final selectedService = favoriteServices
+                                        .firstWhere((s) => s.id == val);
+                                    
+                                    // 1. Preenchimento Automático da Descrição com Inteligência de Quinzena
+                                    _descriptionController.text = _processarDescricaoInteligente(
+                                        selectedService.descricaoBase);
 
-                                // 2. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
-                                if (selectedService.idClientePadrao != null) {
-                                  clientsAsync.whenData((clients) {
-                                    try {
-                                      final cliente = clients.firstWhere((c) => c.id == selectedService.idClientePadrao);
-                                      _documentController.text = cliente.cnpj;
-                                      _nameController.text = cliente.razaoSocial;
-                                    } catch (_) {}
-                                  });
-                                }
-                              }
-                            });
-                          },
-                        ),
+                                    // 2. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
+                                    if (selectedService.idClientePadrao != null) {
+                                      clientsAsync.whenData((clients) {
+                                        try {
+                                          final cliente = clients.firstWhere((c) => c.id == selectedService.idClientePadrao);
+                                          _documentController.text = cliente.cnpj;
+                                          _nameController.text = cliente.razaoSocial;
+                                        } catch (_) {}
+                                      });
+                                    }
+                                  }
+                                });
+                              },
+                            ),
+                          ),
+                          if (_selectedServiceId != null) ...[
+                            const SizedBox(width: 8),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6.0),
+                              child: IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                tooltip: "Excluir Serviço Favorito",
+                                onPressed: () => _excluirServico(_selectedServiceId!),
+                              ),
+                            ),
+                          ],
+                        ]
+                      ),
                       const SizedBox(height: 16),
                       
 

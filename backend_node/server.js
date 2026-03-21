@@ -158,8 +158,9 @@ app.use(cors({
         }
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-PocketBase-Token'],
+    credentials: true,
+    maxAge: 86400 // Cache de 24h para preflight OPTIONS
 }));
 
 app.use(express.json());
@@ -300,6 +301,23 @@ async function handleEmissaoNacional(req, res) {
         console.log(`🌍 [Nacional] Ambiente: ${payload.ambiente === "1" ? "PRODUÇÃO" : "HOMOLOGAÇÃO"}`);
         console.log(`🏢 [Nacional] Prestador: ${payload.prestador.cnpj}`);
         console.log(`👤 [Nacional] Tomador: ${payload.tomador.cnpj} (${payload.tomador.nome})`);
+
+        // 🛡️ DICA DE SEGURANÇA NO BACKEND (NODE.JS) - LIMITE MEI
+        const anoAtual = new Date().getFullYear();
+        const inicioAno = `${anoAtual}-01-01 00:00:00`; 
+        const somaRows = await query(`
+            SELECT SUM(valor) as total
+            FROM notas_fiscais 
+            WHERE user = ? AND status = 'CONCLUIDA' AND competencia >= ?
+        `, [userId, inicioAno]);
+        
+        const faturamentoAnual = somaRows[0].total || 0;
+        const valorNota = parseFloat(payload.servico.valor) || 0;
+        
+        if ((faturamentoAnual + valorNota) > 81000) {
+             console.warn(`🛑 Bloqueio MEI: Usuário tenta ultrapassar 81k. Atual: ${faturamentoAnual}, Nota: ${valorNota}`);
+             return res.status(400).json({ sucesso: false, erro: "Atenção: Esta nota fará você ultrapassar o limite anual do MEI (R$ 81.000,00). Emissão bloqueada por segurança fiscal para evitar desenquadramento!" });
+        }
 
         // 3. Aciona o Motor VORTEX (Com Trava Real/Teste Dinâmica)
         console.log(`📡 [VORTEX] Payload Final para Motor:`, JSON.stringify({ 
@@ -934,7 +952,7 @@ app.use('/', proxy(config.pocketbase.url, {
         }
         headers['access-control-allow-credentials'] = 'true';
         headers['access-control-allow-methods'] = 'GET,POST,PUT,PATCH,DELETE,OPTIONS';
-        headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With, Accept';
+        headers['access-control-allow-headers'] = 'Content-Type, Authorization, X-Requested-With, Accept, X-PocketBase-Token';
         
         return headers;
     },

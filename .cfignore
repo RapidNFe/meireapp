@@ -29,5 +29,11 @@ DEPLOY_OPTIMIZATION.md
 package-lock.json
 package.json
 LICENSE
-.git
-.github
+.git/
+.github/
+.agents/
+docs/
+ssh-key-*.key
+test_*.dart
+test_*.js
+*.log

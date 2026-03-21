@@ -49,6 +49,7 @@ class BrasilApiService {
             'cep': data['cep'] ?? '',
             'cnae_fiscal': data['cnae_fiscal']?.toString() ?? '',
             'cnae_fiscal_descricao': data['cnae_fiscal_descricao'] ?? '',
+            'cnaes_secundarios': data['cnaes_secundarios'] ?? [],
             'logradouro': data['logradouro'] ?? '',
             'numero': data['numero'] ?? 'S/N',
             'bairro': data['bairro'] ?? '',
@@ -79,21 +80,41 @@ class BrasilApiService {
     return finalData;
   }
 
-  // Retorna dados do CEP incluindo Código IBGE (Endpoint V2 da BrasilAPI garante city_ibge)
+  // Retorna dados do CEP incluindo Código IBGE (Endpoint V2 da BrasilAPI)
   static Future<Map<String, dynamic>> buscarCep(String cep) async {
     final cepLimpo = cep.replaceAll(RegExp(r'\D'), '');
     try {
       final response = await _dio.get('https://brasilapi.com.br/api/cep/v2/$cepLimpo');
       if (response.statusCode == 200) {
+        final data = response.data;
+        String codigoIbge = data['ibge']?.toString() ?? '';
+
+        // 🛡️ Fallback: Se a BrasilAPI V2 não retornar o IBGE direto
+        if (codigoIbge.isEmpty && data['state'] != null && data['city'] != null) {
+          try {
+            final ibgeResponse = await _dio.get('https://brasilapi.com.br/api/ibge/municipios/v1/${data['state']}');
+            if (ibgeResponse.statusCode == 200 && ibgeResponse.data is List) {
+              final municipios = ibgeResponse.data as List;
+              final municipio = municipios.firstWhere(
+                  (m) => m['nome']?.toString().toUpperCase() == data['city']?.toString().toUpperCase(),
+                  orElse: () => null);
+              if (municipio != null) {
+                codigoIbge = municipio['codigo_ibge']?.toString() ?? '';
+              }
+            }
+          } catch (_) {
+            // Ignora falha silenciosamente e mantém vazio ou o que tiver retornado
+          }
+        }
+
         return {
-          'cep': response.data['cep'],
-          'city': response.data['city'],
-          'state': response.data['state'],
-          'street': response.data['street'],
-          'neighborhood': response.data['neighborhood'],
-          'service': response.data['service'],
-          // BrasilAPI v2 usa 'city_ibge' para o código de 7 dígitos
-          'codigo_ibge': response.data['city_ibge']?.toString() ?? '',
+          'cep': data['cep'],
+          'city': data['city'],
+          'state': data['state'],
+          'street': data['street'],
+          'neighborhood': data['neighborhood'],
+          'service': data['service'],
+          'codigo_ibge': codigoIbge,
         };
       }
       throw Exception('Falha ao buscar CEP');
