@@ -26,7 +26,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final _imController = TextEditingController();
   final _cepController = TextEditingController();
   final _cnaeController = TextEditingController();
-  final _codigoMunicipioController = TextEditingController();
+  final _codigoIbgeController = TextEditingController();
   final _senhaPfxController = TextEditingController();
   PlatformFile? _pickedFile;
 
@@ -42,7 +42,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       _imController.text = user.getStringValue('inscricao_municipal');
       _cepController.text = user.getStringValue('cep');
       _cnaeController.text = user.getStringValue('cnae_principal');
-      _codigoMunicipioController.text = user.getStringValue('codigo_municipio');
+      _codigoIbgeController.text = user.getStringValue('codigo_ibge');
       _senhaPfxController.text = user.getBoolValue('possui_certificado') ? '********' : '';
     }
   }
@@ -52,7 +52,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     _imController.dispose();
     _cepController.dispose();
     _cnaeController.dispose();
-    _codigoMunicipioController.dispose();
+    _codigoIbgeController.dispose();
     _senhaPfxController.dispose();
     super.dispose();
   }
@@ -69,7 +69,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         'inscricao_municipal': _imController.text,
         'cep': _cepController.text.replaceAll(RegExp(r'[^0-9]'), ''),
         'cnae_principal': _cnaeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
-        'codigo_municipio': _codigoMunicipioController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+        'codigo_ibge': _codigoIbgeController.text.replaceAll(RegExp(r'[^0-9]'), ''),
       };
 
       // 1. Atualiza dados Cadastrais no PocketBase (Dados Seguros/Públicos)
@@ -104,8 +104,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           throw Exception('Para segurança do cofre, envie o arquivo .pfx junto com a nova senha.');
       }
 
-      // Refresh data
+      // Refresh data e aguarda propagação do Realtime
       await ref.read(pbProvider).collection('users').authRefresh();
+      
+      // Pequeno respiro para garantir que a UI reflita a mudança
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Força a releitura do usuário logado se o authRefresh falhar em propagar
+      try {
+        final pb = ref.read(pbProvider);
+        final updatedUser = await pb.collection('users').getOne(user.id);
+        pb.authStore.save(pb.authStore.token, updatedUser);
+      } catch (_) {}
       
       if (mounted) {
         setState(() {
@@ -132,7 +142,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _checkCadastroCompleto(RecordModel user) {
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
-    final ibge = user.getStringValue('codigo_municipio');
+    final ibge = user.getStringValue('codigo_ibge');
     final cnpj = user.getStringValue('cnpj');
     final possuiCert = user.getBoolValue('possui_certificado');
     return im.isNotEmpty && cep.isNotEmpty && ibge.isNotEmpty && cnpj.length == 14 && possuiCert;
@@ -145,7 +155,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final razaoSocial = user.getStringValue('razao_social');
     final im = user.getStringValue('inscricao_municipal');
     final cep = user.getStringValue('cep');
-    final ibge = user.getStringValue('codigo_municipio');
+    final ibge = user.getStringValue('codigo_ibge');
     final possuiCert = user.getBoolValue('possui_certificado');
 
     if (cnpj.isEmpty || cnpj.length != 14) pendencias.add("CNPJ inválido ou incompleto");
@@ -493,7 +503,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
-                              controller: _codigoMunicipioController,
+                              controller: _codigoIbgeController,
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: 'Código IBGE (Município) *',
@@ -519,8 +529,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           const Divider(height: 24),
                           _InfoRow(
                             label: 'Código IBGE (Município)', 
-                            value: user.getStringValue('codigo_municipio').isEmpty ? '⚠️ Pendente' : user.getStringValue('codigo_municipio'),
-                            isPending: user.getStringValue('codigo_municipio').isEmpty,
+                            value: user.getStringValue('codigo_ibge').isEmpty ? '⚠️ Pendente' : user.getStringValue('codigo_ibge'),
+                            isPending: user.getStringValue('codigo_ibge').isEmpty,
                           ),
                           const Divider(height: 24),
                           _InfoRow(
