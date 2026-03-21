@@ -15,7 +15,7 @@ final notificationsProvider = StreamProvider.autoDispose<List<NotificationModel>
   Future<List<NotificationModel>> fetchNotifications() async {
     try {
       final records = await pb.collection('notificacoes').getFullList(
-        filter: 'user_id = "${user.id}"',
+        filter: 'user_id = "${user.id}" && lida = false',
         sort: '-created',
       );
       return records.map((r) => NotificationModel.fromRecord(r)).toList();

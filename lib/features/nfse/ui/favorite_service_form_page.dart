@@ -33,6 +33,8 @@ class _FavoriteServiceFormPageState
      "9602502": "06.01.01",
      "8219999": "17.02.01",
      "9609206": "06.01.01",
+     "960250": "06.01.01",
+     "96025": "06.01.01",
    };
  
    @override
@@ -58,7 +60,17 @@ class _FavoriteServiceFormPageState
           if (principal.isNotEmpty) opts.add(principal);
           opts.addAll(scds);
           
-          if (mounted) setState(() => _cnaesOptions = opts.toList());
+          if (mounted) {
+             setState(() {
+               _cnaesOptions = opts.toList();
+               
+               // Autopreenchimento Total (CNAE, Descrição, Apelido, Código Nac)
+               if (principal.isNotEmpty) {
+                 _cnaeSelecionado = principal;
+                 _onCnaeSelecionado(principal);
+               }
+             });
+          }
         }
      });
    }

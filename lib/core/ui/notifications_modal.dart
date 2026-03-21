@@ -25,9 +25,13 @@ class NotificationsModal extends ConsumerWidget {
 
     final pbInstance = ref.read(pbProvider);
     try {
-      for (var n in unread) {
-        await pbInstance.collection('notificacoes').update(n.id, body: {'lida': true});
-      }
+      // Paraleliza as atualizações para ser mais rápido
+      await Future.wait(unread.map(
+        (n) => pbInstance.collection('notificacoes').update(n.id, body: {'lida': true}),
+      ));
+      
+      // Força a atualização do provider (caso o stream demore)
+      ref.invalidate(notificationsProvider);
     } catch (e) {
       debugPrint('Erro ao marcar todas como lidas: $e');
     }
@@ -41,6 +45,7 @@ class NotificationsModal extends ConsumerWidget {
           notification.id,
           body: {'lida': true}, // 'lida' conforme novo padrão
         );
+        ref.invalidate(notificationsProvider);
       } catch (e) {
         debugPrint('Erro ao marcar como lida: $e');
       }

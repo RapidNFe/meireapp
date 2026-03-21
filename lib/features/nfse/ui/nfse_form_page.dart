@@ -129,6 +129,8 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
             _selectedServiceId = null;
             _descriptionController.clear();
             _valueController.clear();
+            _documentController.clear();
+            _nameController.clear();
             _isLoading = false;
           });
           ScaffoldMessenger.of(context).showSnackBar(
@@ -326,13 +328,28 @@ class _NfseFormPageState extends ConsumerState<NfseFormPage> {
                                     _descriptionController.text = _processarDescricaoInteligente(
                                         selectedService.descricaoBase);
 
-                                    // 2. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
-                                    if (selectedService.idClientePadrao != null) {
+                                    // 2. Preenchimento Automático do Valor (se houver)
+                                    if (selectedService.valorBase != null) {
+                                      _valueController.text = NumberFormat.currency(
+                                              locale: 'pt_BR', symbol: 'R\$ ')
+                                          .format(selectedService.valorBase);
+                                    } else {
+                                      _valueController.clear();
+                                    }
+
+                                    // 3. Auto-seleção do Cliente (se houver ID padrão e estiver na lista)
+                                    if (selectedService.idClientePadrao != null && selectedService.idClientePadrao!.isNotEmpty) {
                                       clientsAsync.whenData((clients) {
                                         try {
-                                          final cliente = clients.firstWhere((c) => c.id == selectedService.idClientePadrao);
-                                          _documentController.text = cliente.cnpj;
-                                          _nameController.text = cliente.razaoSocial;
+                                          final cliente = clients.firstWhere(
+                                              (c) => c.id == selectedService.idClientePadrao);
+                                          if (mounted) {
+                                            setState(() {
+                                              _selectedClient = cliente;
+                                              _documentController.text = cliente.cnpj;
+                                              _nameController.text = cliente.razaoSocial;
+                                            });
+                                          }
                                         } catch (_) {}
                                       });
                                     }
