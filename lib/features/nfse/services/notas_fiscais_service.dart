@@ -47,7 +47,7 @@ class NotasFiscaisService {
             "numeroSerie": "900",
             "dataHoraEmissao": formattedDate,
             "competencia": competencia, 
-            "codigoMunicipioEmissor": user?.getStringValue('codigo_municipio') ?? "5208707",
+            "codigoMunicipioEmissor": user?.getStringValue('codigo_ibge') ?? "5208707",
             "tomador": {
               "cnpj": cleanCnpj,
               "nome": clientName,
